@@ -76,7 +76,7 @@ html, body {
 
 #game {
   width: min(98vw, 780px);
-  height: min(calc(100vh - 220px), 780px); /* espaço para topbar + controlos */
+  height: min(calc(100vh - 150px), 820px); /* espaço para topbar + controlos */
   background: #050812;
   border-radius: var(--radius);
   border: 1px solid rgba(255,255,255,0.10);
@@ -117,31 +117,3 @@ html, body {
 
 .row { display: flex; gap: 10px; justify-content: flex-end; }
 
-/* Controlos mobile (one-hand) */
-.controls{
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 12px 14px calc(12px + env(safe-area-inset-bottom));
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
-  gap: 10px;
-  background: color-mix(in srgb, var(--bg) 82%, #000);
-  border-top: 1px solid rgba(255,255,255,0.08);
-  z-index: 15;
-}
-
-.ctl{
-  height: 58px;
-  border-radius: 14px;
-  font-size: 20px;
-  font-weight: 800;
-  border: 1px solid rgba(255,255,255,0.14);
-  background: var(--panel);
-  color: var(--text);
-}
-
-.ctl:active{
-  transform: translateY(1px);
-}

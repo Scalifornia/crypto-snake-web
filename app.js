@@ -303,7 +303,7 @@
     touchStart = null;
   }, { passive: true });
 
-  // Tap: muda direção sem swipe (zona relativa ao centro do canvas)
+  // Tap (one-hand): metade esquerda = vira esquerda; metade direita = vira direita
   canvas.addEventListener("touchend", (e) => {
     if (!touchStart) return;
     const t = (e.changedTouches && e.changedTouches[0]) || null;
@@ -312,33 +312,40 @@
     const dx = t.clientX - touchStart.x;
     const dy = t.clientY - touchStart.y;
 
+    // tap = movimento pequeno (não swipe)
     if (Math.abs(dx) < SWIPE_MIN && Math.abs(dy) < SWIPE_MIN) {
-      const rect = canvas.getBoundingClientRect();
-      const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
-
-      const tx = t.clientX - cx;
-      const ty = t.clientY - cy;
-
-      if (Math.abs(tx) > Math.abs(ty)) {
-        setDirection(tx > 0 ? { x: 1, y: 0 } : { x: -1, y: 0 });
-      } else {
-        setDirection(ty > 0 ? { x: 0, y: 1 } : { x: 0, y: -1 });
-      }
+      if (t.clientX < window.innerWidth / 2) turnLeft();
+      else turnRight();
     }
     touchStart = null;
   }, { passive: true });
-
-  // Botões one-hand
-  document.querySelectorAll(".ctl").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const d = btn.getAttribute("data-dir");
       if (d === "up") setDirection({ x: 0, y: -1 });
       if (d === "down") setDirection({ x: 0, y: 1 });
       if (d === "left") setDirection({ x: -1, y: 0 });
       if (d === "right") setDirection({ x: 1, y: 0 });
     });
   });
+
+  // Full-screen one-hand taps (não interfere com botões)
+  document.addEventListener("click", (e) => {
+    if (e.target && e.target.closest && e.target.closest("button")) return;
+    if (!state.running || state.paused || state.over) return;
+    if (e.clientX < window.innerWidth / 2) turnLeft();
+    else turnRight();
+  });
+
+  // Tap no ecrã todo (mobile)
+  document.addEventListener("touchend", (e) => {
+    // ignora se foi no overlay (overlay já trata restart)
+    if (e.target && e.target.closest && e.target.closest("#overlay")) return;
+    if (e.target && e.target.closest && e.target.closest("button")) return;
+    if (!state.running || state.paused || state.over) return;
+
+    const t = (e.changedTouches && e.changedTouches[0]) || null;
+    if (!t) return;
+    if (t.clientX < window.innerWidth / 2) turnLeft();
+    else turnRight();
+  }, { passive: true });
 
   // UI botões topo/overlay
   btnNew.addEventListener("click", resetGame);
