@@ -1,6 +1,6 @@
 (() => {
   const GRID = 18;
-  const TICK_MS = 95;
+  const BASE_TICK_MS = 95;
   const SWIPE_MIN = 18;
   const STORAGE_KEY = "cryptoSnakeBest_v1";
 
@@ -19,18 +19,6 @@
   const btnResume = document.getElementById("btnResume");
   const btnRestart = document.getElementById("btnRestart");
 
-  function resizeCanvas() {
-    const dpr = Math.max(1, Math.floor(window.devicePixelRatio || 1));
-    const sizeCss = Math.min(window.innerWidth * 0.92, 520);
-    canvas.style.width = `${sizeCss}px`;
-    canvas.style.height = `${sizeCss}px`;
-    canvas.width = Math.floor(sizeCss * dpr);
-    canvas.height = Math.floor(sizeCss * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  }
-  window.addEventListener("resize", resizeCanvas, { passive: true });
-  resizeCanvas();
-
   const state = {
     running: false,
     paused: false,
@@ -43,9 +31,31 @@
     food: { x: 10, y: 10 },
     lastTick: 0,
     acc: 0,
+    tickMs: BASE_TICK_MS,
   };
 
   bestEl.textContent = String(state.best);
+
+  function resizeCanvas() {
+    const dpr = Math.max(1, Math.floor(window.devicePixelRatio || 1));
+    // Reserva espaço para topbar + controls (aprox). Não precisa ser perfeito.
+    const reserved = 240;
+    const maxSize = 780;
+
+    const sizeCss = Math.max(
+      220,
+      Math.min(window.innerWidth * 0.98, window.innerHeight - reserved, maxSize)
+    );
+
+    canvas.style.width = `${sizeCss}px`;
+    canvas.style.height = `${sizeCss}px`;
+    canvas.width = Math.floor(sizeCss * dpr);
+    canvas.height = Math.floor(sizeCss * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  window.addEventListener("resize", resizeCanvas, { passive: true });
+  resizeCanvas();
 
   const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
   const cellEquals = (a, b) => a.x === b.x && a.y === b.y;
@@ -65,7 +75,7 @@
   }
 
   function spawnFood() {
-    for (let i = 0; i < 200; i++) {
+    for (let i = 0; i < 250; i++) {
       const p = { x: randInt(0, GRID - 1), y: randInt(0, GRID - 1) };
       if (!state.snake.some(s => cellEquals(s, p))) {
         state.food = p;
@@ -112,7 +122,7 @@
     state.over = false;
     state.running = true;
 
-    // importante: evita dt gigante no restart
+    state.tickMs = BASE_TICK_MS;
     state.lastTick = performance.now();
     state.acc = 0;
 
@@ -157,8 +167,9 @@
     state.dir = state.nextDir;
 
     const head = state.snake[0];
-    const newHead = { x: head.x + state.dir.x, y: head.y + state.dir.y };
+    let newHead = { x: head.x + state.dir.x, y: head.y + state.dir.y };
 
+    // parede (mantém game over por agora)
     if (newHead.x < 0 || newHead.x >= GRID || newHead.y < 0 || newHead.y >= GRID) {
       gameOver(); return;
     }
@@ -203,6 +214,7 @@
     }
     ctx.globalAlpha = 1;
 
+    // food
     ctx.fillStyle = "#22c55e";
     const fx = state.food.x * cell;
     const fy = state.food.y * cell;
@@ -210,6 +222,7 @@
     rr(ctx, fx + 3, fy + 3, cell - 6, cell - 6, 8);
     ctx.fill();
 
+    // snake
     for (let i = state.snake.length - 1; i >= 0; i--) {
       const s = state.snake[i];
       const x = s.x * cell;
@@ -242,19 +255,19 @@
 
     if (!state.running || state.paused || state.over) return;
 
-    if (!state.lastTick) state.lastTick = ts;
     const dt = ts - state.lastTick;
     state.lastTick = ts;
 
     state.acc += dt;
-    while (state.acc >= TICK_MS) {
-      state.acc -= TICK_MS;
+    while (state.acc >= state.tickMs) {
+      state.acc -= state.tickMs;
       step();
       if (state.over) break;
     }
   }
   requestAnimationFrame(loop);
 
+  // Teclado (desktop)
   window.addEventListener("keydown", (e) => {
     const k = e.key.toLowerCase();
     if (k === "arrowup" || k === "w") setDirection({ x: 0, y: -1 });
@@ -265,6 +278,7 @@
     else if (k === "enter" && state.over) resetGame();
   }, { passive: true });
 
+  // Swipe + tap (mobile)
   let touchStart = null;
 
   canvas.addEventListener("touchstart", (e) => {
@@ -281,14 +295,52 @@
 
     if (Math.abs(dx) < SWIPE_MIN && Math.abs(dy) < SWIPE_MIN) return;
 
-    if (Math.abs(dx) > Math.abs(dy)) setDirection(dx > 0 ? { x: 1, y: 0 } : { x: -1, y: 0 });
-    else setDirection(dy > 0 ? { x: 0, y: 1 } : { x: 0, y: -1 });
-
+    if (Math.abs(dx) > Math.abs(dy)) {
+      setDirection(dx > 0 ? { x: 1, y: 0 } : { x: -1, y: 0 });
+    } else {
+      setDirection(dy > 0 ? { x: 0, y: 1 } : { x: 0, y: -1 });
+    }
     touchStart = null;
   }, { passive: true });
 
-  canvas.addEventListener("touchend", () => { touchStart = null; }, { passive: true });
+  // Tap: muda direção sem swipe (zona relativa ao centro do canvas)
+  canvas.addEventListener("touchend", (e) => {
+    if (!touchStart) return;
+    const t = (e.changedTouches && e.changedTouches[0]) || null;
+    if (!t) { touchStart = null; return; }
 
+    const dx = t.clientX - touchStart.x;
+    const dy = t.clientY - touchStart.y;
+
+    if (Math.abs(dx) < SWIPE_MIN && Math.abs(dy) < SWIPE_MIN) {
+      const rect = canvas.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+
+      const tx = t.clientX - cx;
+      const ty = t.clientY - cy;
+
+      if (Math.abs(tx) > Math.abs(ty)) {
+        setDirection(tx > 0 ? { x: 1, y: 0 } : { x: -1, y: 0 });
+      } else {
+        setDirection(ty > 0 ? { x: 0, y: 1 } : { x: 0, y: -1 });
+      }
+    }
+    touchStart = null;
+  }, { passive: true });
+
+  // Botões one-hand
+  document.querySelectorAll(".ctl").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const d = btn.getAttribute("data-dir");
+      if (d === "up") setDirection({ x: 0, y: -1 });
+      if (d === "down") setDirection({ x: 0, y: 1 });
+      if (d === "left") setDirection({ x: -1, y: 0 });
+      if (d === "right") setDirection({ x: 1, y: 0 });
+    });
+  });
+
+  // UI botões topo/overlay
   btnNew.addEventListener("click", resetGame);
   btnRestart.addEventListener("click", resetGame);
   btnResume.addEventListener("click", () => pauseToggle(false));
