@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Crypto Snake (Mobile)</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Crypto Snake</div>
+
+    <div class="stats">
+      <div class="pill">Score: <span id="score">0</span></div>
+      <div class="pill">Best: <span id="best">0</span></div>
+    </div>
+
+    <div class="actions">
+      <button id="btnPause" class="btn">Pause</button>
+      <button id="btnNew" class="btn btn-primary">New</button>
+    </div>
+  </header>
+
+  <main class="stage">
+    <canvas id="game" width="360" height="360" aria-label="Crypto Snake game"></canvas>
+
+    <div class="hint">
+      Swipe para mudar direção. Toque com 2 dedos para pausar.
+    </div>
+  </main>
+
+  <div id="overlay" class="overlay hidden">
+    <div class="card">
+      <h1 id="overlayTitle">Game Over</h1>
+      <p id="overlayText">Score: 0</p>
+      <div class="row">
+        <button id="btnResume" class="btn">Resume</button>
+        <button id="btnRestart" class="btn btn-primary">Restart</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
