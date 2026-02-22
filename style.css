@@ -67,14 +67,19 @@ html, body {
   background: color-mix(in srgb, var(--accent) 30%, var(--panel));
 }
 
-.stage {
-  display: grid;
-  place-items: center;
-  padding: 12px 14px 0;
+.stage{
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;   /* esquerda */
+  width: 100%;
+  padding: 12px 10px 0;      /* ligeiramente mais à esquerda */
   gap: 10px;
 }
 
+
 #game {
+  margin-left: 0;
+
   width: min(98vw, 780px);
   height: min(calc(100vh - 150px), 820px); /* espaço para topbar + controlos */
   background: #050812;

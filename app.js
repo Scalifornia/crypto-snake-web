@@ -169,10 +169,9 @@
     const head = state.snake[0];
     let newHead = { x: head.x + state.dir.x, y: head.y + state.dir.y };
 
-    // parede (mantém game over por agora)
-    if (newHead.x < 0 || newHead.x >= GRID || newHead.y < 0 || newHead.y >= GRID) {
-      gameOver(); return;
-    }
+    // wrap walls (atravessa paredes)
+    newHead.x = (newHead.x + GRID) % GRID;
+    newHead.y = (newHead.y + GRID) % GRID;
 
     if (state.snake.some((seg, idx) => idx !== 0 && cellEquals(seg, newHead))) {
       gameOver(); return;
@@ -303,22 +302,7 @@
     touchStart = null;
   }, { passive: true });
 
-  // Tap (one-hand): metade esquerda = vira esquerda; metade direita = vira direita
-  canvas.addEventListener("touchend", (e) => {
-    if (!touchStart) return;
-    const t = (e.changedTouches && e.changedTouches[0]) || null;
-    if (!t) { touchStart = null; return; }
-
-    const dx = t.clientX - touchStart.x;
-    const dy = t.clientY - touchStart.y;
-
-    // tap = movimento pequeno (não swipe)
-    if (Math.abs(dx) < SWIPE_MIN && Math.abs(dy) < SWIPE_MIN) {
-      if (t.clientX < window.innerWidth / 2) turnLeft();
-      else turnRight();
-    }
-    touchStart = null;
-  }, { passive: true });
+  canvas.addEventListener("touchend", () => { touchStart = null; }, { passive: true });
       if (d === "up") setDirection({ x: 0, y: -1 });
       if (d === "down") setDirection({ x: 0, y: 1 });
       if (d === "left") setDirection({ x: -1, y: 0 });
@@ -346,6 +330,52 @@
     if (t.clientX < window.innerWidth / 2) turnLeft();
     else turnRight();
   }, { passive: true });
+
+  // ONE_HAND_FULLSCREEN_V1
+  let ohStart = null;
+  let ohMoved = false
+
+  document.addEventListener("touchstart", (e) => {
+    if (e.touches && e.touches.length !== 1) return;
+    if (e.target && e.target.closest && (e.target.closest("button") || e.target.closest("#overlay"))) return;
+    const t = e.touches[0];
+    ohStart = { x: t.clientX, y: t.clientY };
+    ohMoved = false;
+  }, { passive: true, capture: true });
+
+  document.addEventListener("touchmove", (e) => {
+    if (!ohStart) return;
+    const t = (e.touches && e.touches[0]) || null;
+    if (!t) return;
+    const dx = t.clientX - ohStart.x;
+    const dy = t.clientY - ohStart.y;
+    if (Math.abs(dx) > SWIPE_MIN || Math.abs(dy) > SWIPE_MIN) ohMoved = true; // foi swipe
+  }, { passive: true, capture: true });
+
+  document.addEventListener("touchend", (e) => {
+    if (!ohStart) return;
+    if (e.target && e.target.closest && (e.target.closest("button") || e.target.closest("#overlay"))) { ohStart = null; return; }
+
+    const t = (e.changedTouches && e.changedTouches[0]) || null;
+    if (!t) { ohStart = null; return; }
+
+    // só tap curto (não swipe)
+    const dx = t.clientX - ohStart.x;
+    const dy = t.clientY - ohStart.y;
+    if (!ohMoved && Math.abs(dx) < SWIPE_MIN && Math.abs(dy) < SWIPE_MIN) {
+      if (t.clientX < window.innerWidth / 2) turnLeft();
+      else turnRight();
+    }
+    ohStart = null;
+  }, { passive: true, capture: true });
+
+  // Desktop: click esquerda/direita (não interfere com botões)
+  document.addEventListener("click", (e) => {
+    if (e.target && e.target.closest && (e.target.closest("button") || e.target.closest("#overlay"))) return;
+    if (!state.running || state.paused || state.over) return;
+    if (e.clientX < window.innerWidth / 2) turnLeft();
+    else turnRight();
+  }, true);
 
   // UI botões topo/overlay
   btnNew.addEventListener("click", resetGame);
