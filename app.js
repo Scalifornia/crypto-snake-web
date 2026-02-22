@@ -11,6 +11,7 @@
   const bestEl = document.getElementById("best");
 
   const overlay = document.getElementById("overlay");
+  const tapLayer = document.getElementById("tapLayer");
   const overlayTitle = document.getElementById("overlayTitle");
   const overlayText = document.getElementById("overlayText");
 
@@ -311,7 +312,7 @@
   });
 
   // Full-screen one-hand taps (não interfere com botões)
-  document.addEventListener("click", (e) => {
+  tapLayer.addEventListener("click", (e) => {
     if (e.target && e.target.closest && e.target.closest("button")) return;
     if (!state.running || state.paused || state.over) return;
     if (e.clientX < window.innerWidth / 2) turnLeft();
@@ -319,7 +320,7 @@
   });
 
   // Tap no ecrã todo (mobile)
-  document.addEventListener("touchend", (e) => {
+  tapLayer.addEventListener("touchend", (e) => {
     // ignora se foi no overlay (overlay já trata restart)
     if (e.target && e.target.closest && e.target.closest("#overlay")) return;
     if (e.target && e.target.closest && e.target.closest("button")) return;
@@ -335,7 +336,7 @@
   let ohStart = null;
   let ohMoved = false
 
-  document.addEventListener("touchstart", (e) => {
+  tapLayer.addEventListener("touchstart", (e) => {
     if (e.touches && e.touches.length !== 1) return;
     if (e.target && e.target.closest && (e.target.closest("button") || e.target.closest("#overlay"))) return;
     const t = e.touches[0];
@@ -343,7 +344,7 @@
     ohMoved = false;
   }, { passive: true, capture: true });
 
-  document.addEventListener("touchmove", (e) => {
+  tapLayer.addEventListener("touchmove", (e) => {
     if (!ohStart) return;
     const t = (e.touches && e.touches[0]) || null;
     if (!t) return;
@@ -352,7 +353,7 @@
     if (Math.abs(dx) > SWIPE_MIN || Math.abs(dy) > SWIPE_MIN) ohMoved = true; // foi swipe
   }, { passive: true, capture: true });
 
-  document.addEventListener("touchend", (e) => {
+  tapLayer.addEventListener("touchend", (e) => {
     if (!ohStart) return;
     if (e.target && e.target.closest && (e.target.closest("button") || e.target.closest("#overlay"))) { ohStart = null; return; }
 
@@ -370,7 +371,7 @@
   }, { passive: true, capture: true });
 
   // Desktop: click esquerda/direita (não interfere com botões)
-  document.addEventListener("click", (e) => {
+  tapLayer.addEventListener("click", (e) => {
     if (e.target && e.target.closest && (e.target.closest("button") || e.target.closest("#overlay"))) return;
     if (!state.running || state.paused || state.over) return;
     if (e.clientX < window.innerWidth / 2) turnLeft();

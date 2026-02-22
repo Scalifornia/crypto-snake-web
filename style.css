@@ -23,6 +23,7 @@ html, body {
 }
 
 .topbar {
+  z-index: 40;
   position: sticky;
   top: 0;
   z-index: 10;
@@ -70,14 +71,17 @@ html, body {
 .stage{
   display: flex;
   flex-direction: column;
-  align-items: flex-start;   /* esquerda */
+  align-items: flex-start; /* esquerda */
   width: 100%;
-  padding: 12px 10px 0;      /* ligeiramente mais à esquerda */
+  padding: 12px 6px 0 8px; /* mais à esquerda */
   gap: 10px;
 }
 
 
 #game {
+  display: block;
+  margin-left: 0;
+
   margin-left: 0;
 
   width: min(98vw, 780px);
@@ -97,6 +101,7 @@ html, body {
 }
 
 .overlay {
+  z-index: 60;
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.55);
@@ -122,3 +127,13 @@ html, body {
 
 .row { display: flex; gap: 10px; justify-content: flex-end; }
 
+
+
+/* Camada transparente para captar taps (one-hand) em todo o ecrã */
+#tapLayer{
+  position: fixed;
+  inset: 0;
+  z-index: 20;            /* abaixo da topbar (40) e acima do resto */
+  background: transparent;
+  touch-action: manipulation;
+}
