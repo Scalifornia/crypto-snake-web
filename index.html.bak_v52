@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Crypto Snake Web</title>
+  <link rel="stylesheet" href="style.css?v=51" />
+</head>
+
+<body>
+  <div id="app">
+
+    <header class="topbar">
+      <div class="brand">Crypto Snake</div>
+
+      <div class="stats">
+        <div class="pill">Score: <span id="score">0</span></div>
+        <div class="pill">Best: <span id="best">0</span></div>
+      </div>
+
+      <div class="actions">
+        <button id="btnPause" class="btn">Pause</button>
+        <button id="btnReset" class="btn btn-primary">Reset</button>
+        <button id="btnMenu" class="btn">Menu</button>
+      </div>
+    </header>
+
+    <div id="menu" class="panel">
+      <div class="menu-shell">
+        <div class="menu-card">
+          <h1>CRYPTO SNAKE</h1>
+
+          <div class="row">
+            <label for="mode">Modo</label>
+            <select id="mode">
+              <option value="classic" selected>Infinito (Classic)</option>
+              <option value="timed">Timed (60s)</option>
+              <option value="survival">Survival (speed up)</option>
+            </select>
+          </div>
+
+          <div class="row">
+            <label for="difficulty">Dificuldade</label>
+            <select id="difficulty">
+              <option value="easy">Easy</option>
+              <option value="normal" selected>Normal</option>
+              <option value="hard">Hard</option>
+            </select>
+          </div>
+
+          <div class="row">
+            <label for="walls">Paredes</label>
+            <select id="walls">
+              <option value="off" selected>OFF (wrap)</option>
+              <option value="on">ON (colisão)</option>
+            </select>
+          </div>
+
+          <div class="row">
+            <label for="grid">Grelha</label>
+            <select id="grid">
+              <option value="off" selected>OFF</option>
+              <option value="mid">Médio</option>
+              <option value="low">Fraco</option>
+            </select>
+          </div>
+
+          <div class="row">
+            <label for="bgOpacity">Opacidade fundo</label>
+            <input id="bgOpacity" type="range" min="0" max="100" value="40" />
+          </div>
+
+          <div class="row">
+            <label for="bgFile">Fundo (upload)</label>
+            <input id="bgFile" type="file" accept="image/*" />
+          </div>
+
+          <div class="row">
+            <label for="sound">Efeitos</label>
+            <select id="sound">
+              <option value="on" selected>On</option>
+              <option value="off">Off</option>
+            </select>
+          </div>
+
+          <div class="row">
+            <label for="sfxVol">Volume efeitos</label>
+            <input id="sfxVol" type="range" min="0" max="100" value="80" />
+          </div>
+
+          <div class="row">
+            <label for="music">Música</label>
+            <select id="music">
+              <option value="on" selected>On</option>
+              <option value="off">Off</option>
+            </select>
+          </div>
+
+          <div class="row">
+            <label for="musicTrack">Faixa</label>
+            <select id="musicTrack">
+              <option value="assets/audio/trilha_sonora.wav" selected>Trilha 1</option>
+              <option value="assets/audio/trilha_2.wav">Trilha 2</option>
+              <option value="assets/audio/trilha_3.wav">Trilha 3</option>
+            </select>
+          </div>
+
+          <div class="row">
+            <label for="musicVol">Volume música</label>
+            <input id="musicVol" type="range" min="0" max="100" value="60" />
+          </div>
+
+          <div class="buttons">
+            <button id="btnPlay" class="btn btn-primary">Play</button>
+          </div>
+
+          <p class="hint">PC: setas / WASD · Espaço = Pause · R = Reset</p>
+          <p class="hint">Mobile: toca/arrasta em qualquer parte do ecrã</p>
+        </div>
+      </div>
+    </div>
+
+    <main class="stage">
+      <canvas id="game" width="900" height="700" aria-label="Crypto Snake"></canvas>
+    </main>
+
+    <div id="overlay" class="overlay hidden">
+      <div class="overlay-card">
+        <h2 id="overlayTitle">Pausa</h2>
+        <p id="overlayText">Espaço para continuar</p>
+        <div class="buttons">
+          <button id="btnOverlayResume" class="btn btn-primary">Resume</button>
+          <button id="btnOverlayReset" class="btn">Reset</button>
+          <button id="btnOverlayMenu" class="btn">Menu</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script defer src="app.js?v=51"></script>
+</body>
+</html>

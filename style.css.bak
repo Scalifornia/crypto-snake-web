@@ -1,0 +1,139 @@
+:root {
+  --bg: #0b0f17;
+  --panel: #111827;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --accent: #3b82f6;
+  --accent2: #22c55e;
+  --danger: #ef4444;
+  --radius: 14px;
+  --pad: 14px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, system-ui, Segoe UI, Roboto, Arial;
+  overflow: hidden;              /* bloqueia scroll */
+  overscroll-behavior: none;     /* evita “bounce” */
+}
+
+.topbar {
+  z-index: 40;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: var(--pad);
+  background: color-mix(in srgb, var(--bg) 85%, #000);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.brand { font-weight: 700; letter-spacing: 0.2px; }
+
+.stats { display: flex; gap: 8px; }
+
+.pill {
+  background: var(--panel);
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 8px 10px;
+  border-radius: 999px;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.actions { display: flex; gap: 8px; }
+
+.btn {
+  appearance: none;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: var(--panel);
+  color: var(--text);
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.btn:active { transform: translateY(1px); }
+
+.btn-primary {
+  border-color: rgba(59,130,246,0.5);
+  background: color-mix(in srgb, var(--accent) 30%, var(--panel));
+}
+
+.stage{
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* esquerda */
+  width: 100%;
+  padding: 12px 6px 0 8px; /* mais à esquerda */
+  gap: 10px;
+}
+
+
+#game {
+  display: block;
+  margin-left: 0;
+
+  margin-left: 0;
+
+  width: min(98vw, 780px);
+  height: min(calc(100vh - 150px), 820px); /* espaço para topbar + controlos */
+  background: #050812;
+  border-radius: var(--radius);
+  border: 1px solid rgba(255,255,255,0.10);
+  touch-action: none; /* swipe/tap sem scroll */
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+  max-width: 780px;
+  padding-bottom: 8px;
+}
+
+.overlay {
+  z-index: 60;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  z-index: 20;
+}
+
+.hidden { display: none; }
+
+.card {
+  width: min(92vw, 420px);
+  background: var(--panel);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.card h1 { margin: 0 0 8px 0; font-size: 20px; }
+
+.card p { margin: 0 0 14px 0; color: var(--muted); }
+
+.row { display: flex; gap: 10px; justify-content: flex-end; }
+
+
+
+/* Camada transparente para captar taps (one-hand) em todo o ecrã */
+#tapLayer{
+  position: fixed;
+  inset: 0;
+  z-index: 20;            /* abaixo da topbar (40) e acima do resto */
+  background: transparent;
+  touch-action: manipulation;
+}

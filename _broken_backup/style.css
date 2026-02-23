@@ -1,0 +1,258 @@
+:root{
+  --pad: 12px;
+}
+
+*{ box-sizing:border-box; }
+html,body{ height:100%; margin:0; }
+body{
+  background:#060913;
+  color:#e8eefc;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  overflow:hidden;
+}
+
+.topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding: var(--pad);
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.brand{ font-weight:700; }
+
+.pill{
+  background: rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:999px;
+  padding:8px 12px;
+}
+
+.stats{ display:flex; gap:10px; align-items:center; }
+
+.btn{
+  border:1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.06);
+  color:#fff;
+  padding:8px 12px;
+  border-radius:12px;
+}
+.btn-primary{ background:#2563eb; border-color:#2563eb; }
+
+.stage{
+  position:relative;
+  width: min(92vw, 820px);
+  aspect-ratio: 1/1;
+  margin: 0 auto;
+  border-radius: 18px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,0.08);
+}
+
+#game{
+  width:100%;
+  height:100%;
+  display:block;
+}
+
+#tapLayer{
+  position:absolute;
+  inset:0;
+  touch-action:none; /* importante no iOS */
+}
+
+.overlay{
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: rgba(0,0,0,0.55);
+}
+.hidden{ display:none; }
+
+.card{
+  width:min(92vw, 420px);
+  background: rgba(15,20,35,0.95);
+  border:1px solid rgba(255,255,255,0.10);
+  border-radius: 18px;
+  padding: 18px;
+  text-align:center;
+}
+.row{ margin-top: 12px; display:flex; justify-content:center; gap:10px; }
+
+
+/* TOUCHPAD_FULLSCREEN */
+.topbar {
+  position: relative;
+  z-index: 20; /* fica acima do touchPad */
+}
+
+#touchPad {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  background: transparent;
+  touch-action: none;   /* essencial no iPhone */
+}
+
+
+/* OVERLAY_ZINDEX_FIX */
+.overlay{
+  z-index: 9999;   /* acima do #touchPad */
+}
+.card{
+  position: relative;
+  z-index: 10000;
+}
+
+
+/* MENU_SCREEN_V1 */
+.menuScreen{ z-index: 9999; 
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: url("assets/img/menu_bg.png") center/cover no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+
+.menuShade{
+  position:absolute;
+  inset:0;
+  background: rgba(0,0,0,0.55);
+}
+
+.menuCard{
+  position: relative;
+  z-index: 1;
+  width: min(92vw, 520px);
+  border-radius: 22px;
+  padding: 18px;
+  background: rgba(10,14,28,0.72);
+  border: 1px solid rgba(255,255,255,0.10);
+  backdrop-filter: blur(10px);
+  text-align: center;
+}
+
+.menuTitle{
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.menuSubtitle{
+  margin-top: 6px;
+  opacity: 0.85;
+}
+
+.modeGrid{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.modeBtn{
+  padding: 12px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  font-weight: 650;
+}
+
+.modeBtn.active{
+  outline: 2px solid rgba(37,99,235,0.9);
+  background: rgba(37,99,235,0.22);
+}
+
+.menuRow{ margin-top: 14px; }
+.bigBtn{ width: 100%; padding: 14px 14px; border-radius: 16px; font-size: 18px; }
+
+.menuHint{ margin-top: 10px; opacity: 0.7; font-size: 13px; }
+
+.modal{
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(0,0,0,0.60);
+}
+
+.modalCard{
+  width: min(92vw, 520px);
+  border-radius: 18px;
+  padding: 16px;
+  background: rgba(15,20,35,0.96);
+  border: 1px solid rgba(255,255,255,0.10);
+}
+
+.modalTitle{ font-size: 20px; font-weight: 800; margin-bottom: 10px; }
+
+.formRow{
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.formRow label{ opacity: 0.9; text-align: left; }
+.formRow input[type="range"], .formRow select{ width: 100%; }
+
+.modalRow{ display:flex; gap:10px; justify-content:flex-end; margin-top: 12px; }
+
+
+/* HIDDEN_CLASS_FIX */
+.hidden { display: none !important; }
+
+/* CLICK BLOCK FIX */
+
+#menuScreen {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  pointer-events: auto;
+}
+
+#tapLayer {
+  pointer-events: none !important;
+}
+
+canvas {
+  pointer-events: none;
+}
+
+
+/* MENU CLICK FIX (layering) */
+#menuScreen{
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+}
+
+#menuScreen .menuShade{
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none; /* NÃO bloquear cliques */
+}
+
+#menuScreen .menuCard{
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
+}
+
+/* garantir que a camada de toques não bloqueia o menu */
+#tapLayer{
+  pointer-events: none !important;
+}

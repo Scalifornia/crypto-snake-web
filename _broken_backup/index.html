@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Crypto Snake</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar" id="topbar">
+    <div class="brand">Crypto Snake</div>
+
+    <div class="stats">
+      <div class="pill">Score: <span id="score">0</span></div>
+      <div class="pill">Best: <span id="best">0</span></div>
+    </div>
+
+    <div class="actions">
+      <button id="btnPause" class="btn">Pause</button>
+      <button id="btnNew" class="btn btn-primary">New</button>
+    </div>
+  </header>
+
+  <main class="stage" id="stage">
+    <canvas id="game" aria-label="Crypto Snake"></canvas>
+    <!-- Camada transparente para captar toques em TODO o ecrã do jogo -->
+    <div id="tapLayer" aria-hidden="true"></div>
+  </main>
+
+  <div id="overlay" class="overlay hidden">
+    <div class="card">
+      <h1 id="overlayTitle">Game Over</h1>
+      <p id="overlayText">Score: 0</p>
+      <div class="row">
+        <button id="btnStart" class="btn btn-primary">Start</button>
+        <button id="btnRestart" class="btn btn-primary">Restart</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="touchPad" aria-hidden="true"></div>
+
+  <script src="app.js"></script>
+
+  <!-- MENU FULLSCREEN -->
+  <section id="menuScreen" class="menuScreen">
+    <div class="menuShade"></div>
+    <div class="menuCard">
+      <div class="menuTitle">Crypto Snake</div>
+      <div class="menuSubtitle">Escolhe um modo e carrega em Play</div>
+
+      <div class="modeGrid" id="modeGrid">
+        <button class="modeBtn" data-mode="infinite">Infinite</button>
+        <button class="modeBtn" data-mode="time">Time Attack</button>
+        <button class="modeBtn" data-mode="survival">Survival</button>
+        <button class="modeBtn" data-mode="settings">Settings</button>
+      </div>
+
+      <div class="menuRow">
+        <button id="btnPlay" class="btn btn-primary bigBtn">Play</button>
+      </div>
+
+      <div class="menuHint" id="menuHint">Dica: no telemóvel, controla com um dedo em qualquer parte do ecrã.</div>
+    </div>
+  </section>
+
+  <!-- SETTINGS MODAL -->
+  <div id="settingsModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modalCard">
+      <div class="modalTitle">Settings</div>
+
+      <div class="formRow">
+        <label>Música</label>
+        <input id="musicVol" type="range" min="0" max="100" value="25">
+      </div>
+
+      <div class="formRow">
+        <label>Sons (SFX)</label>
+        <input id="sfxVol" type="range" min="0" max="100" value="80">
+      </div>
+
+      <div class="formRow">
+        <label>Fundo do jogo</label>
+        <select id="bgMode">
+          <option value="gradient">Gradiente escuro</option>
+          <option value="image">Imagem</option>
+        </select>
+      </div>
+
+      <div class="formRow">
+        <label>Transparência do fundo</label>
+        <input id="bgAlpha" type="range" min="0" max="80" value="30">
+      </div>
+
+      <div class="formRow">
+        <label>Dificuldade</label>
+        <select id="difficulty">
+          <option value="easy">Easy</option>
+          <option value="normal" selected>Normal</option>
+          <option value="hard">Hard</option>
+        </select>
+      </div>
+
+      <div class="formRow">
+        <label>Paredes</label>
+        <select id="walls">
+          <option value="wrap" selected>Atravessa (wrap)</option>
+          <option value="solid">Sólidas (morre)</option>
+        </select>
+      </div>
+
+      <div class="formRow">
+        <label>Obstáculos</label>
+        <select id="obstacles">
+          <option value="off" selected>Off</option>
+          <option value="on">On</option>
+        </select>
+      </div>
+
+      <div class="modalRow">
+        <button id="btnCloseSettings" class="btn">Close</button>
+        <button id="btnSaveSettings" class="btn btn-primary">Save</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

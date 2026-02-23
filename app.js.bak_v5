@@ -1,0 +1,494 @@
+(() => {
+  "use strict";
+
+  // ---------- DOM ----------
+  const el = {
+    canvas: document.getElementById("game"),
+    menu: document.getElementById("menu"),
+    overlay: document.getElementById("overlay"),
+    overlayTitle: document.getElementById("overlayTitle"),
+    overlayText: document.getElementById("overlayText"),
+
+    btnPlay: document.getElementById("btnPlay"),
+    btnPause: document.getElementById("btnPause"),
+    btnReset: document.getElementById("btnReset"),
+    btnMenu: document.getElementById("btnMenu"),
+
+    btnOverlayResume: document.getElementById("btnOverlayResume"),
+    btnOverlayReset: document.getElementById("btnOverlayReset"),
+    btnOverlayMenu: document.getElementById("btnOverlayMenu"),
+
+    mode: document.getElementById("mode"),
+    difficulty: document.getElementById("difficulty"),
+    walls: document.getElementById("walls"),
+    sound: document.getElementById("sound"),
+    music: document.getElementById("music"),
+
+    score: document.getElementById("score"),
+    best: document.getElementById("best"),
+  };
+
+  if (!el.canvas) return;
+  const ctx = el.canvas.getContext("2d", { alpha: false });
+
+  // ---------- CONFIG ----------
+  const STORAGE_KEY = "cryptoSnakeBest_v4";
+  const GRID = 22; // células por lado (quadrado)
+
+  const DIFFICULTY = {
+    easy: { tickMs: 140 },
+    normal: { tickMs: 110 },
+    hard: { tickMs: 85 },
+  };
+
+  const State = { MENU:"MENU", RUNNING:"RUNNING", PAUSED:"PAUSED", OVER:"OVER" };
+  let state = State.MENU;
+
+  let rafId = null;
+  let lastTs = 0;
+  let accMs = 0;
+
+  let tickMs = DIFFICULTY.normal.tickMs;
+  let speedMult = 1.0;
+
+  let timeLeft = 60;
+  let lastSecondTs = 0;
+
+  let wallsOn = false;
+
+  let snake = [];
+  let dir = { x: 1, y: 0 };
+  let nextDir = { x: 1, y: 0 };
+  let food = { x: 10, y: 10 };
+
+  let score = 0;
+  let best = Number(localStorage.getItem(STORAGE_KEY) || 0);
+  if (el.best) el.best.textContent = String(best);
+
+  // ---------- CANVAS LAYOUT (não estica no mobile) ----------
+  let cssW = 800, cssH = 600, dpr = 1;
+  let cell = 20, boardPx = 440, ox = 0, oy = 0;
+
+  function resizeCanvas() {
+    const rect = el.canvas.getBoundingClientRect();
+    cssW = Math.max(1, rect.width);
+    cssH = Math.max(1, rect.height);
+    dpr = Math.max(1, window.devicePixelRatio || 1);
+
+    el.canvas.width = Math.floor(cssW * dpr);
+    el.canvas.height = Math.floor(cssH * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    boardPx = Math.floor(Math.min(cssW, cssH));
+    cell = Math.max(10, Math.floor(boardPx / GRID));
+    boardPx = cell * GRID;
+
+    ox = Math.floor((cssW - boardPx) / 2);
+    oy = Math.floor((cssH - boardPx) / 2);
+  }
+  window.addEventListener("resize", resizeCanvas, { passive: true });
+  resizeCanvas();
+
+  // ---------- AUDIO (wav) ----------
+  const sfx = {
+    eat: new Audio("assets/audio/som_comer.wav"),
+    dead: new Audio("assets/audio/som_perder.wav"),
+    level: new Audio("assets/audio/level_up.wav"),
+  };
+  Object.values(sfx).forEach(a => a.addEventListener("error", () => {}, { once: true }));
+
+  const music = new Audio("assets/audio/trilha_sonora.wav");
+  music.loop = true;
+  music.addEventListener("error", () => {}, { once: true });
+
+  let audioUnlocked = false;
+
+  function shouldSfx() { return el.sound?.value === "on"; }
+  function shouldMusic() { return el.music?.value === "on"; }
+
+  function unlockAudioOnce() {
+    if (audioUnlocked) return;
+    audioUnlocked = true;
+    // tentativa de "unlock" iOS: play/pause rápido
+    if (shouldMusic()) {
+      music.volume = 0.6;
+      music.play().then(() => {
+        music.pause();
+        music.currentTime = 0;
+      }).catch(() => {});
+    }
+  }
+
+  function playSfx(aud) {
+    if (!shouldSfx()) return;
+    try { aud.currentTime = 0; aud.play().catch(() => {}); } catch {}
+  }
+
+  function musicStartIfNeeded() {
+    if (!shouldMusic()) { musicStop(); return; }
+    try {
+      music.volume = 0.6;
+      music.play().catch(() => {});
+    } catch {}
+  }
+
+  function musicStop() {
+    try { music.pause(); } catch {}
+  }
+
+  // ---------- UI ----------
+  function showMenu(show) { el.menu?.classList.toggle("hidden", !show); }
+  function showOverlay(show, title = "", text = "") {
+    if (!el.overlay) return;
+    el.overlay.classList.toggle("hidden", !show);
+    if (show) {
+      el.overlayTitle.textContent = title;
+      el.overlayText.textContent = text;
+    }
+  }
+
+  function syncHud() {
+    el.score && (el.score.textContent = String(score));
+    el.best && (el.best.textContent = String(best));
+  }
+
+  // ---------- GAME ----------
+  function spawnFood() {
+    for (let tries = 0; tries < 5000; tries++) {
+      const x = Math.floor(Math.random() * GRID);
+      const y = Math.floor(Math.random() * GRID);
+      const blocked = snake.some(p => p.x === x && p.y === y);
+      if (!blocked) { food = { x, y }; return; }
+    }
+    food = { x: 1, y: 1 };
+  }
+
+  function initGameFromMenu() {
+    const diff = DIFFICULTY[el.difficulty?.value] || DIFFICULTY.normal;
+    tickMs = diff.tickMs;
+
+    score = 0;
+    speedMult = 1.0;
+    dir = { x: 1, y: 0 };
+    nextDir = { x: 1, y: 0 };
+
+    // Walls: por padrão no modo infinito (classic) -> OFF
+    wallsOn = (el.walls?.value === "on");
+    if (el.mode?.value === "classic" && el.walls?.value === "off") wallsOn = false;
+
+    const mid = Math.floor(GRID / 2);
+    snake = [
+      { x: mid, y: mid },
+      { x: mid - 1, y: mid },
+      { x: mid - 2, y: mid },
+    ];
+
+    if (el.mode?.value === "timed") {
+      timeLeft = 60;
+      lastSecondTs = 0;
+    }
+
+    spawnFood();
+
+    lastTs = 0;
+    accMs = 0;
+    syncHud();
+  }
+
+  function setNextDir(x, y) {
+    if (x === -dir.x && y === -dir.y) return;
+    nextDir = { x, y };
+  }
+
+  function step() {
+    dir = nextDir;
+
+    const head = snake[0];
+    const newHead = { x: head.x + dir.x, y: head.y + dir.y };
+
+    if (wallsOn) {
+      if (newHead.x < 0 || newHead.y < 0 || newHead.x >= GRID || newHead.y >= GRID) {
+        gameOver("Bateu na parede.");
+        return;
+      }
+    } else {
+      // wrap
+      newHead.x = (newHead.x + GRID) % GRID;
+      newHead.y = (newHead.y + GRID) % GRID;
+    }
+
+    if (snake.some(p => p.x === newHead.x && p.y === newHead.y)) {
+      gameOver("Colisão com o corpo.");
+      return;
+    }
+
+    snake.unshift(newHead);
+
+    if (newHead.x === food.x && newHead.y === food.y) {
+      score += 10;
+      playSfx(sfx.eat);
+      spawnFood();
+
+      if (el.mode?.value === "survival") {
+        const before = speedMult;
+        speedMult = Math.min(2.5, speedMult + 0.05);
+        if (speedMult > before + 1e-9) playSfx(sfx.level);
+      }
+
+      syncHud();
+    } else {
+      snake.pop();
+    }
+  }
+
+  function gameOver(msg) {
+    state = State.OVER;
+    stopLoop();
+    playSfx(sfx.dead);
+
+    if (score > best) {
+      best = score;
+      localStorage.setItem(STORAGE_KEY, String(best));
+    }
+    syncHud();
+    showOverlay(true, "Game Over", msg || "Reset ou Menu.");
+    draw();
+  }
+
+  // ---------- FOLLOW FINGER (mobile) ----------
+  const isTouchDevice = ("ontouchstart" in window) || (navigator.maxTouchPoints > 0);
+  let activePointerId = null;
+  let followPoint = null;
+
+  function clientToCanvas(clientX, clientY) {
+    const rect = el.canvas.getBoundingClientRect();
+    const cx = Math.min(rect.right, Math.max(rect.left, clientX));
+    const cy = Math.min(rect.bottom, Math.max(rect.top, clientY));
+    const x = (cx - rect.left) * (cssW / rect.width);
+    const y = (cy - rect.top) * (cssH / rect.height);
+    return { x, y };
+  }
+
+  function updateDirTowardFollowPoint() {
+    if (!followPoint || state !== State.RUNNING) return;
+
+    const head = snake[0];
+    const headPx = { x: ox + head.x * cell + cell / 2, y: oy + head.y * cell + cell / 2 };
+    const dx = followPoint.x - headPx.x;
+    const dy = followPoint.y - headPx.y;
+
+    const ax = Math.abs(dx), ay = Math.abs(dy);
+    if (ax > ay * 1.15) setNextDir(dx > 0 ? 1 : -1, 0);
+    else if (ay > ax * 1.15) setNextDir(0, dy > 0 ? 1 : -1);
+  }
+
+  function onPointerDown(e) {
+    unlockAudioOnce();
+
+    // desktop: não seguir rato
+    if (!isTouchDevice && e.pointerType === "mouse") return;
+
+    activePointerId = e.pointerId;
+    followPoint = clientToCanvas(e.clientX, e.clientY);
+  }
+
+  function onPointerMove(e) {
+    if (activePointerId === null) return;
+    if (e.pointerId !== activePointerId) return;
+    followPoint = clientToCanvas(e.clientX, e.clientY);
+  }
+
+  function onPointerUp(e) {
+    if (activePointerId === null) return;
+    if (e.pointerId !== activePointerId) return;
+    activePointerId = null;
+    followPoint = null;
+  }
+
+  document.addEventListener("pointerdown", onPointerDown, { passive: false });
+  document.addEventListener("pointermove", onPointerMove, { passive: false });
+  document.addEventListener("pointerup", onPointerUp, { passive: false });
+  document.addEventListener("pointercancel", onPointerUp, { passive: false });
+
+  // ---------- LOOP ----------
+  function startLoop() {
+    stopLoop();
+    rafId = requestAnimationFrame(loop);
+  }
+  function stopLoop() {
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = null;
+  }
+
+  function loop(ts) {
+    if (state !== State.RUNNING) return;
+
+    if (!lastTs) lastTs = ts;
+    const dt = ts - lastTs;
+    lastTs = ts;
+    accMs += dt;
+
+    updateDirTowardFollowPoint();
+
+    // timed mode
+    if (el.mode?.value === "timed") {
+      if (!lastSecondTs) lastSecondTs = ts;
+      if (ts - lastSecondTs >= 1000) {
+        lastSecondTs += 1000;
+        timeLeft -= 1;
+        if (timeLeft <= 0) { gameOver("Tempo esgotado."); return; }
+      }
+    }
+
+    const effectiveTick = tickMs / speedMult;
+    while (accMs >= effectiveTick) {
+      accMs -= effectiveTick;
+      step();
+      if (state !== State.RUNNING) return;
+    }
+
+    draw();
+    rafId = requestAnimationFrame(loop);
+  }
+
+  // ---------- RENDER ----------
+  function drawBackground() {
+    ctx.fillStyle = "#050812";
+    ctx.fillRect(0, 0, cssW, cssH);
+
+    // board area
+    ctx.fillStyle = "#070a12";
+    ctx.fillRect(ox, oy, boardPx, boardPx);
+
+    // grid
+    ctx.strokeStyle = "rgba(255,255,255,0.05)";
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= GRID; i++) {
+      const x = ox + i * cell;
+      const y = oy + i * cell;
+      ctx.beginPath(); ctx.moveTo(x, oy); ctx.lineTo(x, oy + boardPx); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(ox, y); ctx.lineTo(ox + boardPx, y); ctx.stroke();
+    }
+
+    // neon border if walls on
+    if (wallsOn) {
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = "rgba(57,255,221,0.85)";
+      ctx.strokeRect(ox + 2, oy + 2, boardPx - 4, boardPx - 4);
+      ctx.lineWidth = 1;
+    }
+  }
+
+  function drawFood() {
+    const x = ox + food.x * cell;
+    const y = oy + food.y * cell;
+    ctx.fillStyle = "rgba(255,213,79,0.95)";
+    ctx.fillRect(x + 3, y + 3, cell - 6, cell - 6);
+  }
+
+  function drawSnake() {
+    for (let i = snake.length - 1; i >= 0; i--) {
+      const p = snake[i];
+      const x = ox + p.x * cell;
+      const y = oy + p.y * cell;
+
+      if (i === 0) {
+        ctx.fillStyle = "rgba(74,163,255,0.95)";
+        ctx.fillRect(x + 1, y + 1, cell - 2, cell - 2);
+        ctx.fillStyle = "rgba(255,255,255,0.12)";
+        ctx.fillRect(x + 5, y + 5, cell - 10, cell - 10);
+      } else {
+        ctx.fillStyle = "rgba(124,92,255,0.55)";
+        ctx.fillRect(x + 2, y + 2, cell - 4, cell - 4);
+      }
+    }
+  }
+
+  function draw() {
+    drawBackground();
+    drawFood();
+    drawSnake();
+  }
+
+  // ---------- CONTROLS ----------
+  function startGame() {
+    unlockAudioOnce();
+    playSfx(sfx.level); // feedback curto ao iniciar (e garante unlock em alguns iPhones)
+
+    resizeCanvas();
+    initGameFromMenu();
+    state = State.RUNNING;
+
+    showMenu(false);
+    showOverlay(false);
+    musicStartIfNeeded();
+
+    startLoop();
+  }
+
+  function pauseToggle(force) {
+    if (state !== State.RUNNING && state !== State.PAUSED) return;
+    const toPause = typeof force === "boolean" ? force : (state === State.RUNNING);
+
+    if (toPause) {
+      state = State.PAUSED;
+      stopLoop();
+      musicStop();
+      showOverlay(true, "Pausa", "Espaço para continuar · R para reset");
+      el.btnPause && (el.btnPause.textContent = "Resume");
+    } else {
+      state = State.RUNNING;
+      showOverlay(false);
+      el.btnPause && (el.btnPause.textContent = "Pause");
+      musicStartIfNeeded();
+      startLoop();
+    }
+  }
+
+  function reset() {
+    if (state === State.MENU) return;
+    startGame();
+  }
+
+  function backToMenu() {
+    stopLoop();
+    musicStop();
+    state = State.MENU;
+    showOverlay(false);
+    showMenu(true);
+    el.btnPause && (el.btnPause.textContent = "Pause");
+    resizeCanvas();
+    drawBackground();
+  }
+
+  // Keyboard (PC)
+  window.addEventListener("keydown", (e) => {
+    const k = e.key.toLowerCase();
+
+    if (k === " " || k === "spacebar") { e.preventDefault(); pauseToggle(); return; }
+    if (k === "r") { reset(); return; }
+
+    if (state !== State.RUNNING) return;
+    if (k === "arrowup" || k === "w") setNextDir(0, -1);
+    else if (k === "arrowdown" || k === "s") setNextDir(0, 1);
+    else if (k === "arrowleft" || k === "a") setNextDir(-1, 0);
+    else if (k === "arrowright" || k === "d") setNextDir(1, 0);
+  });
+
+  // UI buttons
+  el.btnPlay?.addEventListener("click", startGame);
+  el.btnPause?.addEventListener("click", () => pauseToggle());
+  el.btnReset?.addEventListener("click", reset);
+  el.btnMenu?.addEventListener("click", backToMenu);
+
+  el.btnOverlayResume?.addEventListener("click", () => pauseToggle(false));
+  el.btnOverlayReset?.addEventListener("click", reset);
+  el.btnOverlayMenu?.addEventListener("click", backToMenu);
+
+  // ---------- BOOT ----------
+  showOverlay(false);
+  showMenu(true);
+  resizeCanvas();
+  syncHud();
+  drawBackground();
+})();

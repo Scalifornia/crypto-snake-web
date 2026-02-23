@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Crypto Snake Web</title>
+  <link rel="stylesheet" href="style.css?v=3" />
+</head>
+
+<body>
+  <div id="app">
+
+    <header class="topbar">
+      <div class="brand">Crypto Snake</div>
+
+      <div class="stats">
+        <div class="pill">Score: <span id="score">0</span></div>
+        <div class="pill">Best: <span id="best">0</span></div>
+      </div>
+
+      <div class="actions">
+        <button id="btnPause" class="btn">Pause</button>
+        <button id="btnReset" class="btn btn-primary">Reset</button>
+        <button id="btnMenu" class="btn">Menu</button>
+      </div>
+    </header>
+
+    <div id="menu" class="panel">
+      <div class="card">
+        <h1>CRYPTO SNAKE</h1>
+
+        <div class="row">
+          <label for="mode">Modo</label>
+          <select id="mode">
+            <option value="classic" selected>Classic</option>
+            <option value="timed">Timed (60s)</option>
+            <option value="survival">Survival (speed up)</option>
+          </select>
+        </div>
+
+        <div class="row">
+          <label for="difficulty">Dificuldade</label>
+          <select id="difficulty">
+            <option value="easy">Easy</option>
+            <option value="normal" selected>Normal</option>
+            <option value="hard">Hard</option>
+          </select>
+        </div>
+
+        <div class="row">
+          <label for="sound">Som</label>
+          <select id="sound">
+            <option value="on" selected>On</option>
+            <option value="off">Off</option>
+          </select>
+        </div>
+
+        <div class="buttons">
+          <button id="btnPlay" class="btn btn-primary">Play</button>
+        </div>
+
+        <p class="hint">Teclado: setas / WASD · Espaço = Pause · R = Reset</p>
+      </div>
+    </div>
+
+    <main class="stage">
+      <div id="hud" class="hud hidden">
+        <div class="hud-left">
+          <div><span class="k">Modo</span> <span id="hudMode">Classic</span></div>
+          <div><span class="k">Vel</span> <span id="hudSpeed">1.0x</span></div>
+        </div>
+        <div id="timerBox" class="hud-right hidden">
+          <div><span class="k">Tempo</span> <span id="timer">60</span>s</div>
+        </div>
+      </div>
+
+      <canvas id="game" width="800" height="500" aria-label="Crypto Snake"></canvas>
+    </main>
+
+    <div id="overlay" class="overlay hidden">
+      <div class="overlay-card">
+        <h2 id="overlayTitle">Pausa</h2>
+        <p id="overlayText">Espaço para continuar</p>
+        <div class="buttons">
+          <button id="btnOverlayResume" class="btn btn-primary">Resume</button>
+          <button id="btnOverlayReset" class="btn">Reset</button>
+          <button id="btnOverlayMenu" class="btn">Menu</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script defer src="app.js?v=3"></script>
+</body>
+</html>

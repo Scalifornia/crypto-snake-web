@@ -1,0 +1,84 @@
+:root {
+  --bg: #0b0f17;
+  --panel: #111827;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --radius: 14px;
+  --pad: 14px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, system-ui, Segoe UI, Roboto, Arial;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--pad);
+  background: var(--panel);
+}
+
+.stats { display: flex; gap: 8px; }
+
+.pill {
+  background: #222;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+.btn {
+  background: #333;
+  color: var(--text);
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: none;
+  font-weight: bold;
+}
+
+.stage {
+  position: absolute;
+  top: 70px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;  /* centra no ecrã */
+  align-items: center;
+}
+
+#game {
+  background: #050812;
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: var(--radius);
+  touch-action: none;
+}
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: grid;
+  place-items: center;
+  color: var(--text);
+}
+.hidden { display: none; }
+
+.card {
+  background: var(--panel);
+  padding: 22px;
+  border-radius: var(--radius);
+  text-align: center;
+}
+.row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
