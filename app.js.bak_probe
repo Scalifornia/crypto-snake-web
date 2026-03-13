@@ -34,12 +34,6 @@
 
     score: document.getElementById("score"),
     best: document.getElementById("best"),
-    time: document.getElementById("time"),
-    combo: document.getElementById("combo"),
-    hint: document.getElementById("hint"),
-    boardSize: document.getElementById("boardSize"),
-    timedDuration: document.getElementById("timedDuration"),
-    combo: document.getElementById("combo"),
   };
 
   if (!el.canvas) return;
@@ -55,19 +49,9 @@
     walls: "cs_walls",
     difficulty: "cs_difficulty",
     mode: "cs_mode",
-    hint: "cs_hint",
-    boardSize: "cs_boardSize",
-    timedDuration: "cs_timedDuration",
   };
 
   const GRID = 22;
-  const BOARD_SIZE_PRESETS = {
-    small: 0.72,
-    medium: 0.84,
-    large: 0.94,
-  };
-  const COMBO_WINDOW_MS = 2200;
-  const COMBO_MAX_MULT = 3.0;
 
   const DIFFICULTY = {
     easy: { tickMs: 140 },
@@ -86,13 +70,7 @@
   let speedMult = 1.0;
 
   let timeLeft = 60;
-  let timeAttackDuration = 20;
   let lastSecondTs = 0;
-
-  let combo = 0;
-  let comboMult = 1.0;
-  let lastEatAt = 0;
-  let lastGain = 0;
 
   let wallsOn = false;
 
@@ -109,11 +87,6 @@
   let cssW = 800, cssH = 600, dpr = 1;
   let cell = 20, boardPx = 440, ox = 0, oy = 0;
 
-  function currentBoardScale() {
-    const key = el.boardSize?.value || "medium";
-    return BOARD_SIZE_PRESETS[key] ?? BOARD_SIZE_PRESETS.medium;
-  }
-
   function resizeCanvas() {
     const rect = el.canvas.getBoundingClientRect();
     cssW = Math.max(1, rect.width);
@@ -124,8 +97,7 @@
     el.canvas.height = Math.floor(cssH * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    const scale = currentBoardScale();
-    boardPx = Math.floor(Math.min(cssW, cssH) * scale);
+    boardPx = Math.floor(Math.min(cssW, cssH));
     cell = Math.max(10, Math.floor(boardPx / GRID));
     boardPx = cell * GRID;
 
@@ -232,49 +204,6 @@
   // ---------- Background custom (opção A) ----------
   let bgImg = null;
 
-  const NORMAL_COIN_FILES = [
-    "Ethereum1.png",
-    "Solana1.png",
-    "Cardano1.png",
-    "Doge1.png"
-  ];
-
-  const SPECIAL_COIN_FILE = "Bitcoin1.png";
-
-  const coinImages = {
-    normal: [],
-    special: null
-  };
-
-  function loadCoinImages(){
-    const fallbackMap = {
-      "Ethereum1.png": "assets/img/ethereum.png",
-      "Solana1.png": "assets/img/solana.png",
-      "Cardano1.png": "assets/img/cardano.png",
-      "Doge1.png": "assets/img/doge.png",
-      "Bitcoin1.png": "assets/img/bitcoin.png",
-    };
-
-    function buildImage(name){
-      const i = new Image();
-      i.dataset.loaded = "0";
-      i.onload = () => {
-        i.dataset.loaded = "1";
-      };
-      i.onerror = () => {
-        if (i.dataset.fallbackTried === "1") return;
-        i.dataset.fallbackTried = "1";
-        i.src = fallbackMap[name] || ("assets/" + name);
-      };
-      i.src = "assets/" + name + "?v=coins4";
-      return i;
-    }
-
-    coinImages.normal = NORMAL_COIN_FILES.map(buildImage);
-    coinImages.special = buildImage(SPECIAL_COIN_FILE);
-  }
-
-
   function loadBgFromStorage() {
     const data = localStorage.getItem(LS.bgData);
     if (!data) { bgImg = null; return; }
@@ -295,28 +224,6 @@
     return 0.05;
   }
 
-  function resetCombo() {
-    combo = 0;
-    comboMult = 1.0;
-    lastEatAt = 0;
-    lastGain = 0;
-  }
-
-  function registerEat(basePoints = 10) {
-    const now = performance.now();
-    if (lastEatAt && (now - lastEatAt) <= COMBO_WINDOW_MS) combo += 1;
-    else combo = 1;
-
-    lastEatAt = now;
-    comboMult = Math.min(COMBO_MAX_MULT, 1 + (combo - 1) * 0.2);
-    lastGain = Math.round(basePoints * comboMult);
-    score += lastGain;
-  }
-
-  function hintOn() {
-    return (el.hint?.value || "on") === "on";
-  }
-
   // ---------- UI ----------
   function showMenu(show) { el.menu?.classList.toggle("hidden", !show); }
   function showOverlay(show, title="", text="") {
@@ -331,12 +238,6 @@
   function syncHud() {
     el.score && (el.score.textContent = String(score));
     el.best && (el.best.textContent = String(best));
-    if (el.time) {
-      el.time.textContent = (el.mode?.value === "timed") ? `${Math.max(0, timeLeft)}s` : "--";
-    }
-    if (el.combo) {
-      el.combo.textContent = combo > 1 ? `x${combo} · +${lastGain}` : "x1";
-    }
   }
 
   // ---------- Game ----------
@@ -345,18 +246,9 @@
       const x = Math.floor(Math.random() * GRID);
       const y = Math.floor(Math.random() * GRID);
       const blocked = snake.some(p => p.x === x && p.y === y);
-      if (!blocked) {
-        const isSpecial = Math.random() < 0.15;
-        food = {
-          x,
-          y,
-          type: isSpecial ? "special" : "normal",
-          spriteIndex: isSpecial ? -1 : Math.floor(Math.random() * NORMAL_COIN_FILES.length)
-        };
-        return;
-      }
+      if (!blocked) { food = { x, y }; return; }
     }
-    food = { x: 1, y: 1, type: "normal", spriteIndex: 0 };
+    food = { x: 1, y: 1 };
   }
 
   function initGameFromMenu() {
@@ -365,7 +257,6 @@
 
     score = 0;
     speedMult = 1.0;
-    resetCombo();
     dir = { x: 1, y: 0 };
     nextDir = { x: 1, y: 0 };
 
@@ -383,11 +274,7 @@
     ];
 
     if (el.mode?.value === "timed") {
-      timeAttackDuration = Number(el.timedDuration?.value || 20);
-      timeLeft = timeAttackDuration;
-      lastSecondTs = 0;
-    } else {
-      timeLeft = 0;
+      timeLeft = 60;
       lastSecondTs = 0;
     }
 
@@ -508,13 +395,8 @@
     snake.unshift(newHead);
 
     if (newHead.x === food.x && newHead.y === food.y) {
-      registerEat(10);
+      score += 10;
       playSfx(sfx.eat);
-
-      if (el.mode?.value === "timed") {
-        timeLeft += (food.type === "special" ? 2 : 1);
-      }
-
       spawnFood();
 
       if (el.mode?.value === "survival") {
@@ -605,131 +487,11 @@
     }
   }
 
-  function drawHint() {
-    if (!hintOn() || !snake?.length) return;
-
-    const head = snake[0];
-    const hx = head.x;
-    const hy = head.y;
-    const fx = food.x;
-    const fy = food.y;
-
-    const aligned = (hx === fx || hy === fy);
-    const color = aligned ? [60, 255, 60] : [255, 60, 60];
-
-    const hxPx = ox + hx * cell + cell / 2;
-    const hyPx = oy + hy * cell + cell / 2;
-    const fxPx = ox + fx * cell + cell / 2;
-    const fyPx = oy + fy * cell + cell / 2;
-
-    const bandHalf = Math.max(6, Math.floor(cell * 0.34));
-    const outlineOffset = bandHalf;
-    const outlineWidth = Math.max(1, Math.floor(cell * 0.05));
-    const step = 4;
-    const maxPx = Math.max(1, 22 * cell);
-
-    function falloff(distPx) {
-      const v = distPx / maxPx;
-      return Math.exp(-2.2 * v);
-    }
-
-    function drawHorizontal(x1, x2, yCenter, coinX) {
-      if (x1 === x2) return;
-      const xa = Math.min(x1, x2);
-      const xb = Math.max(x1, x2);
-      for (let x = xa; x <= xb; x += step) {
-        const distPx = Math.abs(x - coinX);
-        const aFill = Math.floor(210 * 0.5 * falloff(distPx));
-        const aLine = Math.floor(220 * falloff(distPx));
-
-        if (aFill > 0) {
-          ctx.fillStyle = `rgba(${color[0]},${color[1]},${color[2]},${aFill / 255})`;
-          ctx.fillRect(x, yCenter - bandHalf, step, bandHalf * 2);
-        }
-        if (aLine > 0) {
-          ctx.strokeStyle = `rgba(${color[0]},${color[1]},${color[2]},${aLine / 255})`;
-          ctx.lineWidth = outlineWidth;
-          ctx.beginPath();
-          ctx.moveTo(x, yCenter - outlineOffset);
-          ctx.lineTo(Math.min(x + step, cssW - 1), yCenter - outlineOffset);
-          ctx.stroke();
-          ctx.beginPath();
-          ctx.moveTo(x, yCenter + outlineOffset);
-          ctx.lineTo(Math.min(x + step, cssW - 1), yCenter + outlineOffset);
-          ctx.stroke();
-        }
-      }
-    }
-
-    function drawVertical(y1, y2, xCenter, coinY) {
-      if (y1 === y2) return;
-      const ya = Math.min(y1, y2);
-      const yb = Math.max(y1, y2);
-      for (let y = ya; y <= yb; y += step) {
-        const distPx = Math.abs(y - coinY);
-        const aFill = Math.floor(210 * 0.5 * falloff(distPx));
-        const aLine = Math.floor(220 * falloff(distPx));
-
-        if (aFill > 0) {
-          ctx.fillStyle = `rgba(${color[0]},${color[1]},${color[2]},${aFill / 255})`;
-          ctx.fillRect(xCenter - bandHalf, y, bandHalf * 2, step);
-        }
-        if (aLine > 0) {
-          ctx.strokeStyle = `rgba(${color[0]},${color[1]},${color[2]},${aLine / 255})`;
-          ctx.lineWidth = outlineWidth;
-          ctx.beginPath();
-          ctx.moveTo(xCenter - outlineOffset, y);
-          ctx.lineTo(xCenter - outlineOffset, Math.min(y + step, cssH - 1));
-          ctx.stroke();
-          ctx.beginPath();
-          ctx.moveTo(xCenter + outlineOffset, y);
-          ctx.lineTo(xCenter + outlineOffset, Math.min(y + step, cssH - 1));
-          ctx.stroke();
-        }
-      }
-    }
-
-    if (hxPx !== fxPx) drawHorizontal(hxPx, fxPx, hyPx, fxPx);
-    if (hyPx !== fyPx) drawVertical(hyPx, fyPx, fxPx, fyPx);
-  }
-
   function drawFood() {
     const x = ox + food.x * cell;
     const y = oy + food.y * cell;
-
-    let img = null;
-    if (food.type === "special") {
-      img = coinImages.special;
-    } else {
-      const idx = Number.isInteger(food.spriteIndex) ? food.spriteIndex : 0;
-      img = coinImages.normal[idx] || coinImages.normal[0] || null;
-    }
-
-    if (img && img.complete && img.naturalWidth > 0) {
-      const pulse = 1 + 0.06 * Math.sin(performance.now() / 180);
-      const size = Math.max(8, Math.floor(cell * 0.88 * pulse));
-      const dx = x + Math.floor((cell - size) / 2);
-      const dy = y + Math.floor((cell - size) / 2);
-
-      ctx.save();
-      if (food.type === "special") {
-        ctx.shadowBlur = Math.max(8, Math.floor(cell * 0.55));
-        ctx.shadowColor = "rgba(255, 200, 40, 0.75)";
-      } else {
-        ctx.shadowBlur = Math.max(5, Math.floor(cell * 0.32));
-        ctx.shadowColor = "rgba(125, 249, 255, 0.35)";
-      }
-      ctx.drawImage(img, dx, dy, size, size);
-      ctx.restore();
-      return;
-    }
-
-    ctx.fillStyle = food.type === "special"
-      ? "rgba(245,158,11,0.95)"
-      : "rgba(34,197,94,0.95)";
-    ctx.beginPath();
-    ctx.arc(x + cell / 2, y + cell / 2, Math.max(4, cell * 0.28), 0, Math.PI * 2);
-    ctx.fill();
+    ctx.fillStyle = "rgba(34,197,94,0.95)";
+    ctx.fillRect(x + 3, y + 3, cell - 6, cell - 6);
   }
 
   function drawSnake() {
@@ -750,7 +512,6 @@
 
   function draw() {
     drawBackground();
-    drawHint();
     drawFood();
     drawSnake();
   }
@@ -836,13 +597,6 @@
     if (k === " " || k === "spacebar") { e.preventDefault(); pauseToggle(); return; }
     if (k === "r") { reset(); return; }
     if (k === "f") { toggleFullscreen(); return; }
-    if (k === "h") {
-      if (el.hint) {
-        el.hint.value = el.hint.value === "on" ? "off" : "on";
-        localStorage.setItem(LS.hint, String(el.hint.value));
-      }
-      return;
-    }
     if (state !== State.RUNNING) return;
 
     if (k === "arrowup" || k === "w") setNextDir(0, -1);
@@ -873,9 +627,6 @@
     setIf(el.walls, LS.walls);
     setIf(el.difficulty, LS.difficulty);
     setIf(el.mode, LS.mode);
-    setIf(el.hint, LS.hint);
-    setIf(el.boardSize, LS.boardSize);
-    setIf(el.timedDuration, LS.timedDuration);
   }
 
   function wireSettingsSave() {
@@ -889,9 +640,6 @@
     saveVal(el.walls, LS.walls);
     saveVal(el.difficulty, LS.difficulty);
     saveVal(el.mode, LS.mode);
-    saveVal(el.hint, LS.hint);
-    saveVal(el.boardSize, LS.boardSize);
-    saveVal(el.timedDuration, LS.timedDuration);
 
     el.bgFile?.addEventListener("change", () => {
       const f = el.bgFile.files && el.bgFile.files[0];
@@ -901,7 +649,6 @@
         const data = String(reader.result || "");
         localStorage.setItem(LS.bgData, data);
         loadBgFromStorage();
-  loadCoinImages();
       };
       reader.readAsDataURL(f);
     });
@@ -910,7 +657,6 @@
   // BOOT
   applySavedSettingsToUI();
   loadBgFromStorage();
-  
   wireSettingsSave();
 
   showOverlay(false);

@@ -39,6 +39,7 @@
     hint: document.getElementById("hint"),
     boardSize: document.getElementById("boardSize"),
     timedDuration: document.getElementById("timedDuration"),
+    time: document.getElementById("time"),
     combo: document.getElementById("combo"),
   };
 
@@ -247,31 +248,15 @@
   };
 
   function loadCoinImages(){
-    const fallbackMap = {
-      "Ethereum1.png": "assets/img/ethereum.png",
-      "Solana1.png": "assets/img/solana.png",
-      "Cardano1.png": "assets/img/cardano.png",
-      "Doge1.png": "assets/img/doge.png",
-      "Bitcoin1.png": "assets/img/bitcoin.png",
-    };
+    coinImages.normal = NORMAL_COIN_FILES.map(n=>{
+      const i=new Image()
+      i.src="assets/"+n
+      return i
+    })
 
-    function buildImage(name){
-      const i = new Image();
-      i.dataset.loaded = "0";
-      i.onload = () => {
-        i.dataset.loaded = "1";
-      };
-      i.onerror = () => {
-        if (i.dataset.fallbackTried === "1") return;
-        i.dataset.fallbackTried = "1";
-        i.src = fallbackMap[name] || ("assets/" + name);
-      };
-      i.src = "assets/" + name + "?v=coins4";
-      return i;
-    }
-
-    coinImages.normal = NORMAL_COIN_FILES.map(buildImage);
-    coinImages.special = buildImage(SPECIAL_COIN_FILE);
+    const btc=new Image()
+    btc.src="assets/"+SPECIAL_COIN_FILE
+    coinImages.special=btc
   }
 
 
@@ -622,9 +607,9 @@
     const fxPx = ox + fx * cell + cell / 2;
     const fyPx = oy + fy * cell + cell / 2;
 
-    const bandHalf = Math.max(6, Math.floor(cell * 0.34));
+    const bandHalf = Math.max(5, Math.floor(cell / 3));
     const outlineOffset = bandHalf;
-    const outlineWidth = Math.max(1, Math.floor(cell * 0.05));
+    const outlineWidth = 1;
     const step = 4;
     const maxPx = Math.max(1, 22 * cell);
 
@@ -639,8 +624,8 @@
       const xb = Math.max(x1, x2);
       for (let x = xa; x <= xb; x += step) {
         const distPx = Math.abs(x - coinX);
-        const aFill = Math.floor(210 * 0.5 * falloff(distPx));
-        const aLine = Math.floor(220 * falloff(distPx));
+        const aFill = Math.floor(170 * 0.45 * falloff(distPx));
+        const aLine = Math.floor(170 * falloff(distPx));
 
         if (aFill > 0) {
           ctx.fillStyle = `rgba(${color[0]},${color[1]},${color[2]},${aFill / 255})`;
@@ -667,8 +652,8 @@
       const yb = Math.max(y1, y2);
       for (let y = ya; y <= yb; y += step) {
         const distPx = Math.abs(y - coinY);
-        const aFill = Math.floor(210 * 0.5 * falloff(distPx));
-        const aLine = Math.floor(220 * falloff(distPx));
+        const aFill = Math.floor(170 * 0.45 * falloff(distPx));
+        const aLine = Math.floor(170 * falloff(distPx));
 
         if (aFill > 0) {
           ctx.fillStyle = `rgba(${color[0]},${color[1]},${color[2]},${aFill / 255})`;
@@ -696,40 +681,8 @@
   function drawFood() {
     const x = ox + food.x * cell;
     const y = oy + food.y * cell;
-
-    let img = null;
-    if (food.type === "special") {
-      img = coinImages.special;
-    } else {
-      const idx = Number.isInteger(food.spriteIndex) ? food.spriteIndex : 0;
-      img = coinImages.normal[idx] || coinImages.normal[0] || null;
-    }
-
-    if (img && img.complete && img.naturalWidth > 0) {
-      const pulse = 1 + 0.06 * Math.sin(performance.now() / 180);
-      const size = Math.max(8, Math.floor(cell * 0.88 * pulse));
-      const dx = x + Math.floor((cell - size) / 2);
-      const dy = y + Math.floor((cell - size) / 2);
-
-      ctx.save();
-      if (food.type === "special") {
-        ctx.shadowBlur = Math.max(8, Math.floor(cell * 0.55));
-        ctx.shadowColor = "rgba(255, 200, 40, 0.75)";
-      } else {
-        ctx.shadowBlur = Math.max(5, Math.floor(cell * 0.32));
-        ctx.shadowColor = "rgba(125, 249, 255, 0.35)";
-      }
-      ctx.drawImage(img, dx, dy, size, size);
-      ctx.restore();
-      return;
-    }
-
-    ctx.fillStyle = food.type === "special"
-      ? "rgba(245,158,11,0.95)"
-      : "rgba(34,197,94,0.95)";
-    ctx.beginPath();
-    ctx.arc(x + cell / 2, y + cell / 2, Math.max(4, cell * 0.28), 0, Math.PI * 2);
-    ctx.fill();
+    ctx.fillStyle = "rgba(34,197,94,0.95)";
+    ctx.fillRect(x + 3, y + 3, cell - 6, cell - 6);
   }
 
   function drawSnake() {

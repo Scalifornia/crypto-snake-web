@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Crypto Snake Web</title>
-  <link rel="stylesheet" href="style.css?v=108" />
+  <link rel="stylesheet" href="style.css?v=58" />
 </head>
 
 <body>
@@ -16,8 +16,6 @@
       <div class="stats">
         <div class="pill">Score: <span id="score">0</span></div>
         <div class="pill">Best: <span id="best">0</span></div>
-        <div class="pill">Tempo: <span id="time">--</span></div>
-        <div class="pill">Combo: <span id="combo">x1</span></div>
       </div>
 
       <div class="actions">
@@ -64,32 +62,6 @@
               <option value="off" selected>OFF</option>
               <option value="mid">Médio</option>
               <option value="low">Fraco</option>
-            </select>
-          </div>
-
-          <div class="row">
-            <label for="hint">Hint</label>
-            <select id="hint">
-              <option value="on" selected>On</option>
-              <option value="off">Off</option>
-            </select>
-          </div>
-
-          <div class="row">
-            <label for="boardSize">Tamanho do quadro</label>
-            <select id="boardSize">
-              <option value="small">Pequeno</option>
-              <option value="medium" selected>Médio</option>
-              <option value="large">Grande</option>
-            </select>
-          </div>
-
-          <div class="row">
-            <label for="timedDuration">Tempo Time Attack</label>
-            <select id="timedDuration">
-              <option value="10">10 segundos</option>
-              <option value="20" selected>20 segundos</option>
-              <option value="30">30 segundos</option>
             </select>
           </div>
 
@@ -146,7 +118,7 @@
             <button id="btnPlay" class="btn btn-primary">Play</button>
           </div>
 
-          <p class="hint">PC: setas / WASD · Espaço = Pause · H = Hint</p>
+          <p class="hint">PC: setas / WASD · Espaço = Pause · R = Reset</p>
           <p class="hint">Mobile: swipe em qualquer parte do ecrã</p>
         </div>
       </div>
@@ -170,6 +142,6 @@
 
   </div>
 
-  <script defer src="app.js?v=108"></script>
+  <script defer src="app.js?v=58"></script>
 </body>
 </html>
