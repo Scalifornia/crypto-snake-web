@@ -94,9 +94,6 @@
   let lastEatAt = 0;
   let lastGain = 0;
 
-  let particles = [];
-  let lastFrameTs = 0;
-
   let wallsOn = false;
 
   let snake = [];
@@ -327,59 +324,6 @@
     return (el.hint?.value || "on") === "on";
   }
 
-  function emitCoinBurst(gridX, gridY, kind = "normal") {
-    const cx = ox + gridX * cell + cell / 2;
-    const cy = oy + gridY * cell + cell / 2;
-    const count = kind === "special" ? 16 : 10;
-
-    for (let i = 0; i < count; i++) {
-      const a = (Math.PI * 2 * i) / count + Math.random() * 0.35;
-      const speed = (kind === "special" ? 1.8 : 1.2) + Math.random() * (kind === "special" ? 1.6 : 1.0);
-      particles.push({
-        x: cx,
-        y: cy,
-        vx: Math.cos(a) * speed,
-        vy: Math.sin(a) * speed,
-        life: kind === "special" ? 0.95 : 0.7,
-        maxLife: kind === "special" ? 0.95 : 0.7,
-        size: kind === "special" ? (3 + Math.random() * 4) : (2 + Math.random() * 3),
-        color: kind === "special"
-          ? [255, 215, 0]
-          : [125, 249, 255],
-      });
-    }
-  }
-
-  function updateParticles(dtSec) {
-    if (!particles.length) return;
-
-    for (const p of particles) {
-      p.x += p.vx * cell * dtSec;
-      p.y += p.vy * cell * dtSec;
-      p.vx *= 0.985;
-      p.vy *= 0.985;
-      p.life -= dtSec;
-    }
-
-    particles = particles.filter(p => p.life > 0);
-  }
-
-  function drawParticles() {
-    if (!particles.length) return;
-
-    for (const p of particles) {
-      const alpha = Math.max(0, p.life / p.maxLife);
-      ctx.save();
-      ctx.fillStyle = `rgba(${p.color[0]},${p.color[1]},${p.color[2]},${alpha})`;
-      ctx.shadowBlur = Math.max(4, p.size * 2);
-      ctx.shadowColor = `rgba(${p.color[0]},${p.color[1]},${p.color[2]},${alpha * 0.8})`;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
-  }
-
   // ---------- UI ----------
   function showMenu(show) { el.menu?.classList.toggle("hidden", !show); }
   function showOverlay(show, title="", text="") {
@@ -399,7 +343,6 @@
     }
     if (el.combo) {
       el.combo.textContent = combo > 1 ? `x${combo} · +${lastGain}` : "x1";
-      el.combo.classList.toggle("active-combo", combo > 1);
     }
   }
 
@@ -572,14 +515,11 @@
     snake.unshift(newHead);
 
     if (newHead.x === food.x && newHead.y === food.y) {
-      const eatenType = food.type || "normal";
-      registerEat(eatenType === "special" ? 20 : 10);
+      registerEat(10);
       playSfx(sfx.eat);
-      if (eatenType === "special") playSfx(sfx.level);
-      emitCoinBurst(newHead.x, newHead.y, eatenType);
 
       if (el.mode?.value === "timed") {
-        timeLeft += (eatenType === "special" ? 2 : 1);
+        timeLeft += (food.type === "special" ? 2 : 1);
       }
 
       spawnFood();
@@ -610,12 +550,8 @@
     if (state !== State.RUNNING) return;
 
     if (!lastTs) lastTs = ts;
-    if (!lastFrameTs) lastFrameTs = ts;
-
     const dt = ts - lastTs;
-    const frameDt = (ts - lastFrameTs) / 1000;
     lastTs = ts;
-    lastFrameTs = ts;
     accMs += dt;
 
     if (el.mode?.value === "timed") {
@@ -624,7 +560,6 @@
         lastSecondTs += 1000;
         timeLeft -= 1;
         if (timeLeft <= 0) { gameOver("Tempo esgotado."); return; }
-        syncHud();
       }
     }
 
@@ -635,7 +570,6 @@
       if (state !== State.RUNNING) return;
     }
 
-    updateParticles(frameDt);
     draw();
     rafId = requestAnimationFrame(loop);
   }
@@ -779,23 +713,19 @@
     }
 
     if (img && img._ready && img.naturalWidth > 0) {
-      const t = performance.now();
-      const pulse = 1 + 0.08 * Math.sin(t / 160);
-      const baseSize = cell * 0.76;
-      const size = Math.max(10, Math.floor(baseSize * pulse));
+      const pulse = 1 + 0.06 * Math.sin(performance.now() / 180);
+      const size = Math.max(8, Math.floor(cell * 0.88 * pulse));
       const dx = x + Math.floor((cell - size) / 2);
       const dy = y + Math.floor((cell - size) / 2);
 
       ctx.save();
-
       if (food.type === "special") {
-        ctx.shadowBlur = Math.max(10, Math.floor(cell * 0.72));
-        ctx.shadowColor = "rgba(255,215,0,0.92)";
+        ctx.shadowBlur = Math.max(8, Math.floor(cell * 0.55));
+        ctx.shadowColor = "rgba(255, 200, 40, 0.75)";
       } else {
-        ctx.shadowBlur = Math.max(6, Math.floor(cell * 0.42));
-        ctx.shadowColor = "rgba(0,255,255,0.42)";
+        ctx.shadowBlur = Math.max(5, Math.floor(cell * 0.32));
+        ctx.shadowColor = "rgba(125, 249, 255, 0.35)";
       }
-
       ctx.drawImage(img, dx, dy, size, size);
       ctx.restore();
       return;
@@ -830,7 +760,6 @@
     drawHint();
     drawFood();
     drawSnake();
-    drawParticles();
   }
 
   async function gameOver(msg) {
@@ -858,8 +787,6 @@
     loadCoinImages();
     resizeCanvas();
     initGameFromMenu();
-    particles = [];
-    lastFrameTs = 0;
     state = State.RUNNING;
 
     showMenu(false);

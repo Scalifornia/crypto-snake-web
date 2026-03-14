@@ -49,12 +49,12 @@ html,body{
 .stats{ display:flex; gap:8px; flex-wrap:wrap; }
 
 .pill{
-  background: linear-gradient(180deg, rgba(16,22,48,0.94), rgba(10,14,30,0.90));
+  background: linear-gradient(180deg, rgba(16,22,48,0.92), rgba(10,14,30,0.88));
   border: 1px solid rgba(125,249,255,0.22);
   padding: 10px 15px;
-  border-radius: 999px;
-  font-size: 18px;
-  font-weight: 800;
+  border-radius:999px;
+  font-size:18px;
+  font-weight:800;
   box-shadow:
     0 0 18px rgba(168,85,247,0.12),
     inset 0 0 14px rgba(125,249,255,0.05);
@@ -251,56 +251,4 @@ input[type="range"]{
   border-radius: 0 !important;
   border-left: 0 !important;
   border-right: 0 !important;
-}
-
-
-.active-combo{
-  color: #9dff7a !important;
-  text-shadow:
-    0 0 12px rgba(157,255,122,0.55),
-    0 0 24px rgba(157,255,122,0.30) !important;
-}
-
-
-@media (max-width: 600px){
-  .topbar{
-    grid-template-columns: 1fr;
-    gap: 6px;
-    padding: 6px 8px;
-  }
-
-  .brand{
-    font-size: 14px;
-  }
-
-  .stats{
-    gap: 6px;
-  }
-
-  .pill{
-    font-size: 12px;
-    padding: 4px 8px;
-  }
-
-  .pill span{
-    font-size: 16px;
-  }
-
-  #time,
-  #combo{
-    font-size: 18px;
-  }
-
-  .actions{
-    gap: 6px;
-  }
-
-  .btn{
-    padding: 8px 10px;
-    font-size: 12px;
-  }
-
-  #game{
-    height: calc(100dvh - 120px);
-  }
 }
