@@ -113,18 +113,10 @@ html,body{
   display:flex;
   align-items:center;
   justify-content:center;
-  padding:0;
+  padding:12px;
 }
 
-#game{
-  width:100vw;
-  height:calc(100vh - 78px);
-  background:#050812;
-  border-radius: 0;
-  border:0;
-  box-shadow:none;
-  display:block;
-}
+#game{ touch-action:none; }
 
 #game{
   width:min(98vw, 900px);
@@ -140,10 +132,10 @@ html,body{
   .stage{ padding:0; }
   #game{
     width:100vw;
-    height:calc(100dvh - 78px);
+    height: calc(100dvh - 70px);
     border-radius:0;
-    border:0;
-    box-shadow:none;
+    border-left:0;
+    border-right:0;
   }
 }
 

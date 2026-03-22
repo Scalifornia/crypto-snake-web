@@ -61,16 +61,11 @@
     timedDuration: "cs_timedDuration",
   };
 
-  const GRID_PRESETS = {
-    small: 18,
-    medium: 24,
-    large: 32,
-  };
-  let gridSize = GRID_PRESETS.medium;
+  const GRID = 22;
   const BOARD_SIZE_PRESETS = {
     small: 0.72,
-    medium: 0.86,
-    large: 0.98,
+    medium: 0.84,
+    large: 0.94,
   };
   const COMBO_WINDOW_MS = 2200;
   const COMBO_MAX_MULT = 3.0;
@@ -125,18 +120,6 @@
     return BOARD_SIZE_PRESETS[key] ?? BOARD_SIZE_PRESETS.medium;
   }
 
-  function currentGridSize() {
-    const key = el.boardSize?.value || "medium";
-    return GRID_PRESETS[key] ?? GRID_PRESETS.medium;
-  }
-
-  function currentSpriteScale() {
-    const key = el.boardSize?.value || "medium";
-    if (key === "small") return 1.18;
-    if (key === "large") return 0.78;
-    return 1.0;
-  }
-
   function resizeCanvas() {
     const rect = el.canvas.getBoundingClientRect();
     cssW = Math.max(1, rect.width);
@@ -149,8 +132,8 @@
 
     const scale = currentBoardScale();
     boardPx = Math.floor(Math.min(cssW, cssH) * scale);
-    cell = Math.max(10, Math.floor(boardPx / gridSize));
-    boardPx = cell * gridSize;
+    cell = Math.max(10, Math.floor(boardPx / GRID));
+    boardPx = cell * GRID;
 
     ox = Math.floor((cssW - boardPx) / 2);
     oy = Math.floor((cssH - boardPx) / 2);
@@ -435,8 +418,8 @@
   // ---------- Game ----------
   function spawnFood() {
     for (let tries = 0; tries < 5000; tries++) {
-      const x = Math.floor(Math.random() * gridSize);
-      const y = Math.floor(Math.random() * gridSize);
+      const x = Math.floor(Math.random() * GRID);
+      const y = Math.floor(Math.random() * GRID);
       const blocked = snake.some(p => p.x === x && p.y === y);
       if (!blocked) {
         const isSpecial = Math.random() < 0.15;
@@ -455,7 +438,6 @@
   function initGameFromMenu() {
     const diff = DIFFICULTY[el.difficulty?.value] || DIFFICULTY.normal;
     tickMs = diff.tickMs;
-    gridSize = currentGridSize();
 
     score = 0;
     speedMult = 1.0;
@@ -466,7 +448,7 @@
     wallsOn = (el.walls?.value === "on");
     if (el.mode?.value === "classic" && el.walls?.value === "off") wallsOn = false;
 
-    const mid = Math.floor(gridSize / 2);
+    const mid = Math.floor(GRID / 2);
     snake = [
       { x: mid, y: mid },
       { x: mid - 1, y: mid },
@@ -585,13 +567,13 @@
     const newHead = { x: head.x + dir.x, y: head.y + dir.y };
 
     if (wallsOn) {
-      if (newHead.x < 0 || newHead.y < 0 || newHead.x >= gridSize || newHead.y >= gridSize) {
+      if (newHead.x < 0 || newHead.y < 0 || newHead.x >= GRID || newHead.y >= GRID) {
         gameOver("Bateu na parede.");
         return;
       }
     } else {
-      newHead.x = (newHead.x + gridSize) % gridSize;
-      newHead.y = (newHead.y + gridSize) % gridSize;
+      newHead.x = (newHead.x + GRID) % GRID;
+      newHead.y = (newHead.y + GRID) % GRID;
     }
 
     if (snake.some(p => p.x === newHead.x && p.y === newHead.y)) {
@@ -692,7 +674,7 @@
     if (ga > 0) {
       ctx.strokeStyle = `rgba(255,255,255,${ga})`;
       ctx.lineWidth = 1;
-      for (let i = 0; i <= gridSize; i++) {
+      for (let i = 0; i <= GRID; i++) {
         const x = ox + i * cell;
         const y = oy + i * cell;
         ctx.beginPath(); ctx.moveTo(x, oy); ctx.lineTo(x, oy + boardPx); ctx.stroke();
@@ -799,7 +781,6 @@
   function drawFood() {
     const x = ox + food.x * cell;
     const y = oy + food.y * cell;
-    const spriteScale = currentSpriteScale();
 
     let img = null;
     if (food.type === "special") {
@@ -809,20 +790,24 @@
       img = coinImages.normal[idx] || coinImages.normal[0] || null;
     }
 
-    if (img && img.complete && img.naturalWidth > 0) {
-      const pulse = 1 + 0.06 * Math.sin(performance.now() / 180);
-      const size = Math.max(8, Math.floor(cell * 0.88 * spriteScale * pulse));
+    if (img && img._ready && img.naturalWidth > 0) {
+      const t = performance.now();
+      const pulse = 1 + 0.08 * Math.sin(t / 160);
+      const baseSize = cell * 0.76;
+      const size = Math.max(10, Math.floor(baseSize * pulse));
       const dx = x + Math.floor((cell - size) / 2);
       const dy = y + Math.floor((cell - size) / 2);
 
       ctx.save();
+
       if (food.type === "special") {
-        ctx.shadowBlur = Math.max(8, Math.floor(cell * 0.55 * spriteScale));
-        ctx.shadowColor = "rgba(255, 200, 40, 0.75)";
+        ctx.shadowBlur = Math.max(10, Math.floor(cell * 0.72));
+        ctx.shadowColor = "rgba(255,215,0,0.92)";
       } else {
-        ctx.shadowBlur = Math.max(5, Math.floor(cell * 0.32 * spriteScale));
-        ctx.shadowColor = "rgba(125, 249, 255, 0.35)";
+        ctx.shadowBlur = Math.max(6, Math.floor(cell * 0.42));
+        ctx.shadowColor = "rgba(0,255,255,0.42)";
       }
+
       ctx.drawImage(img, dx, dy, size, size);
       ctx.restore();
       return;
@@ -832,94 +817,23 @@
       ? "rgba(245,158,11,0.95)"
       : "rgba(34,197,94,0.95)";
     ctx.beginPath();
-    ctx.arc(
-      x + cell / 2,
-      y + cell / 2,
-      Math.max(4, cell * 0.28 * spriteScale),
-      0,
-      Math.PI * 2
-    );
+    ctx.arc(x + cell / 2, y + cell / 2, Math.max(4, cell * 0.28), 0, Math.PI * 2);
     ctx.fill();
   }
 
   function drawSnake() {
-    const spriteScale = currentSpriteScale();
-
     for (let i = snake.length - 1; i >= 0; i--) {
       const p = snake[i];
       const x = ox + p.x * cell;
       const y = oy + p.y * cell;
-      const cx = x + cell / 2;
-      const cy = y + cell / 2;
-
-      ctx.save();
 
       if (i === 0) {
-        const r = Math.max(6, cell * 0.42 * spriteScale);
-
-        const headGlow = ctx.createRadialGradient(
-          cx - cell * 0.08 * spriteScale,
-          cy - cell * 0.10 * spriteScale,
-          2,
-          cx,
-          cy,
-          r * 1.3
-        );
-        headGlow.addColorStop(0, "rgba(160,255,245,1)");
-        headGlow.addColorStop(0.55, "rgba(57,255,221,0.98)");
-        headGlow.addColorStop(1, "rgba(0,170,155,0.92)");
-
-        ctx.shadowBlur = Math.max(8, Math.floor(cell * 0.55 * spriteScale));
-        ctx.shadowColor = "rgba(57,255,221,0.45)";
-        ctx.fillStyle = headGlow;
-
-        ctx.beginPath();
-        ctx.ellipse(cx, cy, r * 1.10, r, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = "#071018";
-
-        ctx.beginPath();
-        ctx.arc(cx - cell * 0.13 * spriteScale, cy - cell * 0.12 * spriteScale, Math.max(2, cell * 0.05 * spriteScale), 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.arc(cx + cell * 0.13 * spriteScale, cy - cell * 0.12 * spriteScale, Math.max(2, cell * 0.05 * spriteScale), 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.strokeStyle = "rgba(255,255,255,0.78)";
-        ctx.lineWidth = Math.max(1, cell * 0.045 * spriteScale);
-        ctx.beginPath();
-        ctx.moveTo(cx - cell * 0.08 * spriteScale, cy + cell * 0.10 * spriteScale);
-        ctx.quadraticCurveTo(cx, cy + cell * 0.18 * spriteScale, cx + cell * 0.08 * spriteScale, cy + cell * 0.10 * spriteScale);
-        ctx.stroke();
-
+        ctx.fillStyle = "rgba(57,255,221,0.92)";
+        ctx.fillRect(x, y, cell, cell);
       } else {
-        const r = Math.max(4, cell * (0.34 - Math.min(i, 10) * 0.008) * spriteScale);
-
-        const bodyGrad = ctx.createRadialGradient(
-          cx - cell * 0.06 * spriteScale,
-          cy - cell * 0.07 * spriteScale,
-          2,
-          cx,
-          cy,
-          r * 1.15
-        );
-        bodyGrad.addColorStop(0, "rgba(220,150,255,0.92)");
-        bodyGrad.addColorStop(0.58, "rgba(168,85,247,0.82)");
-        bodyGrad.addColorStop(1, "rgba(80,35,130,0.55)");
-
-        ctx.shadowBlur = Math.max(4, Math.floor(cell * 0.22 * spriteScale));
-        ctx.shadowColor = "rgba(168,85,247,0.18)";
-        ctx.fillStyle = bodyGrad;
-
-        ctx.beginPath();
-        ctx.ellipse(cx, cy, r, r * 0.92, 0, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.fillStyle = "rgba(168,85,247,0.45)";
+        ctx.fillRect(x + 1, y + 1, cell - 2, cell - 2);
       }
-
-      ctx.restore();
     }
   }
 
