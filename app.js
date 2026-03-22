@@ -33,6 +33,8 @@
 
     score: document.getElementById("score"),
     best: document.getElementById("best"),
+    stats: document.getElementById("stats"),
+    stats: document.getElementById("stats"),
     level: document.getElementById("level"),
     time: document.getElementById("time"),
     combo: document.getElementById("combo"),
@@ -61,15 +63,15 @@
   };
 
   const GRID_PRESETS = {
-    small: 18,
-    medium: 24,
-    large: 32,
+    small:  { cols: 18, rows: 12, mCols: 24, mRows: 6, pCols: 14, pRows: 18 },
+    medium: { cols: 24, rows: 16, mCols: 30, mRows: 7, pCols: 16, pRows: 20 },
+    large:  { cols: 30, rows: 20, mCols: 34, mRows: 8, pCols: 18, pRows: 24 },
   };
   let gridSize = GRID_PRESETS.medium;
   const BOARD_SIZE_PRESETS = {
-    small: 0.72,
-    medium: 0.86,
-    large: 0.98,
+    small: 0.985,
+    medium: 1.0,
+    large: 1.02,
   };
   const COMBO_WINDOW_MS = 2200;
   const COMBO_MAX_MULT = 3.0;
@@ -117,16 +119,36 @@
 
   // ---------- Canvas layout ----------
   let cssW = 800, cssH = 600, dpr = 1;
-  let cell = 20, boardPx = 440, ox = 0, oy = 0;
+  let cell = 20, boardW = 440, boardH = 440, ox = 0, oy = 0;
+  let gridCols = 24, gridRows = 24;
 
   function currentBoardScale() {
     const key = el.boardSize?.value || "medium";
     return BOARD_SIZE_PRESETS[key] ?? BOARD_SIZE_PRESETS.medium;
   }
 
-  function currentGridSize() {
+  function isMobileLandscape() {
+    return window.matchMedia("(max-width: 950px) and (orientation: landscape)").matches;
+  }
+
+  function currentGridPreset() {
     const key = el.boardSize?.value || "medium";
-    return GRID_PRESETS[key] ?? GRID_PRESETS.medium;
+    const preset = GRID_PRESETS[key] ?? GRID_PRESETS.medium;
+
+    const mobileLandscape = window.matchMedia("(max-width: 950px) and (orientation: landscape)").matches;
+    const mobilePortrait = window.matchMedia("(max-width: 950px) and (orientation: portrait)").matches;
+
+    if (mobileLandscape) return { cols: preset.mCols, rows: preset.mRows };
+    if (mobilePortrait) return { cols: preset.pCols, rows: preset.pRows };
+    return { cols: preset.cols, rows: preset.rows };
+  }
+
+  function currentGridSize() {
+    return currentGridPreset().cols;
+  }
+
+  function currentGridRows() {
+    return currentGridPreset().rows;
   }
 
   function currentSpriteScale() {
@@ -137,8 +159,8 @@
   }
 
   function currentWorldKey() {
-    if (gridSize <= 18) return "small";
-    if (gridSize >= 32) return "large";
+    if (gridCols <= 18) return "small";
+    if (gridCols >= 28) return "large";
     return "medium";
   }
 
@@ -149,7 +171,8 @@
   function applyWorld(world) {
     const next = world === "small" ? "small" : world === "large" ? "large" : "medium";
     if (el.boardSize) el.boardSize.value = next;
-    gridSize = GRID_PRESETS[next] ?? GRID_PRESETS.medium;
+    localStorage.setItem(LS.boardSize, next);
+    if (el.worldSelect) el.worldSelect.value = next;
     resizeCanvas();
 
     if (state === State.RUNNING || state === State.PAUSED || state === State.OVER) {
@@ -211,13 +234,41 @@
     el.canvas.height = Math.floor(cssH * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    const scale = currentBoardScale();
-    boardPx = Math.floor(Math.min(cssW, cssH) * scale);
-    cell = Math.max(10, Math.floor(boardPx / gridSize));
-    boardPx = cell * gridSize;
+    const preset = currentGridPreset();
 
-    ox = Math.floor((cssW - boardPx) / 2);
-    oy = Math.floor((cssH - boardPx) / 2);
+    const mobileLandscape = window.matchMedia("(max-width: 950px) and (orientation: landscape)").matches;
+    const mobilePortrait = window.matchMedia("(max-width: 950px) and (orientation: portrait)").matches;
+    const desktopMode = !mobileLandscape && !mobilePortrait;
+
+    const padX = desktopMode ? 0 : 4;
+    const padY = desktopMode ? 0 : 4;
+
+    const usableW = Math.max(1, cssW - padX);
+    const usableH = Math.max(1, cssH - padY);
+
+    if (desktopMode) {
+      gridCols = preset.cols;
+      cell = Math.max(8, Math.floor(usableW / gridCols));
+      boardW = cell * gridCols;
+      gridRows = Math.max(8, Math.floor(usableH / cell));
+      boardH = cell * gridRows;
+      ox = Math.floor((cssW - boardW) / 2);
+      oy = Math.floor((cssH - boardH) / 2);
+      return;
+    }
+
+    gridCols = preset.cols;
+    gridRows = preset.rows;
+
+    const cellW = Math.floor(usableW / gridCols);
+    const cellH = Math.floor(usableH / gridRows);
+    cell = Math.max(8, Math.min(cellW, cellH));
+
+    boardW = cell * gridCols;
+    boardH = cell * gridRows;
+
+    ox = Math.floor((cssW - boardW) / 2);
+    oy = Math.floor((cssH - boardH) / 2);
   }
   window.addEventListener("resize", resizeCanvas, { passive: true });
   resizeCanvas();
@@ -517,6 +568,31 @@
   }
 
   function syncHud() {
+    const world = typeof currentWorldKey === "function" ? currentWorldKey() : "medium";
+    const theme = world === "small"
+      ? {
+          name: "NEON AMBER",
+          accent: "#ffcf86",
+          glow: "rgba(255,170,60,0.28)",
+          border: "rgba(255,190,90,0.34)",
+          font: "Trebuchet MS, Arial, sans-serif",
+        }
+      : world === "large"
+        ? {
+            name: "NEON VIOLET",
+            accent: "#ddb0ff",
+            glow: "rgba(180,90,255,0.28)",
+            border: "rgba(205,130,255,0.34)",
+            font: "Verdana, Arial, sans-serif",
+          }
+        : {
+            name: "NEON BLUE",
+            accent: "#9fddff",
+            glow: "rgba(70,140,255,0.28)",
+            border: "rgba(105,205,255,0.34)",
+            font: "Segoe UI, Arial, sans-serif",
+          };
+
     el.score && (el.score.textContent = String(score));
     el.best && (el.best.textContent = String(best));
     level = 1 + Math.floor(score / 50);
@@ -534,19 +610,26 @@
     if (el.combo) {
       el.combo.textContent = combo > 1 ? `Combo ${combo}` : "Combo 1";
     }
+
+    if (el.stats) {
+      el.stats.dataset.world = world;
+      el.stats.style.setProperty("--hud-accent", theme.accent);
+      el.stats.style.setProperty("--hud-glow", theme.glow);
+      el.stats.style.setProperty("--hud-border", theme.border);
+      el.stats.style.setProperty("--hud-font", theme.font);
+    }
   }
 
   // ---------- Game ----------
   function spawnFood() {
     for (let tries = 0; tries < 5000; tries++) {
-      const x = Math.floor(Math.random() * gridSize);
-      const y = Math.floor(Math.random() * gridSize);
+      const x = Math.floor(Math.random() * gridCols);
+      const y = Math.floor(Math.random() * gridRows);
       const blocked = snake.some(p => p.x === x && p.y === y);
       if (!blocked) {
-        const isSpecial = Math.random() < 0.15;
+        const isSpecial = Math.random() < 0.12;
         food = {
-          x,
-          y,
+          x, y,
           type: isSpecial ? "special" : "normal",
           spriteIndex: isSpecial ? -1 : Math.floor(Math.random() * NORMAL_COIN_FILES.length)
         };
@@ -689,13 +772,13 @@
     const newHead = { x: head.x + dir.x, y: head.y + dir.y };
 
     if (wallsOn) {
-      if (newHead.x < 0 || newHead.y < 0 || newHead.x >= gridSize || newHead.y >= gridSize) {
+      if (newHead.x < 0 || newHead.y < 0 || newHead.x >= gridCols || newHead.y >= gridRows) {
         gameOver("Bateu na parede.");
         return;
       }
     } else {
-      newHead.x = (newHead.x + gridSize) % gridSize;
-      newHead.y = (newHead.y + gridSize) % gridSize;
+      newHead.x = (newHead.x + gridCols) % gridCols;
+      newHead.y = (newHead.y + gridRows) % gridRows;
     }
 
     if (snake.some(p => p.x === newHead.x && p.y === newHead.y)) {
@@ -778,76 +861,109 @@
   function drawBackground() {
     const world = typeof currentWorldKey === "function" ? currentWorldKey() : "medium";
 
-    let outerA = "#050812";
-    let outerB = "#0a1020";
-    let boardBase = "#070a12";
-    let tint = null;
-
-    if (world === "small") {
-      outerA = "#120b06";
-      outerB = "#1b1208";
-      boardBase = "#120d08";
-      tint = "rgba(255,170,60,0.08)";
-    } else if (world === "medium") {
-      outerA = "#050812";
-      outerB = "#0a1020";
-      boardBase = "#070a12";
-      tint = "rgba(70,140,255,0.07)";
-    } else {
-      outerA = "#0d0716";
-      outerB = "#140a22";
-      boardBase = "#0d0818";
-      tint = "rgba(180,90,255,0.09)";
-    }
+    const theme = world === "small"
+      ? {
+          name: "NEON AMBER",
+          accent: "rgba(255,190,90,0.86)",
+          glow: "rgba(255,170,60,0.18)",
+          bgA: "#120b06",
+          bgB: "#1a1208",
+        }
+      : world === "large"
+        ? {
+            name: "NEON VIOLET",
+            accent: "rgba(205,130,255,0.88)",
+            glow: "rgba(170,90,255,0.18)",
+            bgA: "#0d0716",
+            bgB: "#160a24",
+          }
+        : {
+            name: "NEON BLUE",
+            accent: "rgba(105,205,255,0.88)",
+            glow: "rgba(70,150,255,0.18)",
+            bgA: "#050812",
+            bgB: "#091226",
+          };
 
     const bgGrad = ctx.createLinearGradient(0, 0, 0, cssH);
-    bgGrad.addColorStop(0, outerA);
-    bgGrad.addColorStop(1, outerB);
+    bgGrad.addColorStop(0, theme.bgA);
+    bgGrad.addColorStop(1, theme.bgB);
     ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, cssW, cssH);
 
-    ctx.fillStyle = boardBase;
-    ctx.fillRect(ox, oy, boardPx, boardPx);
+    if (bgImg) {
+      const a = bgOpacity();
+      if (a > 0) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0.12, a * 0.35);
+        drawImageCover(bgImg, 0, 0, cssW, cssH);
+        ctx.restore();
+      }
+    }
 
     if (bgImg) {
       const a = bgOpacity();
       if (a > 0) {
         ctx.save();
         ctx.globalAlpha = a;
-        drawImageCover(bgImg, ox, oy, boardPx, boardPx);
+        drawImageCover(bgImg, ox, oy, boardW, boardH);
         ctx.restore();
+      } else {
+        ctx.fillStyle = "rgba(7,10,18,0.92)";
+        ctx.fillRect(ox, oy, boardW, boardH);
       }
-    }
-
-    if (tint) {
-      ctx.save();
-      ctx.fillStyle = tint;
-      ctx.fillRect(ox, oy, boardPx, boardPx);
-      ctx.restore();
+    } else {
+      ctx.fillStyle = "rgba(7,10,18,0.92)";
+      ctx.fillRect(ox, oy, boardW, boardH);
     }
 
     const ga = gridAlpha();
     if (ga > 0) {
       ctx.strokeStyle = `rgba(255,255,255,${ga})`;
       ctx.lineWidth = 1;
-      for (let i = 0; i <= gridSize; i++) {
+      for (let i = 0; i <= gridCols; i++) {
         const x = ox + i * cell;
+        ctx.beginPath();
+        ctx.moveTo(x, oy);
+        ctx.lineTo(x, oy + boardH);
+        ctx.stroke();
+      }
+      for (let i = 0; i <= gridRows; i++) {
         const y = oy + i * cell;
-        ctx.beginPath(); ctx.moveTo(x, oy); ctx.lineTo(x, oy + boardPx); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(ox, y); ctx.lineTo(ox + boardPx, y); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(ox, y);
+        ctx.lineTo(ox + boardW, y);
+        ctx.stroke();
       }
     }
 
+    ctx.save();
+    ctx.lineWidth = 1.6;
+    ctx.strokeStyle = theme.accent;
+    ctx.shadowBlur = 7;
+    ctx.shadowColor = theme.glow;
+    ctx.strokeRect(ox + 1, oy + 1, boardW - 2, boardH - 2);
+    ctx.restore();
+
     if (wallsOn) {
-      ctx.lineWidth = 4;
-      ctx.strokeStyle = world === "small"
-        ? "rgba(255,190,90,0.88)"
-        : world === "large"
-          ? "rgba(200,120,255,0.88)"
-          : "rgba(57,255,221,0.85)";
-      ctx.strokeRect(ox + 2, oy + 2, boardPx - 4, boardPx - 4);
-      ctx.lineWidth = 1;
+      ctx.save();
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = theme.accent;
+      ctx.shadowBlur = 11;
+      ctx.shadowColor = theme.glow;
+      ctx.strokeRect(ox + 1, oy + 1, boardW - 2, boardH - 2);
+      ctx.restore();
     }
+
+    ctx.save();
+    ctx.textAlign = "right";
+    ctx.textBaseline = "top";
+    ctx.font = "bold 11px Arial";
+    ctx.fillStyle = theme.accent;
+    ctx.shadowBlur = 6;
+    ctx.shadowColor = theme.glow;
+    ctx.fillText(theme.name, ox + boardW - 10, oy + 8);
+    ctx.restore();
   }
 
   function drawHint() {

@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Crypto Snake Web</title>
-  <link rel="stylesheet" href="style.css?v=123" />
+  <link rel="stylesheet" href="style.css?v=134" />
 </head>
 
 <body>
@@ -13,7 +13,7 @@
     <header class="topbar">
       <div class="brand">Crypto Snake</div>
 
-      <div class="stats">
+      <div class="stats" id="stats">
         <div class="pill">Score: <span id="score">0</span></div>
         <div class="pill">Best: <span id="best">0</span></div>
         <div class="pill">Nível: <span id="level">1</span></div>
@@ -71,6 +71,15 @@
             <select id="hint">
               <option value="on" selected>On</option>
               <option value="off">Off</option>
+            </select>
+          </div>
+
+          <div class="row">
+            <label for="boardSize">Mundo</label>
+            <select id="boardSize">
+              <option value="small">Mundo 1</option>
+              <option value="medium" selected>Mundo 2</option>
+              <option value="large">Mundo 3</option>
             </select>
           </div>
 
@@ -159,6 +168,6 @@
     <div id="worldToast" class="world-toast hidden"></div>
   </div>
 
-  <script defer src="app.js?v=123"></script>
+  <script defer src="app.js?v=134"></script>
 </body>
 </html>
