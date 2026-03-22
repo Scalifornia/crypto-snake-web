@@ -194,11 +194,10 @@
   }
 
   function cycleWorld() {
-    if (state !== State.MENU) return;
     const current = currentWorldKey();
     const next = current === "small" ? "medium" : current === "medium" ? "large" : "small";
     const applied = applyWorld(next);
-    if (typeof announceWorld === "function") announceWorld(applied);
+    announceWorld(applied);
   }
 
   function resizeCanvas() {
@@ -371,17 +370,9 @@
 
   function loadBgFromStorage() {
     const data = localStorage.getItem(LS.bgData);
-    if (!data) {
-      bgImg = null;
-      return;
-    }
+    if (!data) { bgImg = null; return; }
     const img = new Image();
-    img.onload = () => {
-      bgImg = img;
-      resizeCanvas();
-      if (state === State.RUNNING || state === State.PAUSED || state === State.OVER) draw();
-      else drawBackground();
-    };
+    img.onload = () => { bgImg = img; };
     img.src = data;
   }
 
@@ -393,11 +384,9 @@
     reader.onload = () => {
       const data = reader.result;
       try { localStorage.setItem(LS.bgData, data); } catch {}
-
       const img = new Image();
       img.onload = () => {
         bgImg = img;
-        resizeCanvas();
         if (state === State.RUNNING || state === State.PAUSED || state === State.OVER) draw();
         else drawBackground();
       };
@@ -776,7 +765,7 @@
 
   // ---------- Render ----------
   function drawBackground() {
-    const world = typeof currentWorldKey === "function" ? currentWorldKey() : "medium";
+    const world = currentWorldKey();
 
     let outerA = "#050812";
     let outerB = "#0a1020";
@@ -787,17 +776,17 @@
       outerA = "#120b06";
       outerB = "#1b1208";
       boardBase = "#120d08";
-      tint = "rgba(255,170,60,0.08)";
+      tint = "rgba(255,170,60,0.12)";
     } else if (world === "medium") {
       outerA = "#050812";
       outerB = "#0a1020";
       boardBase = "#070a12";
-      tint = "rgba(70,140,255,0.07)";
+      tint = "rgba(70,140,255,0.10)";
     } else {
       outerA = "#0d0716";
       outerB = "#140a22";
       boardBase = "#0d0818";
-      tint = "rgba(180,90,255,0.09)";
+      tint = "rgba(180,90,255,0.14)";
     }
 
     const bgGrad = ctx.createLinearGradient(0, 0, 0, cssH);
@@ -809,6 +798,13 @@
     ctx.fillStyle = boardBase;
     ctx.fillRect(ox, oy, boardPx, boardPx);
 
+    if (tint) {
+      ctx.save();
+      ctx.fillStyle = tint;
+      ctx.fillRect(ox, oy, boardPx, boardPx);
+      ctx.restore();
+    }
+
     if (bgImg) {
       const a = bgOpacity();
       if (a > 0) {
@@ -817,13 +813,6 @@
         drawImageCover(bgImg, ox, oy, boardPx, boardPx);
         ctx.restore();
       }
-    }
-
-    if (tint) {
-      ctx.save();
-      ctx.fillStyle = tint;
-      ctx.fillRect(ox, oy, boardPx, boardPx);
-      ctx.restore();
     }
 
     const ga = gridAlpha();
@@ -1081,7 +1070,6 @@
     activeTouchId = null;
     swipeX = null;
     swipeY = null;
-    resetCombo();
 
     await playDeathSequence();
 
@@ -1089,7 +1077,6 @@
       best = score;
       localStorage.setItem(STORAGE_KEY, String(best));
     }
-
     syncHud();
     showOverlay(true, "Game Over", msg || "Restart ou Menu.");
     if (el.btnOverlayReset) el.btnOverlayReset.textContent = "Restart";
@@ -1146,7 +1133,6 @@
   }
 
   function toggleFullscreen() {
-    if (state !== State.MENU) return;
     cycleWorld();
   }
 

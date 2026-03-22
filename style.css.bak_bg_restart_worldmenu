@@ -329,7 +329,6 @@ input[type="range"]{
   text-align:center;
   z-index:120;
   opacity:0;
-  visibility:hidden;
   pointer-events:none;
   transition:opacity .18s ease, transform .18s ease;
 }
@@ -353,13 +352,12 @@ input[type="range"]{
 
 .world-toast.show{
   opacity:1;
-  visibility:visible;
   transform:translateX(-50%) translateY(0);
 }
 
 .world-toast.hidden{
+  display:block !important;
   opacity:0;
-  visibility:hidden;
 }
 
 .world-toast.amber{
@@ -375,31 +373,4 @@ input[type="range"]{
 .world-toast.violet{
   color:#d7a8ff;
   box-shadow:0 10px 30px rgba(180,90,255,0.18);
-}
-
-
-.submenu{
-  margin: 10px 0 14px;
-  border: 1px solid rgba(110,180,255,0.14);
-  border-radius: 14px;
-  background: rgba(8,12,24,0.42);
-  overflow: hidden;
-}
-
-.submenu summary{
-  cursor: pointer;
-  list-style: none;
-  padding: 12px 14px;
-  font-weight: 700;
-  letter-spacing: .03em;
-  color: #dcefff;
-  background: linear-gradient(180deg, rgba(90,140,255,0.10), rgba(90,140,255,0.03));
-}
-
-.submenu summary::-webkit-details-marker{
-  display:none;
-}
-
-.submenu .world-row{
-  padding: 10px 12px 4px;
 }

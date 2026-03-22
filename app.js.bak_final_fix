@@ -198,7 +198,7 @@
     const current = currentWorldKey();
     const next = current === "small" ? "medium" : current === "medium" ? "large" : "small";
     const applied = applyWorld(next);
-    if (typeof announceWorld === "function") announceWorld(applied);
+    announceWorld(applied);
   }
 
   function resizeCanvas() {
@@ -371,10 +371,7 @@
 
   function loadBgFromStorage() {
     const data = localStorage.getItem(LS.bgData);
-    if (!data) {
-      bgImg = null;
-      return;
-    }
+    if (!data) { bgImg = null; return; }
     const img = new Image();
     img.onload = () => {
       bgImg = img;
@@ -776,7 +773,7 @@
 
   // ---------- Render ----------
   function drawBackground() {
-    const world = typeof currentWorldKey === "function" ? currentWorldKey() : "medium";
+    const world = currentWorldKey();
 
     let outerA = "#050812";
     let outerB = "#0a1020";

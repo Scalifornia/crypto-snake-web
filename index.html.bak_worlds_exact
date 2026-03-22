@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Crypto Snake Web</title>
-  <link rel="stylesheet" href="style.css?v=123" />
+  <link rel="stylesheet" href="style.css?v=108" />
 </head>
 
 <body>
@@ -22,6 +22,8 @@
       </div>
 
       <div class="actions">
+        <button id="btnPause" class="btn">Pause</button>
+        <button id="btnReset" class="btn btn-primary">Reset</button>
         <button id="btnMenu" class="btn">Menu</button>
       </div>
     </header>
@@ -71,6 +73,15 @@
             <select id="hint">
               <option value="on" selected>On</option>
               <option value="off">Off</option>
+            </select>
+          </div>
+
+          <div class="row">
+            <label for="boardSize">Tamanho do quadro</label>
+            <select id="boardSize">
+              <option value="small">Pequeno</option>
+              <option value="medium" selected>Médio</option>
+              <option value="large">Grande</option>
             </select>
           </div>
 
@@ -136,7 +147,7 @@
             <button id="btnPlay" class="btn btn-primary">Play</button>
           </div>
 
-          <p class="hint">PC: setas / WASD · Espaço = Pause</p>
+          <p class="hint">PC: setas / WASD · Espaço = Pause · H = Hint</p>
           <p class="hint">Mobile: swipe em qualquer parte do ecrã</p>
         </div>
       </div>
@@ -151,14 +162,15 @@
         <h2 id="overlayTitle">Pausa</h2>
         <p id="overlayText">Espaço para continuar</p>
         <div class="buttons">
+          <button id="btnOverlayResume" class="btn btn-primary">Resume</button>
+          <button id="btnOverlayReset" class="btn">Reset</button>
           <button id="btnOverlayMenu" class="btn">Menu</button>
         </div>
       </div>
     </div>
 
-    <div id="worldToast" class="world-toast hidden"></div>
   </div>
 
-  <script defer src="app.js?v=123"></script>
+  <script defer src="app.js?v=108"></script>
 </body>
 </html>

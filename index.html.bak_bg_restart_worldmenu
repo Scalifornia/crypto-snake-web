@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Crypto Snake Web</title>
-  <link rel="stylesheet" href="style.css?v=123" />
+  <link rel="stylesheet" href="style.css?v=108" />
 </head>
 
 <body>
@@ -136,7 +136,7 @@
             <button id="btnPlay" class="btn btn-primary">Play</button>
           </div>
 
-          <p class="hint">PC: setas / WASD · Espaço = Pause</p>
+          <p class="hint">PC: setas / WASD · Espaço = Pause · F = Mundo 1/2/3</p>
           <p class="hint">Mobile: swipe em qualquer parte do ecrã</p>
         </div>
       </div>
@@ -159,6 +159,6 @@
     <div id="worldToast" class="world-toast hidden"></div>
   </div>
 
-  <script defer src="app.js?v=123"></script>
+  <script defer src="app.js?v=108"></script>
 </body>
 </html>

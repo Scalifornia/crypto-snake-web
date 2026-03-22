@@ -7,7 +7,6 @@
     overlay: document.getElementById("overlay"),
     overlayTitle: document.getElementById("overlayTitle"),
     overlayText: document.getElementById("overlayText"),
-    worldToast: document.getElementById("worldToast"),
 
     btnPlay: document.getElementById("btnPlay"),
     btnReset: document.getElementById("btnReset"),
@@ -38,7 +37,6 @@
     combo: document.getElementById("combo"),
     hint: document.getElementById("hint"),
     boardSize: document.getElementById("boardSize"),
-    worldSelect: document.getElementById("worldSelect"),
     timedDuration: document.getElementById("timedDuration"),
     combo: document.getElementById("combo"),
   };
@@ -137,13 +135,10 @@
   }
 
   function currentWorldKey() {
-    if (gridSize <= 18) return "small";
-    if (gridSize >= 32) return "large";
+    const grid = currentGridSize();
+    if (grid <= 18) return "small";
+    if (grid >= 32) return "large";
     return "medium";
-  }
-
-  function worldToLabel(world) {
-    return world === "small" ? "Mundo 1" : world === "large" ? "Mundo 3" : "Mundo 2";
   }
 
   function applyWorld(world) {
@@ -151,54 +146,19 @@
     if (el.boardSize) el.boardSize.value = next;
     gridSize = GRID_PRESETS[next] ?? GRID_PRESETS.medium;
     resizeCanvas();
-
-    if (state === State.RUNNING || state === State.PAUSED || state === State.OVER) {
-      draw();
-      requestAnimationFrame(() => {
-        resizeCanvas();
-        draw();
-      });
-    } else {
-      drawBackground();
-      requestAnimationFrame(() => {
-        resizeCanvas();
-        drawBackground();
-      });
-    }
-
-    return next;
-  }
-
-  let worldToastTimer = null;
-
-  function announceWorld(world) {
-    if (!el.worldToast) return;
-
-    const title = world === "small" ? "MUNDO 1" : world === "medium" ? "MUNDO 2" : "MUNDO 3";
-    const subtitle = world === "small" ? "NEON AMBER" : world === "medium" ? "NEON BLUE" : "NEON VIOLET";
-    const cls = world === "small" ? "amber" : world === "medium" ? "blue" : "violet";
-
-    el.worldToast.className = `world-toast ${cls}`;
-    el.worldToast.innerHTML = `<strong>${title}</strong><span>${subtitle}</span>`;
-
-    clearTimeout(worldToastTimer);
-    requestAnimationFrame(() => {
-      el.worldToast.classList.remove("hidden");
-      el.worldToast.classList.add("show");
-    });
-
-    worldToastTimer = setTimeout(() => {
-      el.worldToast.classList.remove("show");
-      el.worldToast.classList.add("hidden");
-    }, 1200);
+    if (state === State.RUNNING || state === State.PAUSED || state === State.OVER) draw();
+    else drawBackground();
   }
 
   function cycleWorld() {
-    if (state !== State.MENU) return;
     const current = currentWorldKey();
     const next = current === "small" ? "medium" : current === "medium" ? "large" : "small";
-    const applied = applyWorld(next);
-    if (typeof announceWorld === "function") announceWorld(applied);
+    applyWorld(next);
+    spawnScoreText(
+      ox + boardPx / 2,
+      oy + 34,
+      next === "small" ? "MUNDO 1" : next === "medium" ? "MUNDO 2" : "MUNDO 3"
+    );
   }
 
   function resizeCanvas() {
@@ -371,39 +331,10 @@
 
   function loadBgFromStorage() {
     const data = localStorage.getItem(LS.bgData);
-    if (!data) {
-      bgImg = null;
-      return;
-    }
+    if (!data) { bgImg = null; return; }
     const img = new Image();
-    img.onload = () => {
-      bgImg = img;
-      resizeCanvas();
-      if (state === State.RUNNING || state === State.PAUSED || state === State.OVER) draw();
-      else drawBackground();
-    };
+    img.onload = () => { bgImg = img; };
     img.src = data;
-  }
-
-  function handleBackgroundFileUpload(file) {
-    if (!file) return;
-    if (!String(file.type || "").startsWith("image/")) return;
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      const data = reader.result;
-      try { localStorage.setItem(LS.bgData, data); } catch {}
-
-      const img = new Image();
-      img.onload = () => {
-        bgImg = img;
-        resizeCanvas();
-        if (state === State.RUNNING || state === State.PAUSED || state === State.OVER) draw();
-        else drawBackground();
-      };
-      img.src = data;
-    };
-    reader.readAsDataURL(file);
   }
 
   function bgOpacity() {
@@ -491,18 +422,6 @@
       ctx.fill();
       ctx.restore();
     }
-  }
-
-  function drawImageCover(img, x, y, w, h) {
-    if (!img || !img.complete || !img.naturalWidth || !img.naturalHeight) return;
-
-    const scale = Math.max(w / img.naturalWidth, h / img.naturalHeight);
-    const sw = img.naturalWidth * scale;
-    const sh = img.naturalHeight * scale;
-    const dx = x + (w - sw) / 2;
-    const dy = y + (h - sh) / 2;
-
-    ctx.drawImage(img, dx, dy, sw, sh);
   }
 
   // ---------- UI ----------
@@ -776,37 +695,10 @@
 
   // ---------- Render ----------
   function drawBackground() {
-    const world = typeof currentWorldKey === "function" ? currentWorldKey() : "medium";
-
-    let outerA = "#050812";
-    let outerB = "#0a1020";
-    let boardBase = "#070a12";
-    let tint = null;
-
-    if (world === "small") {
-      outerA = "#120b06";
-      outerB = "#1b1208";
-      boardBase = "#120d08";
-      tint = "rgba(255,170,60,0.08)";
-    } else if (world === "medium") {
-      outerA = "#050812";
-      outerB = "#0a1020";
-      boardBase = "#070a12";
-      tint = "rgba(70,140,255,0.07)";
-    } else {
-      outerA = "#0d0716";
-      outerB = "#140a22";
-      boardBase = "#0d0818";
-      tint = "rgba(180,90,255,0.09)";
-    }
-
-    const bgGrad = ctx.createLinearGradient(0, 0, 0, cssH);
-    bgGrad.addColorStop(0, outerA);
-    bgGrad.addColorStop(1, outerB);
-    ctx.fillStyle = bgGrad;
+    ctx.fillStyle = "#050812";
     ctx.fillRect(0, 0, cssW, cssH);
 
-    ctx.fillStyle = boardBase;
+    ctx.fillStyle = "#070a12";
     ctx.fillRect(ox, oy, boardPx, boardPx);
 
     if (bgImg) {
@@ -814,16 +706,9 @@
       if (a > 0) {
         ctx.save();
         ctx.globalAlpha = a;
-        drawImageCover(bgImg, ox, oy, boardPx, boardPx);
+        ctx.drawImage(bgImg, ox, oy, boardPx, boardPx);
         ctx.restore();
       }
-    }
-
-    if (tint) {
-      ctx.save();
-      ctx.fillStyle = tint;
-      ctx.fillRect(ox, oy, boardPx, boardPx);
-      ctx.restore();
     }
 
     const ga = gridAlpha();
@@ -840,11 +725,7 @@
 
     if (wallsOn) {
       ctx.lineWidth = 4;
-      ctx.strokeStyle = world === "small"
-        ? "rgba(255,190,90,0.88)"
-        : world === "large"
-          ? "rgba(200,120,255,0.88)"
-          : "rgba(57,255,221,0.85)";
+      ctx.strokeStyle = "rgba(57,255,221,0.85)";
       ctx.strokeRect(ox + 2, oy + 2, boardPx - 4, boardPx - 4);
       ctx.lineWidth = 1;
     }
@@ -1081,7 +962,6 @@
     activeTouchId = null;
     swipeX = null;
     swipeY = null;
-    resetCombo();
 
     await playDeathSequence();
 
@@ -1089,10 +969,8 @@
       best = score;
       localStorage.setItem(STORAGE_KEY, String(best));
     }
-
     syncHud();
-    showOverlay(true, "Game Over", msg || "Restart ou Menu.");
-    if (el.btnOverlayReset) el.btnOverlayReset.textContent = "Restart";
+    showOverlay(true, "Game Over", msg || "Reset ou Menu.");
     draw();
   }
 
@@ -1146,7 +1024,6 @@
   }
 
   function toggleFullscreen() {
-    if (state !== State.MENU) return;
     cycleWorld();
   }
 
@@ -1175,7 +1052,7 @@
   el.btnMenu?.addEventListener("click", backToMenu);
   el.btnFull?.addEventListener("click", toggleFullscreen);
 
-  el.btnOverlayReset?.addEventListener("click", () => startGame());
+  el.btnOverlayReset?.addEventListener("click", reset);
   el.btnOverlayMenu?.addEventListener("click", backToMenu);
 
   function applySavedSettingsToUI() {
