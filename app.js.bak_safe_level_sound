@@ -107,7 +107,6 @@
 
   let score = 0;
   let level = 1;
-  let lastLevelForSound = 1;
   let best = Number(localStorage.getItem(STORAGE_KEY) || 0);
   el.best && (el.best.textContent = String(best));
 
@@ -399,11 +398,6 @@
     el.best && (el.best.textContent = String(best));
     level = 1 + Math.floor(score / 50);
     el.level && (el.level.textContent = String(level));
-
-    if (level > lastLevelForSound) {
-      lastLevelForSound = level;
-      try { playSfx(sfx.level); } catch {}
-    }
 
     if (el.time) {
       el.time.textContent = (el.mode?.value === "timed") ? `${Math.max(0, timeLeft)}s` : "--";

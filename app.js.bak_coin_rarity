@@ -34,7 +34,6 @@
 
     score: document.getElementById("score"),
     best: document.getElementById("best"),
-    level: document.getElementById("level"),
     time: document.getElementById("time"),
     combo: document.getElementById("combo"),
     hint: document.getElementById("hint"),
@@ -106,8 +105,6 @@
   let food = { x: 10, y: 10 };
 
   let score = 0;
-  let level = 1;
-  let lastLevelForSound = 1;
   let best = Number(localStorage.getItem(STORAGE_KEY) || 0);
   el.best && (el.best.textContent = String(best));
 
@@ -147,6 +144,7 @@
     level: new Audio("assets/audio/level_up.wav"),
     boom: new Audio("assets/audio/explosion.mp3"),
     over: new Audio("assets/audio/Game_over_retro.mp3"),
+    bitcoin: new Audio("assets/level_up.wav"),
   };
 
   const menuMusic = new Audio("assets/audio/som_menu.wav");
@@ -333,19 +331,19 @@
   function emitCoinBurst(gridX, gridY, kind = "normal") {
     const cx = ox + gridX * cell + cell / 2;
     const cy = oy + gridY * cell + cell / 2;
-    const count = kind === "special" ? 16 : 10;
+    const count = kind === "special" ? 22 : 10;
 
     for (let i = 0; i < count; i++) {
-      const a = (Math.PI * 2 * i) / count + Math.random() * 0.35;
-      const speed = (kind === "special" ? 1.8 : 1.2) + Math.random() * (kind === "special" ? 1.6 : 1.0);
+      const a = (Math.PI * 2 * i) / count + Math.random() * 0.45;
+      const speed = (kind === "special" ? 2.3 : 1.2) + Math.random() * (kind === "special" ? 2.0 : 1.0);
       particles.push({
         x: cx,
         y: cy,
         vx: Math.cos(a) * speed,
         vy: Math.sin(a) * speed,
-        life: kind === "special" ? 0.95 : 0.7,
-        maxLife: kind === "special" ? 0.95 : 0.7,
-        size: kind === "special" ? (3 + Math.random() * 4) : (2 + Math.random() * 3),
+        life: kind === "special" ? 1.15 : 0.7,
+        maxLife: kind === "special" ? 1.15 : 0.7,
+        size: kind === "special" ? (4 + Math.random() * 5) : (2 + Math.random() * 3),
         color: kind === "special"
           ? [255, 215, 0]
           : [125, 249, 255],
@@ -397,18 +395,9 @@
   function syncHud() {
     el.score && (el.score.textContent = String(score));
     el.best && (el.best.textContent = String(best));
-    level = 1 + Math.floor(score / 50);
-    el.level && (el.level.textContent = String(level));
-
-    if (level > lastLevelForSound) {
-      lastLevelForSound = level;
-      try { playSfx(sfx.level); } catch {}
-    }
-
     if (el.time) {
       el.time.textContent = (el.mode?.value === "timed") ? `${Math.max(0, timeLeft)}s` : "--";
     }
-
     if (el.combo) {
       el.combo.textContent = combo > 1 ? `x${combo} · +${lastGain}` : "x1";
       el.combo.classList.toggle("active-combo", combo > 1);
@@ -585,9 +574,17 @@
 
     if (newHead.x === food.x && newHead.y === food.y) {
       const eatenType = food.type || "normal";
-      registerEat(eatenType === "special" ? 20 : 10);
-      playSfx(sfx.eat);
-      if (eatenType === "special") playSfx(sfx.level);
+      const basePoints = eatenType === "special" ? 50 : 10;
+
+      registerEat(basePoints);
+
+      if (eatenType === "special") {
+        playSfx(sfx.bitcoin || sfx.level);
+        playSfx(sfx.level);
+      } else {
+        playSfx(sfx.eat);
+      }
+
       emitCoinBurst(newHead.x, newHead.y, eatenType);
 
       if (el.mode?.value === "timed") {

@@ -16,7 +16,6 @@
       <div class="stats">
         <div class="pill">Score: <span id="score">0</span></div>
         <div class="pill">Best: <span id="best">0</span></div>
-        <div class="pill">Nível: <span id="level">1</span></div>
         <div class="pill">Tempo: <span id="time">--</span></div>
         <div class="pill">Combo: <span id="combo">x1</span></div>
       </div>
