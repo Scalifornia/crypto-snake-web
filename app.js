@@ -112,9 +112,19 @@
   let food = { x: 10, y: 10 };
 
   let score = 0;
+  let cashValue = 0;
   let level = 1;
   let lastLevelForSound = 1;
+
+  let bitcoinUntil = 0;
+  let ethereumUntil = 0;
+  let solanaUntil = 0;
+
+  const BITCOIN_MS = 5500;
+  const ETHEREUM_MS = 6000;
+  const SOLANA_MS = 4500;
   let best = Number(localStorage.getItem(STORAGE_KEY) || 0);
+  el.best && (el.best.textContent = "$0");
   el.best && (el.best.textContent = String(best));
 
   // ---------- Canvas layout ----------
@@ -469,22 +479,55 @@
     return 0.05;
   }
 
+  function nowMs() {
+    return performance.now();
+  }
+
+  function isBitcoinActive() {
+    return nowMs() < bitcoinUntil;
+  }
+
+  function isEthereumActive() {
+    return nowMs() < ethereumUntil;
+  }
+
+  function isSolanaActive() {
+    return nowMs() < solanaUntil;
+  }
+
+  function activatePower(power) {
+    const now = nowMs();
+    if (power === "bitcoin") {
+      bitcoinUntil = now + BITCOIN_MS;
+    } else if (power === "ethereum") {
+      ethereumUntil = now + ETHEREUM_MS;
+    } else if (power === "solana") {
+      solanaUntil = now + SOLANA_MS;
+    }
+  }
+
   function resetCombo() {
     combo = 0;
     comboMult = 1.0;
     lastEatAt = 0;
     lastGain = 0;
+    bitcoinUntil = 0;
+    ethereumUntil = 0;
+    solanaUntil = 0;
   }
 
-  function registerEat(basePoints = 10) {
-    const now = performance.now();
+  function registerEat(baseCoins = 1, baseCash = 100) {
+    const now = nowMs();
     if (lastEatAt && (now - lastEatAt) <= COMBO_WINDOW_MS) combo += 1;
     else combo = 1;
 
     lastEatAt = now;
     comboMult = 1.0;
-    lastGain = basePoints;
-    score += lastGain;
+
+    score += baseCoins;
+    const cashMult = isEthereumActive() ? 2 : 1;
+    lastGain = Math.round(baseCash * cashMult);
+    cashValue += lastGain;
   }
 
   function hintOn() {
@@ -569,9 +612,10 @@
 
   function syncHud() {
     const world = typeof currentWorldKey === "function" ? currentWorldKey() : "medium";
+    const worldName = world === "small" ? "Neon Amber" : world === "large" ? "Neon Violet" : "Neon Blue";
+
     const theme = world === "small"
       ? {
-          name: "NEON AMBER",
           accent: "#ffcf86",
           glow: "rgba(255,170,60,0.28)",
           border: "rgba(255,190,90,0.34)",
@@ -579,14 +623,12 @@
         }
       : world === "large"
         ? {
-            name: "NEON VIOLET",
             accent: "#ddb0ff",
             glow: "rgba(180,90,255,0.28)",
             border: "rgba(205,130,255,0.34)",
             font: "Verdana, Arial, sans-serif",
           }
         : {
-            name: "NEON BLUE",
             accent: "#9fddff",
             glow: "rgba(70,140,255,0.28)",
             border: "rgba(105,205,255,0.34)",
@@ -594,21 +636,19 @@
           };
 
     el.score && (el.score.textContent = String(score));
-    el.best && (el.best.textContent = String(best));
-    level = 1 + Math.floor(score / 50);
-    el.level && (el.level.textContent = String(level));
-
-    if (level > lastLevelForSound) {
-      lastLevelForSound = level;
-      try { playSfx(sfx.level); } catch {}
-    }
+    el.best && (el.best.textContent = `$${cashValue.toLocaleString("en-US")}`);
+    el.level && (el.level.textContent = worldName);
 
     if (el.time) {
       el.time.textContent = (el.mode?.value === "timed") ? `${Math.max(0, timeLeft)}s` : "--";
     }
 
     if (el.combo) {
-      el.combo.textContent = combo > 1 ? `Combo ${combo}` : "Combo 1";
+      const parts = [];
+      if (isBitcoinActive()) parts.push(`₿ ${((bitcoinUntil - nowMs()) / 1000).toFixed(1)}s`);
+      if (isEthereumActive()) parts.push(`Ξ ${((ethereumUntil - nowMs()) / 1000).toFixed(1)}s`);
+      if (isSolanaActive()) parts.push(`◎ ${((solanaUntil - nowMs()) / 1000).toFixed(1)}s`);
+      el.combo.textContent = parts.length ? parts.join(" | ") : "--";
     }
 
     if (el.stats) {
@@ -628,15 +668,22 @@
       const blocked = snake.some(p => p.x === x && p.y === y);
       if (!blocked) {
         const isSpecial = Math.random() < 0.12;
+        let power = null;
+        if (isSpecial) {
+          const roll = Math.random();
+          power = roll < 0.34 ? "bitcoin" : roll < 0.67 ? "ethereum" : "solana";
+        }
+
         food = {
           x, y,
           type: isSpecial ? "special" : "normal",
+          power,
           spriteIndex: isSpecial ? -1 : Math.floor(Math.random() * NORMAL_COIN_FILES.length)
         };
         return;
       }
     }
-    food = { x: 1, y: 1, type: "normal", spriteIndex: 0 };
+    food = { x: 1, y: 1, type: "normal", power: null, spriteIndex: 0 };
   }
 
   function initGameFromMenu() {
@@ -772,16 +819,18 @@
     const newHead = { x: head.x + dir.x, y: head.y + dir.y };
 
     if (wallsOn) {
-      if (newHead.x < 0 || newHead.y < 0 || newHead.x >= gridCols || newHead.y >= gridRows) {
+      if (!isBitcoinActive() && (newHead.x < 0 || newHead.y < 0 || newHead.x >= gridCols || newHead.y >= gridRows)) {
         gameOver("Bateu na parede.");
         return;
       }
+      newHead.x = (newHead.x + gridCols) % gridCols;
+      newHead.y = (newHead.y + gridRows) % gridRows;
     } else {
       newHead.x = (newHead.x + gridCols) % gridCols;
       newHead.y = (newHead.y + gridRows) % gridRows;
     }
 
-    if (snake.some(p => p.x === newHead.x && p.y === newHead.y)) {
+    if (!isBitcoinActive() && snake.some(p => p.x === newHead.x && p.y === newHead.y)) {
       gameOver("Colisão com o corpo.");
       return;
     }
@@ -790,9 +839,21 @@
 
     if (newHead.x === food.x && newHead.y === food.y) {
       const eatenType = food.type || "normal";
-      registerEat(eatenType === "special" ? 20 : 10);
+      const eatenPower = food.power || null;
+
+      let cashAward = 100;
+      if (eatenType === "special") {
+        cashAward = eatenPower === "bitcoin" ? 1000 : eatenPower === "ethereum" ? 800 : 700;
+      }
+
+      registerEat(1, cashAward);
       playSfx(sfx.eat);
-      if (eatenType === "special") playSfx(sfx.level);
+
+      if (eatenType === "special") {
+        activatePower(eatenPower);
+        playSfx(sfx.level);
+      }
+
       emitCoinBurst(newHead.x, newHead.y, eatenType);
 
       if (el.mode?.value === "timed") {
@@ -845,7 +906,9 @@
       }
     }
 
-    const effectiveTick = tickMs / speedMult;
+    let effectiveTick = tickMs / speedMult;
+    if (isSolanaActive()) effectiveTick *= (1 / 0.70);
+
     while (accMs >= effectiveTick) {
       accMs -= effectiveTick;
       step();
