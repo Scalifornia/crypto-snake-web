@@ -495,6 +495,42 @@
     return nowMs() < solanaUntil;
   }
 
+  function currentActivePower() {
+    if (isBitcoinActive()) return "bitcoin";
+    if (isEthereumActive()) return "ethereum";
+    if (isSolanaActive()) return "solana";
+    return null;
+  }
+
+  function getPowerTheme(power) {
+    if (power === "bitcoin") {
+      return {
+        color: "rgba(255,200,60,0.95)",
+        glow: "rgba(255,180,40,0.45)",
+        ring: "rgba(255,225,120,0.85)",
+      };
+    }
+    if (power === "ethereum") {
+      return {
+        color: "rgba(120,220,255,0.95)",
+        glow: "rgba(70,160,255,0.40)",
+        ring: "rgba(180,240,255,0.82)",
+      };
+    }
+    if (power === "solana") {
+      return {
+        color: "rgba(180,120,255,0.95)",
+        glow: "rgba(150,90,255,0.40)",
+        ring: "rgba(225,190,255,0.82)",
+      };
+    }
+    return {
+      color: "rgba(57,255,221,0.95)",
+      glow: "rgba(57,255,221,0.20)",
+      ring: "rgba(180,255,245,0.70)",
+    };
+  }
+
   function activatePower(power) {
     const now = nowMs();
     if (power === "bitcoin") {
@@ -645,10 +681,16 @@
 
     if (el.combo) {
       const parts = [];
-      if (isBitcoinActive()) parts.push(`₿ ${((bitcoinUntil - nowMs()) / 1000).toFixed(1)}s`);
-      if (isEthereumActive()) parts.push(`Ξ ${((ethereumUntil - nowMs()) / 1000).toFixed(1)}s`);
-      if (isSolanaActive()) parts.push(`◎ ${((solanaUntil - nowMs()) / 1000).toFixed(1)}s`);
+      if (isBitcoinActive()) parts.push(`₿ Bitcoin ${((bitcoinUntil - nowMs()) / 1000).toFixed(1)}s`);
+      if (isEthereumActive()) parts.push(`Ξ Ethereum ${((ethereumUntil - nowMs()) / 1000).toFixed(1)}s`);
+      if (isSolanaActive()) parts.push(`◎ Solana ${((solanaUntil - nowMs()) / 1000).toFixed(1)}s`);
       el.combo.textContent = parts.length ? parts.join(" | ") : "--";
+
+      const active = currentActivePower();
+      const pTheme = getPowerTheme(active);
+      el.combo.style.color = parts.length ? pTheme.color : "";
+      el.combo.style.textShadow = parts.length ? `0 0 10px ${pTheme.glow}` : "";
+      el.combo.style.fontWeight = parts.length ? "700" : "";
     }
 
     if (el.stats) {
@@ -1130,6 +1172,8 @@
       img = coinImages.normal[idx] || coinImages.normal[0] || null;
     }
 
+    const pTheme = getPowerTheme(food.power);
+
     if (img && img.complete && img.naturalWidth > 0) {
       const pulse = 1 + 0.06 * Math.sin(performance.now() / 180);
       const size = Math.max(8, Math.floor(cell * 0.88 * spriteScale * pulse));
@@ -1138,8 +1182,14 @@
 
       ctx.save();
       if (food.type === "special") {
-        ctx.shadowBlur = Math.max(8, Math.floor(cell * 0.55 * spriteScale));
-        ctx.shadowColor = "rgba(255, 200, 40, 0.75)";
+        ctx.shadowBlur = Math.max(12, Math.floor(cell * 0.72 * spriteScale));
+        ctx.shadowColor = pTheme.glow;
+
+        ctx.strokeStyle = pTheme.ring;
+        ctx.lineWidth = Math.max(2, Math.floor(cell * 0.08));
+        ctx.beginPath();
+        ctx.arc(x + cell / 2, y + cell / 2, Math.max(8, cell * 0.42 * spriteScale), 0, Math.PI * 2);
+        ctx.stroke();
       } else {
         ctx.shadowBlur = Math.max(5, Math.floor(cell * 0.32 * spriteScale));
         ctx.shadowColor = "rgba(125, 249, 255, 0.35)";
@@ -1149,9 +1199,10 @@
       return;
     }
 
-    ctx.fillStyle = food.type === "special"
-      ? "rgba(245,158,11,0.95)"
-      : "rgba(34,197,94,0.95)";
+    ctx.save();
+    ctx.fillStyle = food.type === "special" ? pTheme.color : "rgba(34,197,94,0.95)";
+    ctx.shadowBlur = food.type === "special" ? 14 : 6;
+    ctx.shadowColor = food.type === "special" ? pTheme.glow : "rgba(34,197,94,0.35)";
     ctx.beginPath();
     ctx.arc(
       x + cell / 2,
@@ -1161,87 +1212,83 @@
       Math.PI * 2
     );
     ctx.fill();
+
+    if (food.type === "special") {
+      ctx.strokeStyle = pTheme.ring;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(x + cell / 2, y + cell / 2, Math.max(8, cell * 0.40 * spriteScale), 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   function drawSnake() {
-    const spriteScale = currentSpriteScale();
+    if (!snake.length) return;
 
-    for (let i = snake.length - 1; i >= 0; i--) {
-      const p = snake[i];
-      const x = ox + p.x * cell;
-      const y = oy + p.y * cell;
-      const cx = x + cell / 2;
-      const cy = y + cell / 2;
+    const active = currentActivePower();
+    const pTheme = getPowerTheme(active);
+    const head = snake[0];
 
+    if (active) {
       ctx.save();
-
-      if (i === 0) {
-        const r = Math.max(6, cell * 0.42 * spriteScale);
-
-        const headGlow = ctx.createRadialGradient(
-          cx - cell * 0.08 * spriteScale,
-          cy - cell * 0.10 * spriteScale,
-          2,
-          cx,
-          cy,
-          r * 1.3
-        );
-        headGlow.addColorStop(0, "rgba(160,255,245,1)");
-        headGlow.addColorStop(0.55, "rgba(57,255,221,0.98)");
-        headGlow.addColorStop(1, "rgba(0,170,155,0.92)");
-
-        ctx.shadowBlur = Math.max(8, Math.floor(cell * 0.55 * spriteScale));
-        ctx.shadowColor = "rgba(57,255,221,0.45)";
-        ctx.fillStyle = headGlow;
-
-        ctx.beginPath();
-        ctx.ellipse(cx, cy, r * 1.10, r, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = "#071018";
-
-        ctx.beginPath();
-        ctx.arc(cx - cell * 0.13 * spriteScale, cy - cell * 0.12 * spriteScale, Math.max(2, cell * 0.05 * spriteScale), 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.arc(cx + cell * 0.13 * spriteScale, cy - cell * 0.12 * spriteScale, Math.max(2, cell * 0.05 * spriteScale), 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.strokeStyle = "rgba(255,255,255,0.78)";
-        ctx.lineWidth = Math.max(1, cell * 0.045 * spriteScale);
-        ctx.beginPath();
-        ctx.moveTo(cx - cell * 0.08 * spriteScale, cy + cell * 0.10 * spriteScale);
-        ctx.quadraticCurveTo(cx, cy + cell * 0.18 * spriteScale, cx + cell * 0.08 * spriteScale, cy + cell * 0.10 * spriteScale);
-        ctx.stroke();
-
-      } else {
-        const r = Math.max(4, cell * (0.34 - Math.min(i, 10) * 0.008) * spriteScale);
-
-        const bodyGrad = ctx.createRadialGradient(
-          cx - cell * 0.06 * spriteScale,
-          cy - cell * 0.07 * spriteScale,
-          2,
-          cx,
-          cy,
-          r * 1.15
-        );
-        bodyGrad.addColorStop(0, "rgba(220,150,255,0.92)");
-        bodyGrad.addColorStop(0.58, "rgba(168,85,247,0.82)");
-        bodyGrad.addColorStop(1, "rgba(80,35,130,0.55)");
-
-        ctx.shadowBlur = Math.max(4, Math.floor(cell * 0.22 * spriteScale));
-        ctx.shadowColor = "rgba(168,85,247,0.18)";
-        ctx.fillStyle = bodyGrad;
-
-        ctx.beginPath();
-        ctx.ellipse(cx, cy, r, r * 0.92, 0, 0, Math.PI * 2);
-        ctx.fill();
+      ctx.shadowBlur = Math.max(12, Math.floor(cell * 0.85));
+      ctx.shadowColor = pTheme.glow;
+      for (const part of snake) {
+        const x = ox + part.x * cell;
+        const y = oy + part.y * cell;
+        ctx.fillStyle = pTheme.glow;
+        ctx.fillRect(x + 2, y + 2, cell - 4, cell - 4);
       }
-
       ctx.restore();
     }
+
+    for (let i = snake.length - 1; i >= 0; i--) {
+      const part = snake[i];
+      const x = ox + part.x * cell;
+      const y = oy + part.y * cell;
+      const isHead = i === 0;
+      const inset = isHead ? 1 : 2;
+      const size = cell - inset * 2;
+
+      ctx.save();
+      if (isHead) {
+        ctx.fillStyle = active ? pTheme.color : "rgba(57,255,221,0.95)";
+        ctx.shadowBlur = active ? 16 : 10;
+        ctx.shadowColor = active ? pTheme.glow : "rgba(57,255,221,0.28)";
+      } else {
+        ctx.fillStyle = active ? pTheme.ring : "rgba(130,255,235,0.88)";
+      }
+
+      const r = Math.max(5, Math.floor(cell * 0.22));
+      ctx.beginPath();
+      ctx.moveTo(x + inset + r, y + inset);
+      ctx.lineTo(x + inset + size - r, y + inset);
+      ctx.quadraticCurveTo(x + inset + size, y + inset, x + inset + size, y + inset + r);
+      ctx.lineTo(x + inset + size, y + inset + size - r);
+      ctx.quadraticCurveTo(x + inset + size, y + inset + size, x + inset + size - r, y + inset + size);
+      ctx.lineTo(x + inset + r, y + inset + size);
+      ctx.quadraticCurveTo(x + inset, y + inset + size, x + inset, y + inset + size - r);
+      ctx.lineTo(x + inset, y + inset + r);
+      ctx.quadraticCurveTo(x + inset, y + inset, x + inset + r, y + inset);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    const hx = ox + head.x * cell;
+    const hy = oy + head.y * cell;
+    const eyeR = Math.max(2, Math.floor(cell * 0.07));
+    const eyeOffX = Math.max(5, Math.floor(cell * 0.24));
+    const eyeOffY = Math.max(5, Math.floor(cell * 0.26));
+
+    ctx.save();
+    ctx.fillStyle = "rgba(5,8,18,0.92)";
+    ctx.beginPath();
+    ctx.arc(hx + eyeOffX, hy + eyeOffY, eyeR, 0, Math.PI * 2);
+    ctx.arc(hx + cell - eyeOffX, hy + eyeOffY, eyeR, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
   }
 
   function draw() {
