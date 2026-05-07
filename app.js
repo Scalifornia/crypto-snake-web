@@ -103,6 +103,7 @@
 
   let particles = [];
   let lastFrameTs = 0;
+  let eatAnimUntil = 0;
 
   let wallsOn = false;
 
@@ -531,6 +532,47 @@
     };
   }
 
+  function getWorldSnakePalette() {
+    const world = typeof currentWorldKey === "function" ? currentWorldKey() : "medium";
+
+    if (world === "small") {
+      return {
+        head: "#ffd089",
+        body: "#ffb347",
+        tail: "#c97a1f",
+        shadow: "rgba(255,180,60,0.30)",
+      };
+    }
+
+    if (world === "large") {
+      return {
+        head: "#ddb0ff",
+        body: "#a855f7",
+        tail: "#6d28d9",
+        shadow: "rgba(170,90,255,0.30)",
+      };
+    }
+
+    return {
+      head: "#8ee7ff",
+      body: "#38bdf8",
+      tail: "#0f6fa8",
+      shadow: "rgba(70,170,255,0.30)",
+    };
+  }
+
+  function visualDir() {
+    if (dir?.x || dir?.y) return dir;
+    return { x: 1, y: 0 };
+  }
+
+  function mouthOpenAmount() {
+    const remain = eatAnimUntil - nowMs();
+    if (remain <= 0) return 0;
+    const t = Math.max(0, Math.min(1, remain / 180));
+    return 0.18 + (0.42 * t);
+  }
+
   function activatePower(power) {
     const now = nowMs();
     if (power === "bitcoin") {
@@ -550,6 +592,7 @@
     bitcoinUntil = 0;
     ethereumUntil = 0;
     solanaUntil = 0;
+    eatAnimUntil = 0;
   }
 
   function registerEat(baseCoins = 1, baseCash = 100) {
@@ -890,6 +933,7 @@
 
       registerEat(1, cashAward);
       playSfx(sfx.eat);
+      eatAnimUntil = nowMs() + 180;
 
       if (eatenType === "special") {
         activatePower(eatenPower);
@@ -1228,7 +1272,9 @@
 
     const active = currentActivePower();
     const pTheme = getPowerTheme(active);
+    const palette = getWorldSnakePalette();
     const head = snake[0];
+    const facing = visualDir();
 
     if (active) {
       ctx.save();
@@ -1238,29 +1284,34 @@
         const x = ox + part.x * cell;
         const y = oy + part.y * cell;
         ctx.fillStyle = pTheme.glow;
-        ctx.fillRect(x + 2, y + 2, cell - 4, cell - 4);
+        ctx.fillRect(x + 3, y + 3, cell - 6, cell - 6);
       }
       ctx.restore();
     }
 
-    for (let i = snake.length - 1; i >= 0; i--) {
+    // body + tail
+    for (let i = snake.length - 1; i >= 1; i--) {
       const part = snake[i];
       const x = ox + part.x * cell;
       const y = oy + part.y * cell;
-      const isHead = i === 0;
-      const inset = isHead ? 1 : 2;
-      const size = cell - inset * 2;
+
+      const t = i / Math.max(1, snake.length - 1);
+      const tailFactor = 0.58 + (0.34 * (1 - t));
+      const size = Math.max(cell * 0.42, cell * tailFactor);
+      const inset = (cell - size) / 2;
 
       ctx.save();
-      if (isHead) {
-        ctx.fillStyle = active ? pTheme.color : "rgba(57,255,221,0.95)";
-        ctx.shadowBlur = active ? 16 : 10;
-        ctx.shadowColor = active ? pTheme.glow : "rgba(57,255,221,0.28)";
+
+      if (active) {
+        ctx.fillStyle = i < snake.length - 2 ? pTheme.ring : pTheme.color;
       } else {
-        ctx.fillStyle = active ? pTheme.ring : "rgba(130,255,235,0.88)";
+        const mix = Math.max(0, Math.min(1, 1 - t));
+        ctx.fillStyle = mix > 0.55 ? palette.body : palette.tail;
+        ctx.shadowBlur = 5;
+        ctx.shadowColor = palette.shadow;
       }
 
-      const r = Math.max(5, Math.floor(cell * 0.22));
+      const r = Math.max(4, size * 0.28);
       ctx.beginPath();
       ctx.moveTo(x + inset + r, y + inset);
       ctx.lineTo(x + inset + size - r, y + inset);
@@ -1276,18 +1327,89 @@
       ctx.restore();
     }
 
+    // head
     const hx = ox + head.x * cell;
     const hy = oy + head.y * cell;
-    const eyeR = Math.max(2, Math.floor(cell * 0.07));
-    const eyeOffX = Math.max(5, Math.floor(cell * 0.24));
-    const eyeOffY = Math.max(5, Math.floor(cell * 0.26));
+    const cx = hx + cell / 2;
+    const cy = hy + cell / 2;
 
     ctx.save();
-    ctx.fillStyle = "rgba(5,8,18,0.92)";
+    ctx.translate(cx, cy);
+
+    let angle = 0;
+    if (facing.x === 1) angle = 0;
+    else if (facing.x === -1) angle = Math.PI;
+    else if (facing.y === 1) angle = Math.PI / 2;
+    else angle = -Math.PI / 2;
+    ctx.rotate(angle);
+
+    const headLen = cell * 0.94;
+    const headWid = cell * 0.74;
+
+    ctx.fillStyle = active ? pTheme.color : palette.head;
+    ctx.shadowBlur = active ? 16 : 10;
+    ctx.shadowColor = active ? pTheme.glow : palette.shadow;
+
     ctx.beginPath();
-    ctx.arc(hx + eyeOffX, hy + eyeOffY, eyeR, 0, Math.PI * 2);
-    ctx.arc(hx + cell - eyeOffX, hy + eyeOffY, eyeR, 0, Math.PI * 2);
+    ctx.moveTo(headLen * 0.48, 0);
+    ctx.quadraticCurveTo(headLen * 0.26, -headWid * 0.54, -headLen * 0.34, -headWid * 0.42);
+    ctx.quadraticCurveTo(-headLen * 0.56, 0, -headLen * 0.34, headWid * 0.42);
+    ctx.quadraticCurveTo(headLen * 0.26, headWid * 0.54, headLen * 0.48, 0);
+    ctx.closePath();
     ctx.fill();
+
+    // darker top plate
+    ctx.fillStyle = "rgba(5,8,18,0.16)";
+    ctx.beginPath();
+    ctx.moveTo(headLen * 0.30, 0);
+    ctx.quadraticCurveTo(0, -headWid * 0.28, -headLen * 0.18, 0);
+    ctx.quadraticCurveTo(0, headWid * 0.28, headLen * 0.30, 0);
+    ctx.closePath();
+    ctx.fill();
+
+    // eyes
+    const eyeR = Math.max(2, cell * 0.052);
+    const eyeX = headLen * 0.14;
+    const eyeY = headWid * 0.18;
+    ctx.fillStyle = "rgba(5,8,18,0.95)";
+    ctx.beginPath();
+    ctx.arc(eyeX, -eyeY, eyeR, 0, Math.PI * 2);
+    ctx.arc(eyeX, eyeY, eyeR, 0, Math.PI * 2);
+    ctx.fill();
+
+    // eye shine
+    ctx.fillStyle = "rgba(255,255,255,0.75)";
+    ctx.beginPath();
+    ctx.arc(eyeX + 0.8, -eyeY - 0.6, Math.max(1, eyeR * 0.38), 0, Math.PI * 2);
+    ctx.arc(eyeX + 0.8, eyeY - 0.6, Math.max(1, eyeR * 0.38), 0, Math.PI * 2);
+    ctx.fill();
+
+    // mouth
+    const mouth = mouthOpenAmount();
+    ctx.strokeStyle = "rgba(5,8,18,0.88)";
+    ctx.lineWidth = Math.max(1.2, cell * 0.045);
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(headLen * 0.28, 0);
+    ctx.lineTo(headLen * 0.46, -headWid * mouth);
+    ctx.moveTo(headLen * 0.28, 0);
+    ctx.lineTo(headLen * 0.46, headWid * mouth);
+    ctx.stroke();
+
+    // tongue
+    if (mouth > 0.22) {
+      ctx.strokeStyle = active ? pTheme.ring : "rgba(255,110,150,0.92)";
+      ctx.lineWidth = Math.max(1, cell * 0.032);
+      ctx.beginPath();
+      ctx.moveTo(headLen * 0.46, 0);
+      ctx.lineTo(headLen * 0.60, 0);
+      ctx.moveTo(headLen * 0.60, 0);
+      ctx.lineTo(headLen * 0.68, -headWid * 0.08);
+      ctx.moveTo(headLen * 0.60, 0);
+      ctx.lineTo(headLen * 0.68, headWid * 0.08);
+      ctx.stroke();
+    }
+
     ctx.restore();
   }
 
