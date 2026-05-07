@@ -4,6 +4,9 @@
   const el = {
     canvas: document.getElementById("game"),
     menu: document.getElementById("menu"),
+    btnOptions: document.getElementById("btnOptions"),
+    btnCloseOptions: document.getElementById("btnCloseOptions"),
+    optionsPanel: document.getElementById("optionsPanel"),
     overlay: document.getElementById("overlay"),
     overlayTitle: document.getElementById("overlayTitle"),
     overlayText: document.getElementById("overlayText"),
@@ -680,6 +683,11 @@
 
   // ---------- UI ----------
   function showMenu(show) { el.menu?.classList.toggle("hidden", !show); }
+
+  function showOptions(show) {
+    el.optionsPanel?.classList.toggle("hidden", !show);
+  }
+
   function showOverlay(show, title="", text="") {
     if (!el.overlay) return;
     el.overlay.classList.toggle("hidden", !show);
@@ -1451,6 +1459,7 @@
     initGameFromMenu();
     particles = [];
     lastFrameTs = 0;
+    showOptions(false);
     state = State.RUNNING;
 
     showMenu(false);
@@ -1484,6 +1493,7 @@
 
   function backToMenu() {
     stopLoop();
+    showOptions(false);
     state = State.MENU;
     showOverlay(false);
     showMenu(true);
@@ -1519,6 +1529,8 @@
   });
 
   el.btnPlay?.addEventListener("click", startGame);
+  el.btnOptions?.addEventListener("click", () => showOptions(true));
+  el.btnCloseOptions?.addEventListener("click", () => showOptions(false));
   el.btnReset?.addEventListener("click", reset);
   el.btnMenu?.addEventListener("click", backToMenu);
   el.btnFull?.addEventListener("click", toggleFullscreen);

@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Crypto Snake Web</title>
-  <link rel="stylesheet" href="style.css?v=134" />
+  <link rel="stylesheet" href="style.css?v=152" />
 </head>
 
 <body>
@@ -26,127 +26,154 @@
       </div>
     </header>
 
-    <div id="menu" class="panel">
-      <div class="menu-shell">
-        <div class="menu-card">
+    
+    <div id="menu" class="panel menu-home">
+      <div class="menu-backdrop"></div>
+
+      <div class="menu-home-inner">
+        <div class="menu-hero">
           <h1>CRYPTO SNAKE</h1>
+          <p>Neon arcade survival across three worlds.</p>
+        </div>
 
-          <div class="row">
-            <label for="mode">Modo</label>
-            <select id="mode">
-              <option value="classic" selected>Infinito (Classic)</option>
-              <option value="timed">Timed (60s)</option>
-              <option value="survival">Survival (speed up)</option>
+        <div class="menu-home-actions">
+          <button id="btnPlay" class="btn btn-primary btn-home">Play</button>
+
+          <div class="menu-home-mode">
+            <label for="mode">Mode</label>
+            <select id="mode" class="menu-home-select">
+              <option value="classic" selected>Classic</option>
+              <option value="timed">Timed</option>
+              <option value="survival">Survival</option>
             </select>
           </div>
 
-          <div class="row">
-            <label for="difficulty">Dificuldade</label>
-            <select id="difficulty">
-              <option value="easy">Easy</option>
-              <option value="normal" selected>Normal</option>
-              <option value="hard">Hard</option>
-            </select>
-          </div>
+          <button id="btnOptions" class="btn btn-home">Options</button>
+        </div>
+      </div>
 
-          <div class="row">
-            <label for="walls">Paredes</label>
-            <select id="walls">
-              <option value="off" selected>OFF (wrap)</option>
-              <option value="on">ON (colisão)</option>
-            </select>
-          </div>
+      <div id="optionsPanel" class="options-panel hidden">
+        <div class="menu-shell">
+          <div class="menu-card options-card">
+            <div class="options-header">
+              <h2>Options</h2>
+              <button id="btnCloseOptions" class="btn">Close</button>
+            </div>
 
-          <div class="row">
-            <label for="grid">Grelha</label>
-            <select id="grid">
-              <option value="off" selected>OFF</option>
-              <option value="mid">Médio</option>
-              <option value="low">Fraco</option>
-            </select>
-          </div>
+            <details class="submenu" open>
+              <summary>Game</summary>
 
-          <div class="row">
-            <label for="hint">Hint</label>
-            <select id="hint">
-              <option value="on" selected>On</option>
-              <option value="off">Off</option>
-            </select>
-          </div>
+              <div class="row">
+                <label for="boardSize">Mundo</label>
+                <select id="boardSize">
+                  <option value="small">Mundo 1</option>
+                  <option value="medium" selected>Mundo 2</option>
+                  <option value="large">Mundo 3</option>
+                </select>
+              </div>
 
-          <div class="row">
-            <label for="boardSize">Mundo</label>
-            <select id="boardSize">
-              <option value="small">Mundo 1</option>
-              <option value="medium" selected>Mundo 2</option>
-              <option value="large">Mundo 3</option>
-            </select>
-          </div>
 
-          <div class="row">
-            <label for="timedDuration">Tempo Time Attack</label>
-            <select id="timedDuration">
-              <option value="10">10 segundos</option>
-              <option value="20" selected>20 segundos</option>
-              <option value="30">30 segundos</option>
-            </select>
-          </div>
+              <div class="row">
+                <label for="difficulty">Dificuldade</label>
+                <select id="difficulty">
+                  <option value="easy">Easy</option>
+                  <option value="normal" selected>Normal</option>
+                  <option value="hard">Hard</option>
+                </select>
+              </div>
 
-          <div class="row">
-            <label for="bgOpacity">Opacidade fundo</label>
-            <input id="bgOpacity" type="range" min="0" max="100" value="40" />
-          </div>
+              <div class="row">
+                <label for="walls">Paredes</label>
+                <select id="walls">
+                  <option value="off" selected>OFF (wrap)</option>
+                  <option value="on">ON (colisão)</option>
+                </select>
+              </div>
 
-          <div class="row">
-            <label for="bgFile">Fundo (upload)</label>
-            <input id="bgFile" type="file" accept="image/*" />
-          </div>
+              <div class="row">
+                <label for="timedDuration">Tempo Time Attack</label>
+                <select id="timedDuration">
+                  <option value="10">10 segundos</option>
+                  <option value="20" selected>20 segundos</option>
+                  <option value="30">30 segundos</option>
+                </select>
+              </div>
 
-          <div class="row">
-            <label for="sound">Efeitos</label>
-            <select id="sound">
-              <option value="on" selected>On</option>
-              <option value="off">Off</option>
-            </select>
-          </div>
+              <div class="row">
+                <label for="hint">Hint</label>
+                <select id="hint">
+                  <option value="on" selected>On</option>
+                  <option value="off">Off</option>
+                </select>
+              </div>
 
-          <div class="row">
-            <label for="sfxVol">Volume efeitos</label>
-            <input id="sfxVol" type="range" min="0" max="100" value="80" />
-          </div>
+              <div class="row">
+                <label for="grid">Grelha</label>
+                <select id="grid">
+                  <option value="off" selected>OFF</option>
+                  <option value="mid">Médio</option>
+                  <option value="low">Fraco</option>
+                </select>
+              </div>
+            </details>
 
-          <div class="row">
-            <label for="music">Música</label>
-            <select id="music">
-              <option value="on" selected>On</option>
-              <option value="off">Off</option>
-            </select>
-          </div>
+            <details class="submenu">
+              <summary>Audio</summary>
 
-          <div class="row">
-            <label for="musicSource">Fonte</label>
-            <select id="musicSource">
-              <option value="default" selected>Trilha Sonora</option>
-              <option value="upload">Carregada pelo utilizador</option>
-            </select>
-          </div>
+              <div class="row">
+                <label for="sound">Efeitos</label>
+                <select id="sound">
+                  <option value="on" selected>On</option>
+                  <option value="off">Off</option>
+                </select>
+              </div>
 
-          <div class="row">
-            <label for="musicFile">Carregar música</label>
-            <input id="musicFile" type="file" accept="audio/*" />
-          </div>
+              <div class="row">
+                <label for="sfxVol">Volume efeitos</label>
+                <input id="sfxVol" type="range" min="0" max="100" value="80" />
+              </div>
 
-          <div class="row">
-            <label for="musicVol">Volume música</label>
-            <input id="musicVol" type="range" min="0" max="100" value="60" />
-          </div>
+              <div class="row">
+                <label for="music">Música</label>
+                <select id="music">
+                  <option value="on" selected>On</option>
+                  <option value="off">Off</option>
+                </select>
+              </div>
 
-          <div class="buttons">
-            <button id="btnPlay" class="btn btn-primary">Play</button>
-          </div>
+              <div class="row">
+                <label for="musicSource">Fonte</label>
+                <select id="musicSource">
+                  <option value="default" selected>Trilha Sonora</option>
+                  <option value="upload">Ficheiro local</option>
+                </select>
+              </div>
 
-          <p class="hint">PC: setas / WASD · Espaço = Pause</p>
-          <p class="hint">Mobile: swipe em qualquer parte do ecrã</p>
+              <div class="row">
+                <label for="musicFile">Carregar música</label>
+                <input id="musicFile" type="file" accept="audio/*" />
+              </div>
+
+              <div class="row">
+                <label for="musicVol">Volume música</label>
+                <input id="musicVol" type="range" min="0" max="100" value="60" />
+              </div>
+            </details>
+
+            <details class="submenu">
+              <summary>Image</summary>
+
+              <div class="row">
+                <label for="bgOpacity">Opacidade fundo</label>
+                <input id="bgOpacity" type="range" min="0" max="100" value="40" />
+              </div>
+
+              <div class="row">
+                <label for="bgFile">Fundo (upload)</label>
+                <input id="bgFile" type="file" accept="image/*" />
+              </div>
+            </details>
+          </div>
         </div>
       </div>
     </div>
@@ -168,6 +195,6 @@
     <div id="worldToast" class="world-toast hidden"></div>
   </div>
 
-  <script defer src="app.js?v=134"></script>
+  <script defer src="app.js?v=152"></script>
 </body>
 </html>
