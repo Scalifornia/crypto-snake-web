@@ -4,12 +4,18 @@
   const el = {
     canvas: document.getElementById("game"),
     menu: document.getElementById("menu"),
+    topbar: document.querySelector(".topbar"),
     btnOptions: document.getElementById("btnOptions"),
     btnCloseOptions: document.getElementById("btnCloseOptions"),
     optionsPanel: document.getElementById("optionsPanel"),
     overlay: document.getElementById("overlay"),
     overlayTitle: document.getElementById("overlayTitle"),
     overlayText: document.getElementById("overlayText"),
+    overlayRanking: document.getElementById("overlayRanking"),
+    rankingList: document.getElementById("rankingList"),
+    rankingNameWrap: document.getElementById("rankingNameWrap"),
+    rankingNameInput: document.getElementById("rankingNameInput"),
+    btnSaveRank: document.getElementById("btnSaveRank"),
     worldToast: document.getElementById("worldToast"),
 
     btnPlay: document.getElementById("btnPlay"),
@@ -19,12 +25,14 @@
 
     btnOverlayReset: document.getElementById("btnOverlayReset"),
     btnOverlayMenu: document.getElementById("btnOverlayMenu"),
+    btnOverlayWorlds: document.getElementById("btnOverlayWorlds"),
 
     mode: document.getElementById("mode"),
     difficulty: document.getElementById("difficulty"),
     walls: document.getElementById("walls"),
     grid: document.getElementById("grid"),
 
+    bgPreset: document.getElementById("bgPreset"),
     bgOpacity: document.getElementById("bgOpacity"),
     bgFile: document.getElementById("bgFile"),
 
@@ -45,6 +53,7 @@
     boardSize: document.getElementById("boardSize"),
     worldSelect: document.getElementById("worldSelect"),
     timedDuration: document.getElementById("timedDuration"),
+    timedOptionsGroup: document.getElementById("timedOptionsGroup"),
     combo: document.getElementById("combo"),
   };
 
@@ -52,10 +61,12 @@
   const ctx = el.canvas.getContext("2d", { alpha: false });
 
   const STORAGE_KEY = "cryptoSnakeBest_v58";
+  const RANKING_KEY = "cs_rankings_v1";
   const LS = {
     sfxVol: "cs_sfxVol",
     musicVol: "cs_musicVol",
     bgData: "cs_bgData",
+    bgPreset: "cs_bgPreset",
     bgOpacity: "cs_bgOpacity",
     grid: "cs_grid",
     walls: "cs_walls",
@@ -79,6 +90,18 @@
   const COMBO_WINDOW_MS = 2200;
   const COMBO_MAX_MULT = 3.0;
 
+  const BACKGROUND_LIBRARY = {
+    alien1: "assets/backgrounds/alien1.png",
+    allien2: "assets/backgrounds/allien2.png",
+    bitimage: "assets/backgrounds/bitimage.jpg",
+    bitimage1: "assets/backgrounds/bitimage1.jpg",
+    image: "assets/backgrounds/image.png",
+    image1: "assets/backgrounds/image1.png",
+    image2: "assets/backgrounds/image2.png",
+    image3: "assets/backgrounds/image3.png",
+    images: "assets/backgrounds/images.jpeg",
+  };
+
   const DIFFICULTY = {
     easy: { tickMs: 140 },
     normal: { tickMs: 110 },
@@ -98,6 +121,7 @@
   let timeLeft = 60;
   let timeAttackDuration = 20;
   let lastSecondTs = 0;
+  let gameElapsedMs = 0;
 
   let combo = 0;
   let comboMult = 1.0;
@@ -105,6 +129,7 @@
   let lastGain = 0;
 
   let particles = [];
+  let floatingTexts = [];
   let lastFrameTs = 0;
   let eatAnimUntil = 0;
 
@@ -114,6 +139,7 @@
   let dir = { x: 1, y: 0 };
   let nextDir = { x: 1, y: 0 };
   let food = { x: 10, y: 10 };
+  let pendingRankEntry = null;
 
   let score = 0;
   let cashValue = 0;
@@ -129,7 +155,6 @@
   const SOLANA_MS = 4500;
   let best = Number(localStorage.getItem(STORAGE_KEY) || 0);
   el.best && (el.best.textContent = "$0");
-  el.best && (el.best.textContent = String(best));
 
   // ---------- Canvas layout ----------
   let cssW = 800, cssH = 600, dpr = 1;
@@ -173,9 +198,8 @@
   }
 
   function currentWorldKey() {
-    if (gridCols <= 18) return "small";
-    if (gridCols >= 28) return "large";
-    return "medium";
+    const key = el.boardSize?.value || "medium";
+    return key === "small" ? "small" : key === "large" ? "large" : "medium";
   }
 
   function worldToLabel(world) {
@@ -383,6 +407,7 @@
 
   // ---------- Background custom (opção A) ----------
   let bgImg = null;
+  let menuBgImg = null;
 
   const NORMAL_COIN_FILES = [
     "Ethereum1.png",
@@ -434,6 +459,15 @@
   }
 
 
+  function loadMenuBackground() {
+    const img = new Image();
+    img.onload = () => {
+      menuBgImg = img;
+      if (state === State.MENU) drawBackground();
+    };
+    img.src = "assets/menu/fundo_snake_melhorado.png";
+  }
+
   function loadBgFromStorage() {
     const data = localStorage.getItem(LS.bgData);
     if (!data) {
@@ -443,6 +477,8 @@
     const img = new Image();
     img.onload = () => {
       bgImg = img;
+      if (el.bgPreset) el.bgPreset.value = "none";
+      localStorage.removeItem(LS.bgPreset);
       resizeCanvas();
       if (state === State.RUNNING || state === State.PAUSED || state === State.OVER) draw();
       else drawBackground();
@@ -470,6 +506,31 @@
     };
     reader.readAsDataURL(file);
   }
+
+  function applyBuiltInBackground(presetKey) {
+    if (!presetKey || presetKey === "none") {
+      if (el.bgPreset) el.bgPreset.value = "none";
+      localStorage.removeItem(LS.bgPreset);
+      localStorage.removeItem(LS.bgData);
+      bgImg = null;
+      draw();
+      return;
+    }
+
+    const src = BACKGROUND_LIBRARY[presetKey];
+    if (!src) return;
+
+    const img = new Image();
+    img.onload = () => {
+      bgImg = img;
+      if (el.bgPreset) el.bgPreset.value = presetKey;
+      localStorage.setItem(LS.bgPreset, presetKey);
+      localStorage.removeItem(LS.bgData);
+      draw();
+    };
+    img.src = src;
+  }
+
 
   function bgOpacity() {
     const v = Number(el.bgOpacity?.value ?? localStorage.getItem(LS.bgOpacity) ?? 40);
@@ -596,6 +657,7 @@
     ethereumUntil = 0;
     solanaUntil = 0;
     eatAnimUntil = 0;
+    floatingTexts = [];
   }
 
   function registerEat(baseCoins = 1, baseCash = 100) {
@@ -616,10 +678,11 @@
     return (el.hint?.value || "on") === "on";
   }
 
-  function emitCoinBurst(gridX, gridY, kind = "normal") {
+  function emitCoinBurst(gridX, gridY, kind = "normal", power = null) {
     const cx = ox + gridX * cell + cell / 2;
     const cy = oy + gridY * cell + cell / 2;
     const count = kind === "special" ? 16 : 10;
+    const pTheme = getPowerTheme(power);
 
     for (let i = 0; i < count; i++) {
       const a = (Math.PI * 2 * i) / count + Math.random() * 0.35;
@@ -633,8 +696,9 @@
         maxLife: kind === "special" ? 0.95 : 0.7,
         size: kind === "special" ? (3 + Math.random() * 4) : (2 + Math.random() * 3),
         color: kind === "special"
-          ? [255, 215, 0]
+          ? (power === "bitcoin" ? [255, 200, 60] : power === "ethereum" ? [120, 220, 255] : power === "solana" ? [180, 120, 255] : [255, 215, 0])
           : [125, 249, 255],
+        glow: kind === "special" ? pTheme.glow : "rgba(125, 249, 255, 0.35)",
       });
     }
   }
@@ -660,11 +724,63 @@
       const alpha = Math.max(0, p.life / p.maxLife);
       ctx.save();
       ctx.fillStyle = `rgba(${p.color[0]},${p.color[1]},${p.color[2]},${alpha})`;
-      ctx.shadowBlur = Math.max(4, p.size * 2);
-      ctx.shadowColor = `rgba(${p.color[0]},${p.color[1]},${p.color[2]},${alpha * 0.8})`;
+      ctx.shadowBlur = Math.max(4, p.size * 2.4);
+      ctx.shadowColor = p.glow || `rgba(${p.color[0]},${p.color[1]},${p.color[2]},${alpha * 0.8})`;
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
       ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function emitFloatingText(gridX, gridY, text, color = "rgba(255,255,255,0.96)") {
+    floatingTexts.push({
+      x: ox + gridX * cell + cell / 2,
+      y: oy + gridY * cell + cell / 2,
+      text,
+      color,
+      life: 1.15,
+      maxLife: 1.15,
+      vy: -16,
+      blink: true,
+    });
+  }
+
+  function updateFloatingTexts(dtSec) {
+    if (!floatingTexts.length) return;
+    for (const t of floatingTexts) {
+      t.y += t.vy * dtSec;
+      t.life -= dtSec;
+    }
+    floatingTexts = floatingTexts.filter(t => t.life > 0);
+  }
+
+  function drawFloatingTexts() {
+    if (!floatingTexts.length) return;
+
+    for (const t of floatingTexts) {
+      let alpha = Math.max(0, t.life / t.maxLife);
+
+      if (t.blink) {
+        const elapsed = t.maxLife - t.life;
+        if (elapsed < 0.54) {
+          const blinkPhase = Math.sin(elapsed * 34);
+          alpha *= blinkPhase > 0 ? 1 : 0.15;
+        }
+      }
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = `900 ${Math.max(22, Math.floor(cell * 0.82))}px Arial`;
+      ctx.lineWidth = Math.max(2, Math.floor(cell * 0.07));
+      ctx.strokeStyle = "rgba(5,8,18,0.72)";
+      ctx.fillStyle = t.color;
+      ctx.shadowBlur = 18;
+      ctx.shadowColor = t.color;
+      ctx.strokeText(t.text, t.x, t.y);
+      ctx.fillText(t.text, t.x, t.y);
       ctx.restore();
     }
   }
@@ -681,11 +797,160 @@
     ctx.drawImage(img, dx, dy, sw, sh);
   }
 
+
+  function currentModeKey() {
+    return el.mode?.value || "classic";
+  }
+
+  function getRankings() {
+    try {
+      const raw = localStorage.getItem(RANKING_KEY);
+      const data = raw ? JSON.parse(raw) : {};
+      return {
+        classic: Array.isArray(data.classic) ? data.classic : [],
+        timed: Array.isArray(data.timed) ? data.timed : [],
+        survival: Array.isArray(data.survival) ? data.survival : [],
+      };
+    } catch {
+      return { classic: [], timed: [], survival: [] };
+    }
+  }
+
+  function saveRankings(data) {
+    localStorage.setItem(RANKING_KEY, JSON.stringify(data));
+  }
+
+  function compareRankingEntries(a, b) {
+    if (a.mode === "survival" && b.mode === "survival") {
+      if ((b.timeSeconds || 0) !== (a.timeSeconds || 0)) return (b.timeSeconds || 0) - (a.timeSeconds || 0);
+      if ((b.coins || 0) !== (a.coins || 0)) return (b.coins || 0) - (a.coins || 0);
+      return (b.cash || 0) - (a.cash || 0);
+    }
+    if ((b.coins || 0) !== (a.coins || 0)) return (b.coins || 0) - (a.coins || 0);
+    if ((b.cash || 0) !== (a.cash || 0)) return (b.cash || 0) - (a.cash || 0);
+    return (b.timeSeconds || 0) - (a.timeSeconds || 0);
+  }
+
+  function formatRankingEntry(entry, index) {
+    const pos = index === 0 ? "1º" : index === 1 ? "2º" : "3º";
+    const world = entry.world === "small" ? "W1" : entry.world === "large" ? "W3" : "W2";
+    const metric = entry.mode === "survival"
+      ? `${entry.timeSeconds.toFixed(1)}s`
+      : `${entry.coins}`;
+    const extra = entry.mode === "survival"
+      ? `${entry.coins}`
+      : `${entry.timeSeconds.toFixed(1)}s`;
+
+    return `
+      <div class="ranking-row rank-${index + 1}">
+        <div class="rank-pos">${pos}</div>
+        <div class="rank-name">${entry.name}</div>
+        <div class="rank-metric">${metric}</div>
+        <div class="rank-extra">${extra}</div>
+        <div class="rank-world">${world}</div>
+      </div>
+    `;
+  }
+
+  function renderRankingList(mode) {
+    if (!el.rankingList) return;
+    const list = getRankings()[mode] || [];
+
+    const primaryLabel = mode === "survival" ? "Tempo" : "Moedas";
+    const secondaryLabel = mode === "survival" ? "Moedas" : "Tempo";
+
+    const header = `
+      <div class="ranking-head">
+        <div class="rank-pos">#</div>
+        <div class="rank-name">Nome</div>
+        <div class="rank-metric">${primaryLabel}</div>
+        <div class="rank-extra">${secondaryLabel}</div>
+        <div class="rank-world">Mundo</div>
+      </div>
+    `;
+
+    if (!list.length) {
+      el.rankingList.innerHTML = `${header}<div class="ranking-item empty">Sem registos ainda.</div>`;
+      return;
+    }
+
+    el.rankingList.innerHTML = header + list.map((entry, i) => formatRankingEntry(entry, i)).join("");
+  }
+
+  function evaluateRankingEntry() {
+    const mode = currentModeKey();
+    const rankings = getRankings();
+    const list = rankings[mode] || [];
+
+    const entry = {
+      name: "PLAYER",
+      mode,
+      world: currentWorldKey(),
+      coins: score,
+      cash: cashValue,
+      timeSeconds: Number((gameElapsedMs / 1000).toFixed(1)),
+      createdAt: Date.now(),
+    };
+
+    const merged = [...list, entry].sort(compareRankingEntries).slice(0, 3);
+    const qualifies = merged.some(e => e.createdAt === entry.createdAt);
+    return { mode, rankings, list, entry, qualifies };
+  }
+
+  function savePendingRanking(name) {
+    if (!pendingRankEntry) return false;
+    const { mode, rankings, list, entry } = pendingRankEntry;
+    entry.name = (name || "PLAYER").trim().slice(0, 12) || "PLAYER";
+    rankings[mode] = [...list, entry].sort(compareRankingEntries).slice(0, 3);
+    saveRankings(rankings);
+    pendingRankEntry = null;
+    return true;
+  }
+
+  function configureOverlayForPause() {
+    el.btnOverlayReset && el.btnOverlayReset.classList.remove("hidden");
+    el.btnOverlayReset && (el.btnOverlayReset.textContent = "Reset");
+    el.btnOverlayWorlds && el.btnOverlayWorlds.classList.add("hidden");
+    el.btnOverlayMenu && el.btnOverlayMenu.classList.remove("hidden");
+    el.btnOverlayMenu && (el.btnOverlayMenu.textContent = "Menu");
+    el.overlayRanking && el.overlayRanking.classList.add("hidden");
+    el.rankingNameWrap && el.rankingNameWrap.classList.add("hidden");
+  }
+
+  function configureOverlayForGameOver(qualifies, mode) {
+    el.btnOverlayReset && el.btnOverlayReset.classList.remove("hidden");
+    el.btnOverlayReset && (el.btnOverlayReset.textContent = "Try Again");
+    el.btnOverlayWorlds && el.btnOverlayWorlds.classList.remove("hidden");
+    el.btnOverlayMenu && el.btnOverlayMenu.classList.remove("hidden");
+    el.btnOverlayMenu && (el.btnOverlayMenu.textContent = "Menu");
+
+    if (qualifies) {
+      el.overlayRanking && el.overlayRanking.classList.add("hidden");
+      el.rankingNameWrap && el.rankingNameWrap.classList.remove("hidden");
+      if (el.rankingNameInput) {
+        el.rankingNameInput.value = "";
+        setTimeout(() => el.rankingNameInput?.focus(), 40);
+      }
+    } else {
+      el.rankingNameWrap && el.rankingNameWrap.classList.add("hidden");
+      el.overlayRanking && el.overlayRanking.classList.remove("hidden");
+      renderRankingList(mode);
+    }
+  }
+
   // ---------- UI ----------
-  function showMenu(show) { el.menu?.classList.toggle("hidden", !show); }
+  function showMenu(show) {
+    el.menu?.classList.toggle("hidden", !show);
+    el.topbar?.classList.toggle("menu-hidden", !!show);
+  }
 
   function showOptions(show) {
     el.optionsPanel?.classList.toggle("hidden", !show);
+  }
+
+  function syncModeOptionsVisibility() {
+    const isTimed = (el.mode?.value || "classic") === "timed";
+    el.timedOptionsGroup?.classList.toggle("hidden", !isTimed);
   }
 
   function showOverlay(show, title="", text="") {
@@ -727,7 +992,8 @@
     el.level && (el.level.textContent = worldName);
 
     if (el.time) {
-      el.time.textContent = (el.mode?.value === "timed") ? `${Math.max(0, timeLeft)}s` : "--";
+      if (el.mode?.value === "timed") el.time.textContent = `${Math.max(0, timeLeft)}s`;
+      else el.time.textContent = `${(gameElapsedMs / 1000).toFixed(1)}s`;
     }
 
     if (el.combo) {
@@ -742,6 +1008,9 @@
       el.combo.style.color = parts.length ? pTheme.color : "";
       el.combo.style.textShadow = parts.length ? `0 0 10px ${pTheme.glow}` : "";
       el.combo.style.fontWeight = parts.length ? "700" : "";
+
+      const powerPill = el.combo.parentElement;
+      if (powerPill) powerPill.classList.toggle("power-active", parts.length > 0);
     }
 
     if (el.stats) {
@@ -785,12 +1054,14 @@
     gridSize = currentGridSize();
 
     score = 0;
+    gameElapsedMs = 0;
     speedMult = 1.0;
     resetCombo();
     dir = { x: 1, y: 0 };
     nextDir = { x: 1, y: 0 };
 
     wallsOn = (el.walls?.value === "on");
+    if (el.mode?.value === "timed") wallsOn = false;
     if (el.mode?.value === "classic" && el.walls?.value === "off") wallsOn = false;
 
     const mid = Math.floor(gridSize / 2);
@@ -804,7 +1075,10 @@
     ];
 
     if (el.mode?.value === "timed") {
-      timeAttackDuration = Number(el.timedDuration?.value || 20);
+      const world = currentWorldKey();
+      const selectedTimed = Number(el.timedDuration?.value || 20);
+      const autoTimed = world === "small" ? 20 : world === "large" ? 30 : 25;
+      timeAttackDuration = selectedTimed === 20 ? autoTimed : selectedTimed;
       timeLeft = timeAttackDuration;
       lastSecondTs = 0;
     } else {
@@ -911,7 +1185,10 @@
     const head = snake[0];
     const newHead = { x: head.x + dir.x, y: head.y + dir.y };
 
-    if (wallsOn) {
+    if (el.mode?.value === "timed") {
+      newHead.x = (newHead.x + gridCols) % gridCols;
+      newHead.y = (newHead.y + gridRows) % gridRows;
+    } else if (wallsOn) {
       if (!isBitcoinActive() && (newHead.x < 0 || newHead.y < 0 || newHead.x >= gridCols || newHead.y >= gridRows)) {
         gameOver("Bateu na parede.");
         return;
@@ -923,7 +1200,7 @@
       newHead.y = (newHead.y + gridRows) % gridRows;
     }
 
-    if (!isBitcoinActive() && snake.some(p => p.x === newHead.x && p.y === newHead.y)) {
+    if (el.mode?.value !== "timed" && !isBitcoinActive() && snake.some(p => p.x === newHead.x && p.y === newHead.y)) {
       gameOver("Colisão com o corpo.");
       return;
     }
@@ -948,10 +1225,35 @@
         playSfx(sfx.level);
       }
 
-      emitCoinBurst(newHead.x, newHead.y, eatenType);
-
       if (el.mode?.value === "timed") {
-        timeLeft += (eatenType === "special" ? 2 : 1);
+        let timeGain = 1;
+        let popupColor = "rgba(255,255,255,0.96)";
+
+        if (eatenType === "special") {
+          if (eatenPower === "bitcoin") {
+            timeGain = 4;
+            popupColor = "rgba(255,200,60,0.98)";
+          } else if (eatenPower === "ethereum") {
+            timeGain = 2;
+            popupColor = "rgba(145,175,210,0.98)";
+          } else if (eatenPower === "solana") {
+            timeGain = 2;
+            popupColor = "rgba(180,120,255,0.98)";
+          }
+        } else {
+          const idx = Number.isInteger(food.spriteIndex) ? food.spriteIndex : 0;
+          if (idx === 0) popupColor = "rgba(145,175,210,0.98)";      // Ethereum
+          else if (idx === 1) popupColor = "rgba(180,120,255,0.98)"; // Solana
+          else if (idx === 2) popupColor = "rgba(90,170,255,0.98)";  // Cardano
+          else if (idx === 3) popupColor = "rgba(255,190,70,0.98)";  // Doge
+          else if (idx === 4) popupColor = "rgba(255,200,60,0.98)";  // Bitcoin
+        }
+
+        timeLeft += timeGain;
+        lastSecondTs = nowMs();
+        emitFloatingText(newHead.x, newHead.y, `+${timeGain}s`, popupColor);
+      } else {
+        emitCoinBurst(newHead.x, newHead.y, eatenType, eatenPower);
       }
 
       spawnFood();
@@ -986,6 +1288,7 @@
 
     const dt = ts - lastTs;
     const frameDt = (ts - lastFrameTs) / 1000;
+    gameElapsedMs += dt;
     lastTs = ts;
     lastFrameTs = ts;
     accMs += dt;
@@ -1010,6 +1313,7 @@
     }
 
     updateParticles(frameDt);
+    updateFloatingTexts(frameDt);
     draw();
     rafId = requestAnimationFrame(loop);
   }
@@ -1017,6 +1321,8 @@
   // ---------- Render ----------
   function drawBackground() {
     const world = typeof currentWorldKey === "function" ? currentWorldKey() : "medium";
+    const isMenuScreen = state === State.MENU;
+    const bgToUse = isMenuScreen ? menuBgImg : bgImg;
 
     const theme = world === "small"
       ? {
@@ -1048,30 +1354,44 @@
     ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, cssW, cssH);
 
-    if (bgImg) {
-      const a = bgOpacity();
+    if (bgToUse) {
+      const a = isMenuScreen ? 0.95 : bgOpacity();
       if (a > 0) {
         ctx.save();
-        ctx.globalAlpha = Math.max(0.12, a * 0.35);
-        drawImageCover(bgImg, 0, 0, cssW, cssH);
+        ctx.globalAlpha = isMenuScreen ? 0.92 : Math.max(0.12, a * 0.35);
+        drawImageCover(bgToUse, 0, 0, cssW, cssH);
         ctx.restore();
       }
     }
 
-    if (bgImg) {
-      const a = bgOpacity();
-      if (a > 0) {
-        ctx.save();
-        ctx.globalAlpha = a;
-        drawImageCover(bgImg, ox, oy, boardW, boardH);
-        ctx.restore();
+    if (!isMenuScreen) {
+      if (bgToUse) {
+        const a = bgOpacity();
+        if (a > 0) {
+          ctx.save();
+          ctx.globalAlpha = a;
+          drawImageCover(bgToUse, ox, oy, boardW, boardH);
+          ctx.restore();
+        } else {
+          ctx.fillStyle = "rgba(7,10,18,0.92)";
+          ctx.fillRect(ox, oy, boardW, boardH);
+        }
       } else {
         ctx.fillStyle = "rgba(7,10,18,0.92)";
         ctx.fillRect(ox, oy, boardW, boardH);
       }
-    } else {
-      ctx.fillStyle = "rgba(7,10,18,0.92)";
+    }
+
+    const active = currentActivePower();
+    if (active) {
+      ctx.save();
+      ctx.fillStyle = active === "bitcoin"
+        ? "rgba(255, 200, 60, 0.08)"
+        : active === "ethereum"
+          ? "rgba(120, 220, 255, 0.07)"
+          : "rgba(180, 120, 255, 0.07)";
       ctx.fillRect(ox, oy, boardW, boardH);
+      ctx.restore();
     }
 
     const ga = gridAlpha();
@@ -1225,6 +1545,7 @@
     }
 
     const pTheme = getPowerTheme(food.power);
+    const powerSymbol = food.power === "bitcoin" ? "₿" : food.power === "ethereum" ? "Ξ" : food.power === "solana" ? "◎" : "";
 
     if (img && img.complete && img.naturalWidth > 0) {
       const pulse = 1 + 0.06 * Math.sin(performance.now() / 180);
@@ -1242,12 +1563,31 @@
         ctx.beginPath();
         ctx.arc(x + cell / 2, y + cell / 2, Math.max(8, cell * 0.42 * spriteScale), 0, Math.PI * 2);
         ctx.stroke();
+
+        ctx.lineWidth = 1.2;
+        ctx.globalAlpha = 0.82;
+        ctx.beginPath();
+        ctx.arc(x + cell / 2, y + cell / 2, Math.max(11, cell * 0.54 * spriteScale), 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
       } else {
         ctx.shadowBlur = Math.max(5, Math.floor(cell * 0.32 * spriteScale));
         ctx.shadowColor = "rgba(125, 249, 255, 0.35)";
       }
       ctx.drawImage(img, dx, dy, size, size);
       ctx.restore();
+
+      if (food.type === "special" && powerSymbol) {
+        ctx.save();
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.font = `bold ${Math.max(10, Math.floor(cell * 0.34))}px Arial`;
+        ctx.fillStyle = "rgba(255,255,255,0.96)";
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = pTheme.glow;
+        ctx.fillText(powerSymbol, x + cell / 2, y + cell / 2 + 1);
+        ctx.restore();
+      }
       return;
     }
 
@@ -1271,6 +1611,14 @@
       ctx.beginPath();
       ctx.arc(x + cell / 2, y + cell / 2, Math.max(8, cell * 0.40 * spriteScale), 0, Math.PI * 2);
       ctx.stroke();
+
+      if (powerSymbol) {
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.font = `bold ${Math.max(10, Math.floor(cell * 0.34))}px Arial`;
+        ctx.fillStyle = "rgba(255,255,255,0.96)";
+        ctx.fillText(powerSymbol, x + cell / 2, y + cell / 2 + 1);
+      }
     }
     ctx.restore();
   }
@@ -1427,9 +1775,12 @@
     drawFood();
     drawSnake();
     drawParticles();
+    drawFloatingTexts();
   }
 
-  async function gameOver(msg) {
+  function gameOver(msg) {
+    if (state === State.OVER) return;
+
     state = State.OVER;
     stopLoop();
     stopAllMusic();
@@ -1439,17 +1790,20 @@
     swipeY = null;
     resetCombo();
 
-    await playDeathSequence();
+    const rankingEval = evaluateRankingEntry();
+    pendingRankEntry = rankingEval.qualifies ? rankingEval : null;
 
-    if (score > best) {
-      best = score;
-      localStorage.setItem(STORAGE_KEY, String(best));
-    }
+    playDeathSequence().finally(() => {
+      if (score > best) {
+        best = score;
+        localStorage.setItem(STORAGE_KEY, String(best));
+      }
 
-    syncHud();
-    showOverlay(true, "Game Over", msg || "Restart ou Menu.");
-    if (el.btnOverlayReset) el.btnOverlayReset.textContent = "Restart";
-    draw();
+      syncHud();
+      configureOverlayForGameOver(rankingEval.qualifies, rankingEval.mode);
+      showOverlay(true, "Game Over", msg || "Restart ou Menu.");
+      draw();
+    });
   }
 
   function startGame() {
@@ -1463,8 +1817,10 @@
     state = State.RUNNING;
 
     showMenu(false);
+    configureOverlayForPause();
     showOverlay(false);
 
+    syncModeOptionsVisibility();
     startGameMusic();
     startLoop();
   }
@@ -1477,6 +1833,8 @@
       state = State.PAUSED;
       stopLoop();
       stopAllMusic();
+      configureOverlayForPause();
+      configureOverlayForPause();
       showOverlay(true, "Pausa", "Espaço para continuar");
     } else {
       state = State.RUNNING;
@@ -1494,7 +1852,9 @@
   function backToMenu() {
     stopLoop();
     showOptions(false);
+    pendingRankEntry = null;
     state = State.MENU;
+    configureOverlayForPause();
     showOverlay(false);
     showMenu(true);
     el.btnPause && (el.btnPause.textContent = "Pause");
@@ -1531,12 +1891,42 @@
   el.btnPlay?.addEventListener("click", startGame);
   el.btnOptions?.addEventListener("click", () => showOptions(true));
   el.btnCloseOptions?.addEventListener("click", () => showOptions(false));
+  el.mode?.addEventListener("change", syncModeOptionsVisibility);
+  el.bgPreset?.addEventListener("change", () => {
+    const v = el.bgPreset?.value || "none";
+    if (v === "none") {
+      localStorage.removeItem(LS.bgPreset);
+      bgImg = null;
+      draw();
+      return;
+    }
+    applyBuiltInBackground(v);
+  });
   el.btnReset?.addEventListener("click", reset);
   el.btnMenu?.addEventListener("click", backToMenu);
   el.btnFull?.addEventListener("click", toggleFullscreen);
 
-  el.btnOverlayReset?.addEventListener("click", () => startGame());
+  el.btnOverlayReset?.addEventListener("click", () => {
+    if (state === State.OVER) startGame();
+    else initGameFromMenu();
+  });
   el.btnOverlayMenu?.addEventListener("click", backToMenu);
+  el.btnOverlayWorlds?.addEventListener("click", () => {
+    backToMenu();
+    showOptions(true);
+  });
+  el.btnSaveRank?.addEventListener("click", () => {
+    if (!pendingRankEntry) return;
+    const ok = savePendingRanking(el.rankingNameInput?.value || "PLAYER");
+    if (!ok) return;
+    el.rankingNameWrap?.classList.add("hidden");
+    el.overlayRanking?.classList.remove("hidden");
+    renderRankingList(currentModeKey());
+  });
+  el.btnOverlayWorlds?.addEventListener("click", () => {
+    backToMenu();
+    showOptions(true);
+  });
 
   function applySavedSettingsToUI() {
     const setIf = (node, key) => {
@@ -1545,6 +1935,7 @@
     };
     setIf(el.sfxVol, LS.sfxVol);
     setIf(el.musicVol, LS.musicVol);
+    setIf(el.bgPreset, LS.bgPreset);
     setIf(el.bgOpacity, LS.bgOpacity);
     setIf(el.grid, LS.grid);
     setIf(el.walls, LS.walls);
@@ -1552,6 +1943,7 @@
     setIf(el.mode, LS.mode);
     setIf(el.hint, LS.hint);
     setIf(el.timedDuration, LS.timedDuration);
+    syncModeOptionsVisibility();
   }
 
   function wireSettingsSave() {
@@ -1575,7 +1967,8 @@
       reader.onload = () => {
         const data = String(reader.result || "");
         localStorage.setItem(LS.bgData, data);
-        loadBgFromStorage();
+        loadMenuBackground();
+  loadBgFromStorage();
   loadCoinImages();
       };
       reader.readAsDataURL(f);

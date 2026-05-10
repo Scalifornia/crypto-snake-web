@@ -28,6 +28,7 @@
 
     
     <div id="menu" class="panel menu-home">
+      <img class="menu-bg-image" src="assets/menu/fundo_snake_melhorado.png" alt="" />
       <div class="menu-backdrop"></div>
 
       <div class="menu-home-inner">
@@ -38,16 +39,6 @@
 
         <div class="menu-home-actions">
           <button id="btnPlay" class="btn btn-primary btn-home">Play</button>
-
-          <div class="menu-home-mode">
-            <label for="mode">Mode</label>
-            <select id="mode" class="menu-home-select">
-              <option value="classic" selected>Classic</option>
-              <option value="timed">Timed</option>
-              <option value="survival">Survival</option>
-            </select>
-          </div>
-
           <button id="btnOptions" class="btn btn-home">Options</button>
         </div>
       </div>
@@ -72,6 +63,27 @@
                 </select>
               </div>
 
+              <div class="row">
+                <label for="mode">Modo</label>
+                <select id="mode">
+                  <option value="classic" selected>Classic</option>
+                  <option value="timed">Timed</option>
+                  <option value="survival">Survival</option>
+                </select>
+              </div>
+
+              <div id="timedOptionsGroup" class="submenu nested-submenu hidden">
+                <div class="nested-submenu-title">Time Attack</div>
+                <div class="row">
+                  <label for="timedDuration">Tempo inicial</label>
+                  <select id="timedDuration">
+                    <option value="20" selected>Auto por mundo</option>
+                    <option value="10">10 segundos</option>
+                    <option value="20">20 segundos</option>
+                    <option value="30">30 segundos</option>
+                  </select>
+                </div>
+              </div>
 
               <div class="row">
                 <label for="difficulty">Dificuldade</label>
@@ -87,15 +99,6 @@
                 <select id="walls">
                   <option value="off" selected>OFF (wrap)</option>
                   <option value="on">ON (colisão)</option>
-                </select>
-              </div>
-
-              <div class="row">
-                <label for="timedDuration">Tempo Time Attack</label>
-                <select id="timedDuration">
-                  <option value="10">10 segundos</option>
-                  <option value="20" selected>20 segundos</option>
-                  <option value="30">30 segundos</option>
                 </select>
               </div>
 
@@ -121,6 +124,19 @@
               <summary>Audio</summary>
 
               <div class="row">
+                <label for="music">Música</label>
+                <select id="music">
+                  <option value="on" selected>On</option>
+                  <option value="off">Off</option>
+                </select>
+              </div>
+
+              <div class="row">
+                <label for="musicVol">Volume música</label>
+                <input id="musicVol" type="range" min="0" max="100" value="60" />
+              </div>
+
+              <div class="row">
                 <label for="sound">Efeitos</label>
                 <select id="sound">
                   <option value="on" selected>On</option>
@@ -131,14 +147,6 @@
               <div class="row">
                 <label for="sfxVol">Volume efeitos</label>
                 <input id="sfxVol" type="range" min="0" max="100" value="80" />
-              </div>
-
-              <div class="row">
-                <label for="music">Música</label>
-                <select id="music">
-                  <option value="on" selected>On</option>
-                  <option value="off">Off</option>
-                </select>
               </div>
 
               <div class="row">
@@ -153,15 +161,26 @@
                 <label for="musicFile">Carregar música</label>
                 <input id="musicFile" type="file" accept="audio/*" />
               </div>
-
-              <div class="row">
-                <label for="musicVol">Volume música</label>
-                <input id="musicVol" type="range" min="0" max="100" value="60" />
-              </div>
             </details>
 
             <details class="submenu">
               <summary>Image</summary>
+
+              <div class="row">
+                <label for="bgPreset">Biblioteca</label>
+                <select id="bgPreset">
+                  <option value="none" selected>Sem preset</option>
+                  <option value="alien1">Alien 1</option>
+                  <option value="allien2">Alien 2</option>
+                  <option value="bitimage">Bit Image</option>
+                  <option value="bitimage1">Bit Image 1</option>
+                  <option value="image">Image</option>
+                  <option value="image1">Image 1</option>
+                  <option value="image2">Image 2</option>
+                  <option value="image3">Image 3</option>
+                  <option value="images">Images</option>
+                </select>
+              </div>
 
               <div class="row">
                 <label for="bgOpacity">Opacidade fundo</label>
@@ -183,10 +202,26 @@
     </main>
 
     <div id="overlay" class="overlay hidden">
-      <div class="overlay-card">
+      <div class="overlay-card gameover-card">
         <h2 id="overlayTitle">Pausa</h2>
         <p id="overlayText">Espaço para continuar</p>
-        <div class="buttons">
+
+        <div id="rankingNameWrap" class="ranking-name-wrap hidden">
+          <label for="rankingNameInput">Novo Top 3 — nome</label>
+          <div class="ranking-name-row">
+            <input id="rankingNameInput" type="text" maxlength="12" placeholder="PLAYER" />
+            <button id="btnSaveRank" class="btn btn-primary">Save</button>
+          </div>
+        </div>
+
+        <div id="overlayRanking" class="overlay-ranking hidden">
+          <div class="overlay-ranking-title">Ranking</div>
+          <div id="rankingList" class="ranking-list"></div>
+        </div>
+
+        <div class="buttons overlay-actions">
+          <button id="btnOverlayReset" class="btn">Try Again</button>
+          <button id="btnOverlayWorlds" class="btn">Worlds</button>
           <button id="btnOverlayMenu" class="btn">Menu</button>
         </div>
       </div>
