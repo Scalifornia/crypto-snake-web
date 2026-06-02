@@ -45,7 +45,6 @@
     score: document.getElementById("score"),
     best: document.getElementById("best"),
     stats: document.getElementById("stats"),
-    stats: document.getElementById("stats"),
     level: document.getElementById("level"),
     time: document.getElementById("time"),
     combo: document.getElementById("combo"),
@@ -54,7 +53,6 @@
     worldSelect: document.getElementById("worldSelect"),
     timedDuration: document.getElementById("timedDuration"),
     timedOptionsGroup: document.getElementById("timedOptionsGroup"),
-    combo: document.getElementById("combo"),
   };
 
   if (!el.canvas) return;
@@ -73,6 +71,7 @@
     difficulty: "cs_difficulty",
     mode: "cs_mode",
     hint: "cs_hint",
+    boardSize: "cs_boardSize",
     timedDuration: "cs_timedDuration",
   };
 
@@ -89,6 +88,13 @@
   };
   const COMBO_WINDOW_MS = 2200;
   const COMBO_MAX_MULT = 3.0;
+  const WORLD2_BLUE_BONUS = {
+    chance: 0.18,
+    durationMs: 6500,
+    coins: 3,
+    cash: 450,
+    timedSeconds: 3,
+  };
 
   const BACKGROUND_LIBRARY = {
     alien1: "assets/backgrounds/alien1.png",
@@ -201,6 +207,10 @@
   function currentWorldKey() {
     const key = el.boardSize?.value || "medium";
     return key === "small" ? "small" : key === "large" ? "large" : "medium";
+  }
+
+  function isWorld2() {
+    return currentWorldKey() === "medium";
   }
 
   function worldToLabel(world) {
@@ -1032,7 +1042,7 @@
       const y = Math.floor(Math.random() * gridRows);
       const blocked = snake.some(p => p.x === x && p.y === y);
       if (!blocked) {
-        const canSpawnBlueBonus = world === "medium" && Math.random() < 0.16;
+        const canSpawnBlueBonus = isWorld2() && Math.random() < WORLD2_BLUE_BONUS.chance;
         const isSpecial = !canSpawnBlueBonus && Math.random() < 0.12;
 
         let power = null;
@@ -1048,7 +1058,7 @@
           spriteIndex: (canSpawnBlueBonus || isSpecial) ? -1 : Math.floor(Math.random() * NORMAL_COIN_FILES.length)
         };
 
-        blueBonusUntil = canSpawnBlueBonus ? nowMs() + 5000 : 0;
+        blueBonusUntil = canSpawnBlueBonus ? nowMs() + WORLD2_BLUE_BONUS.durationMs : 0;
         return;
       }
     }
@@ -1225,10 +1235,10 @@
       if (eatenType === "special") {
         cashAward = eatenPower === "bitcoin" ? 1000 : eatenPower === "ethereum" ? 800 : 700;
       } else if (eatenType === "blue_bonus") {
-        cashAward = 350;
+        cashAward = WORLD2_BLUE_BONUS.cash;
       }
 
-      registerEat(eatenType === "blue_bonus" ? 3 : 1, cashAward);
+      registerEat(eatenType === "blue_bonus" ? WORLD2_BLUE_BONUS.coins : 1, cashAward);
       playSfx(sfx.eat);
       eatAnimUntil = nowMs() + 180;
 
@@ -1254,6 +1264,9 @@
             timeGain = 2;
             popupColor = "rgba(180,120,255,0.98)";
           }
+        } else if (eatenType === "blue_bonus") {
+          timeGain = WORLD2_BLUE_BONUS.timedSeconds;
+          popupColor = "rgba(90,190,255,0.98)";
         } else {
           const idx = Number.isInteger(food.spriteIndex) ? food.spriteIndex : 0;
           if (idx === 0) popupColor = "rgba(145,175,210,0.98)";      // Ethereum
@@ -1566,11 +1579,11 @@
 
     const pTheme = getPowerTheme(food.power);
     const powerSymbol = food.type === "blue_bonus"
-      ? "+"
+      ? `+${WORLD2_BLUE_BONUS.coins}`
       : (food.power === "bitcoin" ? "₿" : food.power === "ethereum" ? "Ξ" : food.power === "solana" ? "◎" : "");
 
     if (img && img.complete && img.naturalWidth > 0) {
-      const pulse = 1 + 0.06 * Math.sin(performance.now() / 180);
+      const pulse = 1 + (food.type === "blue_bonus" ? 0.10 : 0.06) * Math.sin(performance.now() / 180);
       const size = Math.max(8, Math.floor(cell * 0.88 * spriteScale * pulse));
       const dx = x + Math.floor((cell - size) / 2);
       const dy = y + Math.floor((cell - size) / 2);
@@ -1611,7 +1624,7 @@
         ctx.save();
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.font = `bold ${Math.max(10, Math.floor(cell * 0.34))}px Arial`;
+        ctx.font = `bold ${Math.max(10, Math.floor(cell * (food.type === "blue_bonus" ? 0.28 : 0.34)))}px Arial`;
         ctx.fillStyle = "rgba(255,255,255,0.96)";
         ctx.shadowBlur = 10;
         ctx.shadowColor = pTheme.glow;
@@ -1872,7 +1885,6 @@
       stopLoop();
       stopAllMusic();
       configureOverlayForPause();
-      configureOverlayForPause();
       showOverlay(true, "Pausa", "Espaço para continuar");
     } else {
       state = State.RUNNING;
@@ -1961,10 +1973,6 @@
     el.overlayRanking?.classList.remove("hidden");
     renderRankingList(currentModeKey());
   });
-  el.btnOverlayWorlds?.addEventListener("click", () => {
-    backToMenu();
-    showOptions(true);
-  });
 
   function applySavedSettingsToUI() {
     const setIf = (node, key) => {
@@ -1980,8 +1988,18 @@
     setIf(el.difficulty, LS.difficulty);
     setIf(el.mode, LS.mode);
     setIf(el.hint, LS.hint);
+    setIf(el.boardSize, LS.boardSize);
     setIf(el.timedDuration, LS.timedDuration);
     syncModeOptionsVisibility();
+  }
+
+  function migrateLegacyBoardSizeSetting() {
+    if (localStorage.getItem(LS.boardSize) !== null) return;
+
+    const legacy = localStorage.getItem("undefined");
+    if (legacy === "small" || legacy === "medium" || legacy === "large") {
+      localStorage.setItem(LS.boardSize, legacy);
+    }
   }
 
   function wireSettingsSave() {
@@ -1996,6 +2014,12 @@
     saveVal(el.difficulty, LS.difficulty);
     saveVal(el.mode, LS.mode);
     saveVal(el.hint, LS.hint);
+    el.boardSize?.addEventListener("change", () => {
+      localStorage.setItem(LS.boardSize, String(el.boardSize.value));
+      resizeCanvas();
+      syncHud();
+      drawBackground();
+    });
     saveVal(el.timedDuration, LS.timedDuration);
 
     el.bgFile?.addEventListener("change", () => {
@@ -2014,6 +2038,7 @@
   }
 
   // BOOT
+  migrateLegacyBoardSizeSetting();
   applySavedSettingsToUI();
   loadBgFromStorage();
   
