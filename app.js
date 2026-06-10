@@ -17,10 +17,14 @@
     rankingNameInput: document.getElementById("rankingNameInput"),
     btnSaveRank: document.getElementById("btnSaveRank"),
     worldToast: document.getElementById("worldToast"),
+    tutorialCard: document.getElementById("tutorialCard"),
+    tutorialText: document.getElementById("tutorialText"),
+    tutorialKeys: document.getElementById("tutorialKeys"),
 
     btnPlay: document.getElementById("btnPlay"),
     btnReset: document.getElementById("btnReset"),
     btnMenu: document.getElementById("btnMenu"),
+    btnHint: document.getElementById("btnHint"),
     btnFull: document.getElementById("btnFull"),
 
     btnOverlayReset: document.getElementById("btnOverlayReset"),
@@ -49,6 +53,7 @@
     time: document.getElementById("time"),
     combo: document.getElementById("combo"),
     hint: document.getElementById("hint"),
+    alignmentHint: document.getElementById("alignmentHint"),
     boardSize: document.getElementById("boardSize"),
     worldSelect: document.getElementById("worldSelect"),
     timedDuration: document.getElementById("timedDuration"),
@@ -71,6 +76,8 @@
     difficulty: "cs_difficulty",
     mode: "cs_mode",
     hint: "cs_hint",
+    alignmentHint: "cs_alignmentHint",
+    tutorialSeen: "cs_tutorialSeen",
     boardSize: "cs_boardSize",
     timedDuration: "cs_timedDuration",
   };
@@ -147,6 +154,17 @@
   let food = { x: 10, y: 10 };
   let blueBonusUntil = 0;
   let pendingRankEntry = null;
+  let tutorialActive = false;
+  let tutorialCoins = 0;
+  let tutorialIntroShown = false;
+  let tutorialDirectionPending = false;
+  let tutorialFirstCoinShown = false;
+  let tutorialCoinMessageDone = false;
+  let tutorialDirectionShown = false;
+  let tutorialFinalShown = false;
+  let tutorialMessageTimer = null;
+  let tutorialStartTimer = null;
+  let tutorialKeysTimer = null;
 
   let score = 0;
   let cashValue = 0;
@@ -213,6 +231,39 @@
     return currentWorldKey() === "medium";
   }
 
+  function worldForMode(mode) {
+    if (mode === "classic") return "small";
+    if (mode === "timed") return "medium";
+    if (mode === "survival") return "large";
+    return "small";
+  }
+
+  function syncWorldToMode() {
+    const world = worldForMode(currentModeKey());
+    if (el.boardSize) el.boardSize.value = world;
+    localStorage.setItem(LS.boardSize, world);
+    return world;
+  }
+
+  function timeAttackDurationForWorld(world) {
+    const selectedTimed = Number(el.timedDuration?.value || 20);
+    const autoTimed = world === "small" ? 20 : world === "large" ? 30 : 25;
+    return selectedTimed === 20 ? autoTimed : selectedTimed;
+  }
+
+  function applyModeExperience() {
+    const world = syncWorldToMode();
+    syncModeOptionsVisibility();
+    if (state === State.MENU) {
+      gameElapsedMs = 0;
+      timeLeft = currentModeKey() === "timed" ? timeAttackDurationForWorld(world) : 0;
+      lastSecondTs = 0;
+    }
+    resizeCanvas();
+    syncHud();
+    drawBackground();
+  }
+
   function worldToLabel(world) {
     return world === "small" ? "Mundo 1" : world === "large" ? "Mundo 3" : "Mundo 2";
   }
@@ -267,9 +318,15 @@
 
   function cycleWorld() {
     if (state !== State.MENU) return;
-    const current = currentWorldKey();
-    const next = current === "small" ? "medium" : current === "medium" ? "large" : "small";
-    const applied = applyWorld(next);
+    const mode = currentModeKey();
+    const nextMode = mode === "classic" ? "timed" : mode === "timed" ? "survival" : "classic";
+    if (el.mode) el.mode.value = nextMode;
+    localStorage.setItem(LS.mode, nextMode);
+    const applied = syncWorldToMode();
+    syncModeOptionsVisibility();
+    resizeCanvas();
+    syncHud();
+    drawBackground();
     if (typeof announceWorld === "function") announceWorld(applied);
   }
 
@@ -686,7 +743,158 @@
   }
 
   function hintOn() {
+    return (el.alignmentHint?.value || "on") === "on";
+  }
+
+  function syncHintButton() {
+    if (!el.btnHint) return;
+    const active = hintOn();
+    el.btnHint.textContent = active ? "Hint ON" : "Hint OFF";
+    el.btnHint.classList.toggle("active", active);
+  }
+
+  function setAlignmentHint(value) {
+    const next = value === "off" ? "off" : "on";
+    if (el.alignmentHint) el.alignmentHint.value = next;
+    localStorage.setItem(LS.alignmentHint, next);
+    syncHintButton();
+    draw();
+  }
+
+  function toggleAlignmentHint() {
+    setAlignmentHint(hintOn() ? "off" : "on");
+  }
+
+  function tutorialEnabled() {
     return (el.hint?.value || "on") === "on";
+  }
+
+  function tutorialSeen() {
+    return localStorage.getItem(LS.tutorialSeen) === "true";
+  }
+
+  function shouldRunTutorial() {
+    return tutorialEnabled();
+  }
+
+  function clearTutorialTimers() {
+    if (tutorialMessageTimer) clearTimeout(tutorialMessageTimer);
+    if (tutorialStartTimer) clearTimeout(tutorialStartTimer);
+    if (tutorialKeysTimer) clearTimeout(tutorialKeysTimer);
+    tutorialMessageTimer = null;
+    tutorialStartTimer = null;
+    tutorialKeysTimer = null;
+  }
+
+  function hideTutorialMessage() {
+    if (!el.tutorialCard) return;
+    el.tutorialCard.classList.remove("show");
+    el.tutorialKeys?.classList.add("hidden");
+    el.tutorialKeys?.classList.remove("pulse");
+    setTimeout(() => {
+      if (!el.tutorialCard?.classList.contains("show")) {
+        el.tutorialCard?.classList.add("hidden");
+      }
+    }, 240);
+  }
+
+  function showTutorialMessage(text, durationMs = 3600, showKeys = false, onDone = null) {
+    if (!el.tutorialCard || !el.tutorialText) return;
+    if (tutorialMessageTimer) clearTimeout(tutorialMessageTimer);
+    if (tutorialKeysTimer) clearTimeout(tutorialKeysTimer);
+    tutorialKeysTimer = null;
+
+    el.tutorialText.textContent = text;
+    el.tutorialCard.classList.remove("hidden");
+    el.tutorialCard.classList.remove("show");
+    void el.tutorialCard.offsetWidth;
+    requestAnimationFrame(() => el.tutorialCard?.classList.add("show"));
+
+    if (el.tutorialKeys) {
+      el.tutorialKeys.classList.toggle("hidden", !showKeys);
+      el.tutorialKeys.classList.toggle("pulse", showKeys);
+      if (showKeys && durationMs > 0) {
+        tutorialKeysTimer = setTimeout(() => {
+          el.tutorialKeys?.classList.add("hidden");
+          el.tutorialKeys?.classList.remove("pulse");
+          tutorialKeysTimer = null;
+        }, 1000);
+      }
+    }
+
+    if (durationMs > 0) {
+      tutorialMessageTimer = setTimeout(() => {
+        hideTutorialMessage();
+        tutorialMessageTimer = null;
+        if (typeof onDone === "function") onDone();
+      }, durationMs);
+    }
+  }
+
+  function resetTutorialProgress() {
+    tutorialCoins = 0;
+    tutorialIntroShown = false;
+    tutorialDirectionPending = false;
+    tutorialFirstCoinShown = false;
+    tutorialCoinMessageDone = false;
+    tutorialDirectionShown = false;
+    tutorialFinalShown = false;
+  }
+
+  function startTutorial() {
+    clearTutorialTimers();
+    resetTutorialProgress();
+    hideTutorialMessage();
+    tutorialActive = shouldRunTutorial();
+    if (!tutorialActive) return;
+
+    tutorialStartTimer = setTimeout(() => {
+      tutorialStartTimer = null;
+      if (!tutorialActive || state !== State.RUNNING) return;
+      tutorialIntroShown = true;
+      showTutorialMessage("Usa WASD ou as setas para te mover.", 0, true);
+    }, 300);
+  }
+
+  function stopTutorial(complete = false) {
+    clearTutorialTimers();
+    hideTutorialMessage();
+    if (complete) localStorage.setItem(LS.tutorialSeen, "true");
+    tutorialActive = false;
+  }
+
+  function onTutorialCoin() {
+    if (!tutorialActive || state !== State.RUNNING) return;
+
+    tutorialCoins += 1;
+    if (tutorialCoins === 1 && !tutorialFirstCoinShown) {
+      tutorialFirstCoinShown = true;
+      tutorialCoinMessageDone = true;
+      showTutorialMessage("Cada moeda aumenta a tua pontuação.", 0);
+      return;
+    }
+
+    if (tutorialCoins === 2 && !tutorialDirectionShown) {
+      showTutorialDirectionMessage();
+      return;
+    }
+
+    if (tutorialCoins >= 3 && !tutorialFinalShown) {
+      tutorialFinalShown = true;
+      showTutorialMessage("Está pronto. Boa sorte.", 2600, false, () => stopTutorial(true));
+    }
+  }
+
+  function showTutorialDirectionMessage() {
+    if (!tutorialActive || state !== State.RUNNING || tutorialDirectionShown) return;
+    tutorialDirectionPending = false;
+    tutorialDirectionShown = true;
+    showTutorialMessage("Evita paredes e o próprio corpo.", 0);
+  }
+
+  function onTutorialDirectionChange() {
+    if (!tutorialActive || state !== State.RUNNING || tutorialDirectionShown) return;
+    tutorialDirectionPending = true;
   }
 
   function emitCoinBurst(gridX, gridY, kind = "normal", power = null) {
@@ -1096,9 +1304,7 @@
 
     if (el.mode?.value === "timed") {
       const world = currentWorldKey();
-      const selectedTimed = Number(el.timedDuration?.value || 20);
-      const autoTimed = world === "small" ? 20 : world === "large" ? 30 : 25;
-      timeAttackDuration = selectedTimed === 20 ? autoTimed : selectedTimed;
+      timeAttackDuration = timeAttackDurationForWorld(world);
       timeLeft = timeAttackDuration;
       lastSecondTs = 0;
     } else {
@@ -1114,7 +1320,9 @@
 
   function setNextDir(x, y) {
     if (x === -dir.x && y === -dir.y) return;
+    const changed = x !== dir.x || y !== dir.y;
     nextDir = { x, y };
+    if (changed) onTutorialDirectionChange();
   }
 
   // Swipe: 1 viragem por tick
@@ -1239,6 +1447,7 @@
       }
 
       registerEat(eatenType === "blue_bonus" ? WORLD2_BLUE_BONUS.coins : 1, cashAward);
+      onTutorialCoin();
       playSfx(sfx.eat);
       eatAnimUntil = nowMs() + 180;
 
@@ -1475,7 +1684,7 @@
   }
 
   function drawHint() {
-    if (!hintOn() || !snake?.length) return;
+    if (!hintOn() || !snake?.length || !food) return;
 
     const head = snake[0];
     const hx = head.x;
@@ -1484,82 +1693,58 @@
     const fy = food.y;
 
     const aligned = (hx === fx || hy === fy);
-    const color = aligned ? [60, 255, 60] : [255, 60, 60];
+    if (!aligned) return;
 
     const hxPx = ox + hx * cell + cell / 2;
     const hyPx = oy + hy * cell + cell / 2;
     const fxPx = ox + fx * cell + cell / 2;
     const fyPx = oy + fy * cell + cell / 2;
+    if (hxPx === fxPx && hyPx === fyPx) return;
 
-    const bandHalf = Math.max(6, Math.floor(cell * 0.34));
-    const outlineOffset = bandHalf;
-    const outlineWidth = Math.max(1, Math.floor(cell * 0.05));
-    const step = 4;
-    const maxPx = Math.max(1, 22 * cell);
+    const half = Math.max(4, cell * 0.18);
+    const lineWidth = Math.max(2, cell * 0.10);
+    const glow = Math.max(10, cell * 0.50);
+    const pulse = 0.78 + 0.18 * Math.sin(performance.now() / 120);
+    const fillGradient = ctx.createLinearGradient(hxPx, hyPx, fxPx, fyPx);
+    const lineGradient = ctx.createLinearGradient(hxPx, hyPx, fxPx, fyPx);
 
-    function falloff(distPx) {
-      const v = distPx / maxPx;
-      return Math.exp(-2.2 * v);
+    fillGradient.addColorStop(0, "rgba(0,255,170,0.03)");
+    fillGradient.addColorStop(0.45, `rgba(0,255,170,${0.12 * pulse})`);
+    fillGradient.addColorStop(1, `rgba(0,255,170,${0.42 * pulse})`);
+    lineGradient.addColorStop(0, "rgba(0,255,170,0.08)");
+    lineGradient.addColorStop(0.55, `rgba(0,255,170,${0.36 * pulse})`);
+    lineGradient.addColorStop(1, `rgba(0,255,170,${0.88 * pulse})`);
+
+    ctx.save();
+    ctx.shadowBlur = glow;
+    ctx.shadowColor = "rgba(0,255,170,0.48)";
+    ctx.fillStyle = fillGradient;
+    ctx.strokeStyle = lineGradient;
+    ctx.lineWidth = lineWidth;
+    ctx.lineCap = "round";
+
+    if (hy === fy) {
+      const x = Math.min(hxPx, fxPx);
+      const w = Math.abs(fxPx - hxPx);
+      ctx.fillRect(x, hyPx - half, w, half * 2);
+      ctx.beginPath();
+      ctx.moveTo(hxPx, hyPx - half);
+      ctx.lineTo(fxPx, fyPx - half);
+      ctx.moveTo(hxPx, hyPx + half);
+      ctx.lineTo(fxPx, fyPx + half);
+      ctx.stroke();
+    } else {
+      const y = Math.min(hyPx, fyPx);
+      const h = Math.abs(fyPx - hyPx);
+      ctx.fillRect(hxPx - half, y, half * 2, h);
+      ctx.beginPath();
+      ctx.moveTo(hxPx - half, hyPx);
+      ctx.lineTo(fxPx - half, fyPx);
+      ctx.moveTo(hxPx + half, hyPx);
+      ctx.lineTo(fxPx + half, fyPx);
+      ctx.stroke();
     }
-
-    function drawHorizontal(x1, x2, yCenter, coinX) {
-      if (x1 === x2) return;
-      const xa = Math.min(x1, x2);
-      const xb = Math.max(x1, x2);
-      for (let x = xa; x <= xb; x += step) {
-        const distPx = Math.abs(x - coinX);
-        const aFill = Math.floor(210 * 0.5 * falloff(distPx));
-        const aLine = Math.floor(220 * falloff(distPx));
-
-        if (aFill > 0) {
-          ctx.fillStyle = `rgba(${color[0]},${color[1]},${color[2]},${aFill / 255})`;
-          ctx.fillRect(x, yCenter - bandHalf, step, bandHalf * 2);
-        }
-        if (aLine > 0) {
-          ctx.strokeStyle = `rgba(${color[0]},${color[1]},${color[2]},${aLine / 255})`;
-          ctx.lineWidth = outlineWidth;
-          ctx.beginPath();
-          ctx.moveTo(x, yCenter - outlineOffset);
-          ctx.lineTo(Math.min(x + step, cssW - 1), yCenter - outlineOffset);
-          ctx.stroke();
-          ctx.beginPath();
-          ctx.moveTo(x, yCenter + outlineOffset);
-          ctx.lineTo(Math.min(x + step, cssW - 1), yCenter + outlineOffset);
-          ctx.stroke();
-        }
-      }
-    }
-
-    function drawVertical(y1, y2, xCenter, coinY) {
-      if (y1 === y2) return;
-      const ya = Math.min(y1, y2);
-      const yb = Math.max(y1, y2);
-      for (let y = ya; y <= yb; y += step) {
-        const distPx = Math.abs(y - coinY);
-        const aFill = Math.floor(210 * 0.5 * falloff(distPx));
-        const aLine = Math.floor(220 * falloff(distPx));
-
-        if (aFill > 0) {
-          ctx.fillStyle = `rgba(${color[0]},${color[1]},${color[2]},${aFill / 255})`;
-          ctx.fillRect(xCenter - bandHalf, y, bandHalf * 2, step);
-        }
-        if (aLine > 0) {
-          ctx.strokeStyle = `rgba(${color[0]},${color[1]},${color[2]},${aLine / 255})`;
-          ctx.lineWidth = outlineWidth;
-          ctx.beginPath();
-          ctx.moveTo(xCenter - outlineOffset, y);
-          ctx.lineTo(xCenter - outlineOffset, Math.min(y + step, cssH - 1));
-          ctx.stroke();
-          ctx.beginPath();
-          ctx.moveTo(xCenter + outlineOffset, y);
-          ctx.lineTo(xCenter + outlineOffset, Math.min(y + step, cssH - 1));
-          ctx.stroke();
-        }
-      }
-    }
-
-    if (hxPx !== fxPx) drawHorizontal(hxPx, fxPx, hyPx, fxPx);
-    if (hyPx !== fyPx) drawVertical(hyPx, fyPx, fxPx, fyPx);
+    ctx.restore();
   }
 
   function drawFood() {
@@ -1822,9 +2007,9 @@
 
   function draw() {
     drawBackground();
-    drawHint();
     drawFood();
     drawSnake();
+    drawHint();
     drawParticles();
     drawFloatingTexts();
   }
@@ -1835,6 +2020,7 @@
     state = State.OVER;
     stopLoop();
     stopAllMusic();
+    stopTutorial(false);
 
     activeTouchId = null;
     swipeX = null;
@@ -1860,6 +2046,7 @@
   function startGame() {
     unlockAudioOnce();
     loadCoinImages();
+    syncWorldToMode();
     resizeCanvas();
     initGameFromMenu();
     particles = [];
@@ -1872,6 +2059,7 @@
     showOverlay(false);
 
     syncModeOptionsVisibility();
+    startTutorial();
     startGameMusic();
     startLoop();
   }
@@ -1901,6 +2089,7 @@
 
   function backToMenu() {
     stopLoop();
+    stopTutorial(false);
     showOptions(false);
     pendingRankEntry = null;
     state = State.MENU;
@@ -1924,10 +2113,7 @@
     if (k === "r") { reset(); return; }
     if (k === "f") { toggleFullscreen(); return; }
     if (k === "h") {
-      if (el.hint) {
-        el.hint.value = el.hint.value === "on" ? "off" : "on";
-        localStorage.setItem(LS.hint, String(el.hint.value));
-      }
+      toggleAlignmentHint();
       return;
     }
     if (state !== State.RUNNING) return;
@@ -1939,9 +2125,13 @@
   });
 
   el.btnPlay?.addEventListener("click", startGame);
+  el.btnHint?.addEventListener("click", toggleAlignmentHint);
   el.btnOptions?.addEventListener("click", () => showOptions(true));
   el.btnCloseOptions?.addEventListener("click", () => showOptions(false));
-  el.mode?.addEventListener("change", syncModeOptionsVisibility);
+  el.mode?.addEventListener("change", () => {
+    localStorage.setItem(LS.mode, String(el.mode.value));
+    applyModeExperience();
+  });
   el.bgPreset?.addEventListener("change", () => {
     const v = el.bgPreset?.value || "none";
     if (v === "none") {
@@ -1988,9 +2178,15 @@
     setIf(el.difficulty, LS.difficulty);
     setIf(el.mode, LS.mode);
     setIf(el.hint, LS.hint);
+    setIf(el.alignmentHint, LS.alignmentHint);
     setIf(el.boardSize, LS.boardSize);
     setIf(el.timedDuration, LS.timedDuration);
+    const world = syncWorldToMode();
+    gameElapsedMs = 0;
+    timeLeft = currentModeKey() === "timed" ? timeAttackDurationForWorld(world) : 0;
+    lastSecondTs = 0;
     syncModeOptionsVisibility();
+    syncHintButton();
   }
 
   function migrateLegacyBoardSizeSetting() {
@@ -2012,8 +2208,14 @@
     saveVal(el.grid, LS.grid);
     saveVal(el.walls, LS.walls);
     saveVal(el.difficulty, LS.difficulty);
-    saveVal(el.mode, LS.mode);
-    saveVal(el.hint, LS.hint);
+    el.alignmentHint?.addEventListener("change", () => {
+      setAlignmentHint(String(el.alignmentHint.value));
+    });
+    el.hint?.addEventListener("change", () => {
+      localStorage.setItem(LS.hint, String(el.hint.value));
+      if (tutorialEnabled()) localStorage.setItem(LS.tutorialSeen, "false");
+      else stopTutorial(false);
+    });
     el.boardSize?.addEventListener("change", () => {
       localStorage.setItem(LS.boardSize, String(el.boardSize.value));
       resizeCanvas();

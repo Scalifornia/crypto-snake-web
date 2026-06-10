@@ -108,7 +108,20 @@ html,body{
   box-shadow: 0 0 24px rgba(57,255,221,0.10);
 }
 
+.btn-hint{
+  min-width:86px;
+  border-color:rgba(0,255,170,0.32);
+}
+
+.btn-hint.active{
+  color:#ffffff;
+  border-color:rgba(0,255,170,0.78);
+  background:rgba(0,255,170,0.16);
+  box-shadow:0 0 18px rgba(0,255,170,0.24);
+}
+
 .stage{
+  position:relative;
   flex:1;
   display:flex;
   align-items:center;
@@ -250,6 +263,119 @@ input[type="range"]{
 }
 
 .hidden{ display:none !important; }
+
+.tutorial-card{
+  position:fixed;
+  left:50%;
+  bottom:18px;
+  z-index:58;
+  width:fit-content;
+  max-width:calc(100vw - 32px);
+  padding:10px 14px;
+  border-radius:12px;
+  border:1px solid rgba(125,249,255,0.74);
+  background:
+    linear-gradient(135deg, rgba(2,10,24,0.58), rgba(18,8,38,0.48)),
+    radial-gradient(circle at 18% 0%, rgba(0,255,255,0.24), transparent 36%),
+    radial-gradient(circle at 92% 100%, rgba(255,0,220,0.20), transparent 42%);
+  color:#ffffff;
+  box-shadow:
+    0 10px 28px rgba(0,0,0,0.26),
+    0 0 18px rgba(0,255,255,0.42),
+    0 0 34px rgba(255,0,220,0.26),
+    inset 0 0 16px rgba(125,249,255,0.12);
+  backdrop-filter:blur(5px);
+  pointer-events:none;
+  opacity:0;
+  visibility:hidden;
+  overflow:hidden;
+  transform:translateX(-50%) translateY(10px) scale(0.96);
+  transition:opacity .26s ease, transform .26s ease, visibility .26s ease;
+}
+
+.tutorial-card::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-left:3px solid rgba(0,255,255,0.95);
+  background:linear-gradient(90deg, rgba(0,255,255,0.18), transparent 35%);
+  pointer-events:none;
+}
+
+.tutorial-card.show{
+  opacity:1;
+  visibility:visible;
+  transform:translateX(-50%) translateY(0) scale(1);
+  animation:tutorialCardBurst .38s cubic-bezier(.16,1,.3,1);
+}
+
+.tutorial-text{
+  position:relative;
+  z-index:1;
+  font-size:17px;
+  line-height:1.25;
+  font-weight:900;
+  letter-spacing:0;
+  white-space:nowrap;
+  text-shadow:
+    0 0 8px rgba(0,255,255,0.50),
+    0 0 16px rgba(255,0,220,0.28);
+}
+
+.tutorial-keys{
+  position:relative;
+  z-index:1;
+  display:flex;
+  justify-content:center;
+  gap:5px;
+  flex-wrap:wrap;
+  margin-top:8px;
+}
+
+.tutorial-keys span{
+  min-width:25px;
+  height:23px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:7px;
+  border:1px solid rgba(0,255,255,0.66);
+  background:rgba(0,255,255,0.16);
+  color:#ffffff;
+  font-size:12px;
+  font-weight:900;
+  box-shadow:
+    inset 0 0 10px rgba(0,255,255,0.16),
+    0 0 12px rgba(0,255,255,0.20);
+}
+
+.tutorial-keys.pulse span{
+  animation:tutorialKeyPulse 1s ease both;
+}
+
+@keyframes tutorialKeyPulse{
+  0%{ transform:translateY(0); background:rgba(125,249,255,0.10); }
+  38%{ transform:translateY(-2px); background:rgba(125,249,255,0.22); }
+  100%{ transform:translateY(0); background:rgba(125,249,255,0.10); }
+}
+
+@keyframes tutorialCardBurst{
+  0%{
+    opacity:0;
+    transform:translateX(-50%) translateY(14px) scale(0.92);
+    filter:brightness(1.35);
+  }
+  48%{
+    opacity:1;
+    transform:translateX(-50%) translateY(-2px) scale(1.025);
+    filter:brightness(1.18);
+  }
+  100%{
+    opacity:1;
+    transform:translateX(-50%) translateY(0) scale(1);
+    filter:brightness(1);
+  }
+}
 
 
 /* Fullscreen: canvas ocupa o ecrã com boa proporção */
@@ -558,6 +684,25 @@ input[type="range"]{
 
   .overlay-card .buttons .btn {
     width: 100%;
+  }
+
+  .tutorial-card{
+    left:50%;
+    bottom:14px;
+    width:fit-content;
+    max-width:calc(100vw - 24px);
+    padding:9px 12px;
+    transform:translateX(-50%) translateY(10px) scale(0.96);
+  }
+
+  .tutorial-card.show{
+    transform:translateX(-50%) translateY(0) scale(1);
+  }
+
+  .tutorial-text{
+    font-size:16px;
+    white-space:normal;
+    text-align:center;
   }
 }
 
