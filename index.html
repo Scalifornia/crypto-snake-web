@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Crypto Snake Web</title>
-  <link rel="stylesheet" href="style.css?v=160" />
+  <link rel="stylesheet" href="style.css?v=161" />
 </head>
 
 <body>
@@ -36,6 +36,15 @@
         <div class="menu-hero">
           <h1>CRYPTO SNAKE</h1>
           <p>Three focused arcade modes with distinct neon identities.</p>
+        </div>
+
+        <div id="progressSummary" class="progress-summary" aria-live="polite">
+          <div id="progressLevel" class="progress-level">LEVEL 1</div>
+          <div id="progressXp" class="progress-xp">XP: 0 / 100</div>
+          <div class="progress-bar" aria-hidden="true">
+            <span id="progressFill"></span>
+          </div>
+          <div id="progressWorlds" class="progress-worlds">Worlds: 1/5</div>
         </div>
 
         <div class="menu-home-actions">
@@ -240,8 +249,12 @@
     </div>
 
     <div id="worldToast" class="world-toast hidden"></div>
+    <div id="levelUpToast" class="level-up-toast hidden" aria-live="polite">
+      <strong>LEVEL UP!</strong>
+      <span id="levelUpText">LEVEL 2</span>
+    </div>
   </div>
 
-  <script defer src="app.js?v=174"></script>
+  <script defer src="app.js?v=176"></script>
 </body>
 </html>

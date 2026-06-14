@@ -17,6 +17,13 @@
     rankingNameInput: document.getElementById("rankingNameInput"),
     btnSaveRank: document.getElementById("btnSaveRank"),
     worldToast: document.getElementById("worldToast"),
+    progressSummary: document.getElementById("progressSummary"),
+    progressLevel: document.getElementById("progressLevel"),
+    progressXp: document.getElementById("progressXp"),
+    progressFill: document.getElementById("progressFill"),
+    progressWorlds: document.getElementById("progressWorlds"),
+    levelUpToast: document.getElementById("levelUpToast"),
+    levelUpText: document.getElementById("levelUpText"),
     tutorialCard: document.getElementById("tutorialCard"),
     tutorialText: document.getElementById("tutorialText"),
 
@@ -79,6 +86,7 @@
     tutorialSeen: "cs_tutorialSeen",
     boardSize: "cs_boardSize",
     timedDuration: "cs_timedDuration",
+    progress: "cs_progress_v1",
   };
 
   const GRID_PRESETS = {
@@ -101,6 +109,19 @@
     cash: 450,
     timedSeconds: 3,
   };
+  const XP_PER_COIN = 10;
+  const LEVEL_THRESHOLDS = [0, 100, 250, 450, 700];
+  const LEVEL_SCALING = {
+    incrementAfterDefined: 300,
+    growth: 1.18,
+  };
+  const WORLDS = [
+    { id: "bitcoin_city", number: 1, name: "Bitcoin City", unlockLevel: 1 },
+    { id: "ethereum_network", number: 2, name: "Ethereum Network", unlockLevel: 5 },
+    { id: "solana_speed_chain", number: 3, name: "Solana Speed Chain", unlockLevel: 10 },
+    { id: "doge_moon", number: 4, name: "Doge Moon", unlockLevel: 15 },
+    { id: "cardano_labs", number: 5, name: "Cardano Labs", unlockLevel: 20 },
+  ];
 
   const BACKGROUND_LIBRARY = {
     alien1: "assets/backgrounds/alien1.png",
@@ -261,6 +282,132 @@
     syncHud();
     drawBackground();
   }
+
+  const SaveManager = {
+    defaultProgress() {
+      return {
+        xp_total: 0,
+        nivel: 1,
+        moedas_recolhidas: 0,
+        jogos_jogados: 0,
+        melhor_score: 0,
+        tempo_total_jogado: 0,
+      };
+    },
+
+    normalizeProgress(data) {
+      const base = this.defaultProgress();
+      const source = data && typeof data === "object" ? data : {};
+      const progress = {
+        xp_total: Math.max(0, Math.floor(Number(source.xp_total ?? base.xp_total) || 0)),
+        nivel: Math.max(1, Math.floor(Number(source.nivel ?? base.nivel) || 1)),
+        moedas_recolhidas: Math.max(0, Math.floor(Number(source.moedas_recolhidas ?? base.moedas_recolhidas) || 0)),
+        jogos_jogados: Math.max(0, Math.floor(Number(source.jogos_jogados ?? base.jogos_jogados) || 0)),
+        melhor_score: Math.max(0, Math.floor(Number(source.melhor_score ?? base.melhor_score) || 0)),
+        tempo_total_jogado: Math.max(0, Math.floor(Number(source.tempo_total_jogado ?? base.tempo_total_jogado) || 0)),
+      };
+
+      progress.nivel = ProgressManager.calculateLevel(progress.xp_total);
+      return progress;
+    },
+
+    loadProgress() {
+      try {
+        return this.normalizeProgress(JSON.parse(localStorage.getItem(LS.progress) || "null"));
+      } catch {
+        return this.defaultProgress();
+      }
+    },
+
+    saveProgress(progress) {
+      const normalized = this.normalizeProgress(progress);
+      localStorage.setItem(LS.progress, JSON.stringify(normalized));
+      return normalized;
+    },
+  };
+
+  const WorldManager = {
+    worlds: WORLDS,
+
+    isUnlocked(world, currentLevel) {
+      return Number(currentLevel || 1) >= Number(world?.unlockLevel || 1);
+    },
+
+    unlockedWorlds(currentLevel) {
+      return this.worlds.filter((world) => this.isUnlocked(world, currentLevel));
+    },
+
+    nextLockedWorld(currentLevel) {
+      return this.worlds.find((world) => !this.isUnlocked(world, currentLevel)) || null;
+    },
+  };
+
+  const ProgressManager = {
+    state: null,
+
+    xpForLevel(targetLevel) {
+      const nextLevel = Math.max(1, Math.floor(Number(targetLevel) || 1));
+      if (nextLevel <= LEVEL_THRESHOLDS.length) return LEVEL_THRESHOLDS[nextLevel - 1];
+
+      let xp = LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length - 1];
+      let increment = LEVEL_SCALING.incrementAfterDefined;
+      for (let levelIndex = LEVEL_THRESHOLDS.length + 1; levelIndex <= nextLevel; levelIndex += 1) {
+        xp += Math.round(increment);
+        increment *= LEVEL_SCALING.growth;
+      }
+      return xp;
+    },
+
+    calculateLevel(totalXp) {
+      const xp = Math.max(0, Math.floor(Number(totalXp) || 0));
+      let calculatedLevel = 1;
+      while (xp >= this.xpForLevel(calculatedLevel + 1)) {
+        calculatedLevel += 1;
+      }
+      return calculatedLevel;
+    },
+
+    nextLevelXp(currentLevel) {
+      return this.xpForLevel(Math.max(1, Number(currentLevel) || 1) + 1);
+    },
+
+    load() {
+      this.state = SaveManager.loadProgress();
+      return this.state;
+    },
+
+    save() {
+      this.state = SaveManager.saveProgress(this.state || SaveManager.defaultProgress());
+      return this.state;
+    },
+
+    addCoins(coins) {
+      const amount = Math.max(0, Math.floor(Number(coins) || 0));
+      if (!amount) return;
+
+      if (!this.state) this.load();
+      const previousLevel = this.state.nivel;
+      this.state.xp_total += amount * XP_PER_COIN;
+      this.state.moedas_recolhidas += amount;
+      this.state.nivel = this.calculateLevel(this.state.xp_total);
+      this.save();
+      syncProgressUI();
+
+      if (this.state.nivel > previousLevel) {
+        showLevelUp(this.state.nivel);
+      }
+    },
+
+    recordGame(finalScore, elapsedMs) {
+      if (!this.state) this.load();
+      this.state.jogos_jogados += 1;
+      this.state.melhor_score = Math.max(this.state.melhor_score, Math.max(0, Math.floor(Number(finalScore) || 0)));
+      this.state.tempo_total_jogado += Math.max(0, Math.round((Number(elapsedMs) || 0) / 1000));
+      this.state.nivel = this.calculateLevel(this.state.xp_total);
+      this.save();
+      syncProgressUI();
+    },
+  };
 
   function worldToLabel(world) {
     return world === "small" ? "Mundo 1" : world === "large" ? "Mundo 3" : "Mundo 2";
@@ -738,6 +885,7 @@
     const cashMult = isEthereumActive() ? 2 : 1;
     lastGain = Math.round(baseCash * cashMult);
     cashValue += lastGain;
+    ProgressManager.addCoins(baseCoins);
   }
 
   function hintOn() {
@@ -1142,6 +1290,51 @@
     el.menu?.classList.toggle("hidden", !show);
     el.topbar?.classList.toggle("menu-hidden", !!show);
     document.body.classList.toggle("game-active", !show);
+    if (show) syncProgressUI();
+  }
+
+  function syncProgressUI() {
+    if (!el.progressSummary) return;
+    if (!ProgressManager.state) ProgressManager.load();
+
+    const progress = ProgressManager.state;
+    const currentLevel = progress.nivel;
+    const currentXp = progress.xp_total;
+    const levelStartXp = ProgressManager.xpForLevel(currentLevel);
+    const nextLevelXp = ProgressManager.nextLevelXp(currentLevel);
+    const levelSpan = Math.max(1, nextLevelXp - levelStartXp);
+    const levelProgress = Math.max(0, Math.min(1, (currentXp - levelStartXp) / levelSpan));
+    const unlockedWorlds = WorldManager.unlockedWorlds(currentLevel);
+    const nextWorld = WorldManager.nextLockedWorld(currentLevel);
+
+    el.progressLevel && (el.progressLevel.textContent = `LEVEL ${currentLevel}`);
+    el.progressXp && (el.progressXp.textContent = `XP: ${currentXp} / ${nextLevelXp}`);
+    el.progressFill && (el.progressFill.style.width = `${Math.round(levelProgress * 100)}%`);
+
+    if (el.progressWorlds) {
+      el.progressWorlds.textContent = nextWorld
+        ? `Worlds: ${unlockedWorlds.length}/${WORLDS.length} · Next: ${nextWorld.name} L${nextWorld.unlockLevel}`
+        : `Worlds: ${unlockedWorlds.length}/${WORLDS.length} · All unlocked`;
+    }
+  }
+
+  let levelUpToastTimer = null;
+
+  function showLevelUp(nextLevel) {
+    if (!el.levelUpToast) return;
+
+    el.levelUpText && (el.levelUpText.textContent = `LEVEL ${nextLevel}`);
+    el.levelUpToast.classList.remove("hidden");
+    el.levelUpToast.classList.remove("show");
+    void el.levelUpToast.offsetWidth;
+    el.levelUpToast.classList.add("show");
+    playSfx(sfx.level);
+
+    clearTimeout(levelUpToastTimer);
+    levelUpToastTimer = setTimeout(() => {
+      el.levelUpToast?.classList.remove("show");
+      setTimeout(() => el.levelUpToast?.classList.add("hidden"), 260);
+    }, 1600);
   }
 
   function showOptions(show) {
@@ -1296,6 +1489,8 @@
     spawnFood();
     lastTs = 0;
     accMs = 0;
+    touchDirectionQueue = [];
+    lastTouchDirectionAt = 0;
     syncHud();
   }
 
@@ -1310,9 +1505,12 @@
   let activeTouchId = null;
   let swipeX = null;
   let swipeY = null;
-  let turnLocked = false;
-  const SWIPE_TH = 14;
-  const SWIPE_RESET = 10;
+  let touchDirectionQueue = [];
+  let lastTouchDirectionAt = 0;
+  const TOUCH_MIN_SWIPE_DISTANCE = 24;
+  const TOUCH_DIRECTION_COOLDOWN_MS = 100;
+  const TOUCH_AXIS_DOMINANCE_RATIO = 1.25;
+  const TOUCH_MAX_QUEUED_DIRECTIONS = 2;
 
   function isUiTarget(e) {
     const t = e.target;
@@ -1330,6 +1528,43 @@
     return null;
   }
 
+  function sameDirection(a, b) {
+    return !!a && !!b && a.x === b.x && a.y === b.y;
+  }
+
+  function oppositeDirection(a, b) {
+    return !!a && !!b && a.x === -b.x && a.y === -b.y;
+  }
+
+  function lastQueuedTouchDirection() {
+    return touchDirectionQueue.length ? touchDirectionQueue[touchDirectionQueue.length - 1] : null;
+  }
+
+  function enqueueTouchDirection(x, y) {
+    const queuedDir = { x, y };
+    const lastQueued = lastQueuedTouchDirection();
+    const referenceDir = lastQueued || nextDir || dir;
+    const now = nowMs();
+
+    if (touchDirectionQueue.length >= TOUCH_MAX_QUEUED_DIRECTIONS) return false;
+    if (sameDirection(queuedDir, referenceDir)) return false;
+    if (oppositeDirection(queuedDir, referenceDir)) return false;
+    if (!lastQueued && oppositeDirection(queuedDir, dir)) return false;
+    if (now - lastTouchDirectionAt < TOUCH_DIRECTION_COOLDOWN_MS) return false;
+
+    touchDirectionQueue.push(queuedDir);
+    lastTouchDirectionAt = now;
+    onTutorialDirectionChange();
+    return true;
+  }
+
+  function consumeTouchDirectionQueue() {
+    if (!touchDirectionQueue.length) return;
+    const queuedDir = touchDirectionQueue.shift();
+    if (oppositeDirection(queuedDir, dir)) return;
+    nextDir = queuedDir;
+  }
+
   function onTouchStart(e) {
     unlockAudioOnce();
     if (isUiTarget(e)) return;
@@ -1339,6 +1574,7 @@
     activeTouchId = t.identifier;
     swipeX = t.clientX;
     swipeY = t.clientY;
+    lastTouchDirectionAt = 0;
     e.preventDefault();
   }
 
@@ -1359,15 +1595,22 @@
     const ax = Math.abs(dx);
     const ay = Math.abs(dy);
 
-    if (ax < SWIPE_TH && ay < SWIPE_TH) { e.preventDefault(); return; }
-
-    if (!turnLocked) {
-      if (ax >= ay) setNextDir(dx > 0 ? 1 : -1, 0);
-      else setNextDir(0, dy > 0 ? 1 : -1);
-      turnLocked = true;
+    if (ax < TOUCH_MIN_SWIPE_DISTANCE && ay < TOUCH_MIN_SWIPE_DISTANCE) {
+      e.preventDefault();
+      return;
     }
 
-    if (ax > SWIPE_RESET || ay > SWIPE_RESET) { swipeX = x; swipeY = y; }
+    let accepted = false;
+    if (ax > ay * TOUCH_AXIS_DOMINANCE_RATIO) {
+      accepted = enqueueTouchDirection(dx > 0 ? 1 : -1, 0);
+    } else if (ay > ax * TOUCH_AXIS_DOMINANCE_RATIO) {
+      accepted = enqueueTouchDirection(0, dy > 0 ? 1 : -1);
+    }
+
+    if (accepted) {
+      swipeX = x;
+      swipeY = y;
+    }
     e.preventDefault();
   }
 
@@ -1379,6 +1622,7 @@
       activeTouchId = null;
       swipeX = null;
       swipeY = null;
+      lastTouchDirectionAt = 0;
     }
     e.preventDefault();
   }
@@ -1389,7 +1633,7 @@
   document.addEventListener("touchcancel", onTouchEnd, { passive:false });
 
   function step() {
-    turnLocked = false;
+    consumeTouchDirectionQueue();
     dir = nextDir;
 
     const head = snake[0];
@@ -2008,6 +2252,7 @@
     swipeX = null;
     swipeY = null;
     resetCombo();
+    ProgressManager.recordGame(score, gameElapsedMs);
 
     const rankingEval = evaluateRankingEntry();
     pendingRankEntry = rankingEval.qualifies ? rankingEval : null;
@@ -2242,6 +2487,7 @@
 
   // BOOT
   migrateLegacyBoardSizeSetting();
+  ProgressManager.load();
   applySavedSettingsToUI();
   loadBgFromStorage();
   
@@ -2251,6 +2497,7 @@
   showMenu(true);
   resizeCanvas();
   syncHud();
+  syncProgressUI();
   drawBackground();
 
   // PC/Mac: tenta tocar menu logo
