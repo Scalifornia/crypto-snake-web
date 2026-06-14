@@ -120,12 +120,190 @@
     incrementAfterDefined: 300,
     growth: 1.18,
   };
+  const DEFAULT_GAME_MUSIC = "assets/audio/trilha_sonora.wav";
+  const DEFAULT_MENU_MUSIC = "assets/audio/som_menu.wav";
+  const DEFAULT_NORMAL_COIN_FILES = [
+    "Ethereum1.png",
+    "Solana1.png",
+    "Cardano1.png",
+    "Doge1.png"
+  ];
+  const DEFAULT_SPECIAL_COIN_FILE = "Bitcoin1.png";
   const WORLDS = [
-    { id: "bitcoin_city", number: 1, name: "Bitcoin City", image: null, music: null, unlockLevel: 1 },
-    { id: "ethereum_network", number: 2, name: "Ethereum Network", image: null, music: null, unlockLevel: 5 },
-    { id: "solana_speed", number: 3, name: "Solana Speed", image: null, music: null, unlockLevel: 10 },
-    { id: "doge_moon", number: 4, name: "Doge Moon", image: null, music: null, unlockLevel: 15 },
-    { id: "cardano_labs", number: 5, name: "Cardano Labs", image: null, music: null, unlockLevel: 20 },
+    {
+      id: "bitcoin_city",
+      key: "small",
+      number: 1,
+      name: "Bitcoin City",
+      displayName: "NEON AMBER",
+      unlockLevel: 1,
+      assets: {
+        background: null,
+        menuBackground: null,
+        music: DEFAULT_GAME_MUSIC,
+        coins: {
+          normal: DEFAULT_NORMAL_COIN_FILES,
+          special: DEFAULT_SPECIAL_COIN_FILE,
+        },
+        obstacles: [],
+      },
+      colors: {
+        hud: {
+          accent: "#ffcf86",
+          glow: "rgba(255,170,60,0.28)",
+          border: "rgba(255,190,90,0.34)",
+          font: "Trebuchet MS, Arial, sans-serif",
+        },
+        snake: {
+          head: "#ffd089",
+          body: "#ffb347",
+          tail: "#c97a1f",
+          shadow: "rgba(255,180,60,0.30)",
+        },
+        background: {
+          accent: "rgba(255,190,90,0.86)",
+          glow: "rgba(255,170,60,0.18)",
+          bgA: "#120b06",
+          bgB: "#1a1208",
+        },
+        food: {
+          normalGlow: "rgba(125, 249, 255, 0.35)",
+          normalFallback: "rgba(34,197,94,0.95)",
+          bonus: "rgba(90,190,255,0.96)",
+          bonusGlow: "rgba(90,190,255,0.85)",
+          bonusRing: "rgba(120,220,255,0.95)",
+        },
+      },
+    },
+    {
+      id: "ethereum_network",
+      key: "medium",
+      number: 2,
+      name: "Ethereum Network",
+      displayName: "NEON BLUE",
+      unlockLevel: 5,
+      assets: {
+        background: null,
+        menuBackground: null,
+        music: DEFAULT_GAME_MUSIC,
+        coins: {
+          normal: DEFAULT_NORMAL_COIN_FILES,
+          special: DEFAULT_SPECIAL_COIN_FILE,
+          bonus: "Ethereum1.png",
+        },
+        obstacles: [],
+      },
+      colors: {
+        hud: {
+          accent: "#9fddff",
+          glow: "rgba(70,140,255,0.28)",
+          border: "rgba(105,205,255,0.34)",
+          font: "Segoe UI, Arial, sans-serif",
+        },
+        snake: {
+          head: "#8ee7ff",
+          body: "#38bdf8",
+          tail: "#0f6fa8",
+          shadow: "rgba(70,170,255,0.30)",
+        },
+        background: {
+          accent: "rgba(105,205,255,0.88)",
+          glow: "rgba(70,150,255,0.18)",
+          bgA: "#050812",
+          bgB: "#091226",
+        },
+        food: {
+          normalGlow: "rgba(125, 249, 255, 0.35)",
+          normalFallback: "rgba(34,197,94,0.95)",
+          bonus: "rgba(90,190,255,0.96)",
+          bonusGlow: "rgba(90,190,255,0.85)",
+          bonusRing: "rgba(120,220,255,0.95)",
+        },
+      },
+    },
+    {
+      id: "solana_speed",
+      key: "large",
+      number: 3,
+      name: "Solana Speed",
+      displayName: "NEON VIOLET",
+      unlockLevel: 10,
+      assets: {
+        background: null,
+        menuBackground: null,
+        music: DEFAULT_GAME_MUSIC,
+        coins: {
+          normal: DEFAULT_NORMAL_COIN_FILES,
+          special: DEFAULT_SPECIAL_COIN_FILE,
+        },
+        obstacles: [],
+      },
+      colors: {
+        hud: {
+          accent: "#ddb0ff",
+          glow: "rgba(180,90,255,0.28)",
+          border: "rgba(205,130,255,0.34)",
+          font: "Verdana, Arial, sans-serif",
+        },
+        snake: {
+          head: "#ddb0ff",
+          body: "#a855f7",
+          tail: "#6d28d9",
+          shadow: "rgba(170,90,255,0.30)",
+        },
+        background: {
+          accent: "rgba(205,130,255,0.88)",
+          glow: "rgba(170,90,255,0.18)",
+          bgA: "#0d0716",
+          bgB: "#160a24",
+        },
+        food: {
+          normalGlow: "rgba(125, 249, 255, 0.35)",
+          normalFallback: "rgba(34,197,94,0.95)",
+          bonus: "rgba(90,190,255,0.96)",
+          bonusGlow: "rgba(90,190,255,0.85)",
+          bonusRing: "rgba(120,220,255,0.95)",
+        },
+      },
+    },
+    {
+      id: "doge_moon",
+      key: null,
+      number: 4,
+      name: "Doge Moon",
+      displayName: "DOGE MOON",
+      unlockLevel: 15,
+      assets: {
+        background: null,
+        menuBackground: null,
+        music: DEFAULT_GAME_MUSIC,
+        coins: {
+          normal: DEFAULT_NORMAL_COIN_FILES,
+          special: DEFAULT_SPECIAL_COIN_FILE,
+        },
+        obstacles: [],
+      },
+      colors: null,
+    },
+    {
+      id: "cardano_labs",
+      key: null,
+      number: 5,
+      name: "Cardano Labs",
+      displayName: "CARDANO LABS",
+      unlockLevel: 20,
+      assets: {
+        background: null,
+        menuBackground: null,
+        music: DEFAULT_GAME_MUSIC,
+        coins: {
+          normal: DEFAULT_NORMAL_COIN_FILES,
+          special: DEFAULT_SPECIAL_COIN_FILE,
+        },
+        obstacles: [],
+      },
+      colors: null,
+    },
   ];
 
   const BACKGROUND_LIBRARY = {
@@ -251,6 +429,35 @@
     return key === "small" ? "small" : key === "large" ? "large" : "medium";
   }
 
+  function worldConfigByKey(key) {
+    return WORLDS.find((world) => world.key === key) || WORLDS[0];
+  }
+
+  function currentWorldConfig() {
+    return worldConfigByKey(currentWorldKey());
+  }
+
+  function currentWorldColors() {
+    return currentWorldConfig().colors || WORLDS[0].colors;
+  }
+
+  function currentWorldAssets() {
+    return currentWorldConfig().assets || WORLDS[0].assets;
+  }
+
+  function currentWorldCoinConfig() {
+    return currentWorldAssets().coins || WORLDS[0].assets.coins;
+  }
+
+  function currentWorldObstacles() {
+    const obstacles = currentWorldAssets().obstacles;
+    return Array.isArray(obstacles) ? obstacles : [];
+  }
+
+  function currentWorldMusic() {
+    return currentWorldAssets().music || DEFAULT_GAME_MUSIC;
+  }
+
   function isWorld2() {
     return currentWorldKey() === "medium";
   }
@@ -277,6 +484,7 @@
 
   function applyModeExperience() {
     const world = syncWorldToMode();
+    preloadWorldAssets();
     syncModeOptionsVisibility();
     if (state === State.MENU) {
       gameElapsedMs = 0;
@@ -338,6 +546,28 @@
 
     isUnlocked(world, currentLevel) {
       return Number(currentLevel || 1) >= Number(world?.unlockLevel || 1);
+    },
+
+    byKey(key) {
+      return worldConfigByKey(key);
+    },
+
+    assetsForKey(key) {
+      return this.byKey(key).assets || WORLDS[0].assets;
+    },
+
+    assetsForWorld(world) {
+      return world?.assets || WORLDS[0].assets;
+    },
+
+    obstaclesForKey(key) {
+      const obstacles = this.assetsForKey(key).obstacles;
+      return Array.isArray(obstacles) ? obstacles : [];
+    },
+
+    obstaclesForWorld(world) {
+      const obstacles = this.assetsForWorld(world).obstacles;
+      return Array.isArray(obstacles) ? obstacles : [];
     },
 
     unlockedWorlds(currentLevel) {
@@ -474,13 +704,17 @@
       const currentLevel = ProgressManager.state.nivel;
       el.worldsList.innerHTML = WORLDS.map((world) => {
         const unlocked = WorldManager.isUnlocked(world, currentLevel);
+        const assets = WorldManager.assetsForWorld(world);
+        const coinConfig = assets.coins || {};
+        const obstacleCount = WorldManager.obstaclesForWorld(world).length;
         return `
           <article class="world-entry ${unlocked ? "unlocked" : "locked"}">
             <div class="world-entry-art" aria-hidden="true">${world.number}</div>
             <div class="world-entry-body">
               <strong>${world.name}</strong>
               <span>${unlocked ? "Unlocked" : `Unlocks at Level ${world.unlockLevel}`}</span>
-              <small>Image: ${world.image || "not set"} · Music: ${world.music || "not set"}</small>
+              <small>Background: ${assets.background || "not set"} · Music: ${assets.music || "default"}</small>
+              <small>Coins: ${(coinConfig.normal || []).length} · Obstacles: ${obstacleCount}</small>
             </div>
             <div class="world-entry-status">${unlocked ? "OPEN" : "LOCKED"}</div>
           </article>
@@ -508,6 +742,7 @@
     if (el.boardSize) el.boardSize.value = next;
     localStorage.setItem(LS.boardSize, next);
     if (el.worldSelect) el.worldSelect.value = next;
+    preloadWorldAssets();
     resizeCanvas();
 
     if (state === State.RUNNING || state === State.PAUSED || state === State.OVER) {
@@ -532,8 +767,9 @@
   function announceWorld(world) {
     if (!el.worldToast) return;
 
-    const title = world === "small" ? "MUNDO 1" : world === "medium" ? "MUNDO 2" : "MUNDO 3";
-    const subtitle = world === "small" ? "NEON AMBER" : world === "medium" ? "NEON BLUE" : "NEON VIOLET";
+    const config = worldConfigByKey(world);
+    const title = `MUNDO ${config.number}`;
+    const subtitle = config.displayName || config.name;
     const cls = world === "small" ? "amber" : world === "medium" ? "blue" : "violet";
 
     el.worldToast.className = `world-toast ${cls}`;
@@ -558,6 +794,7 @@
     if (el.mode) el.mode.value = nextMode;
     localStorage.setItem(LS.mode, nextMode);
     const applied = syncWorldToMode();
+    preloadWorldAssets();
     syncModeOptionsVisibility();
     resizeCanvas();
     syncHud();
@@ -622,10 +859,10 @@
     over: new Audio("assets/audio/Game_over_retro.mp3"),
   };
 
-  const menuMusic = new Audio("assets/audio/som_menu.wav");
+  const menuMusic = new Audio(DEFAULT_MENU_MUSIC);
   menuMusic.loop = true;
 
-  const gameMusic = new Audio("assets/audio/trilha_sonora.wav");
+  const gameMusic = new Audio(DEFAULT_GAME_MUSIC);
   gameMusic.loop = true;
 
   let audioUnlocked = false;
@@ -655,6 +892,19 @@
     try { gameMusic.pause(); } catch {}
   }
 
+  function setAudioSource(audio, src) {
+    const next = new URL(src || DEFAULT_GAME_MUSIC, window.location.href).href;
+    if (audio.src === next) return;
+    const wasPaused = audio.paused;
+    try { audio.pause(); } catch {}
+    audio.src = next;
+    audio.loop = true;
+    if (!wasPaused && shouldMusic()) {
+      audio.volume = musicVolume();
+      audio.play().catch(() => {});
+    }
+  }
+
   function startMenuMusic() {
     if (!shouldMusic()) { try { menuMusic.pause(); } catch {} ; return; }
     stopAllMusic();
@@ -668,6 +918,7 @@
     if (!shouldMusic()) { try { gameMusic.pause(); } catch {} ; return; }
     stopAllMusic();
     try {
+      setAudioSource(gameMusic, currentWorldMusic());
       gameMusic.volume = musicVolume();
       gameMusic.play().catch(() => {});
     } catch {}
@@ -711,22 +962,45 @@
   // ---------- Background custom (opção A) ----------
   let bgImg = null;
   let menuBgImg = null;
+  const worldImageCache = new Map();
 
-  const NORMAL_COIN_FILES = [
-    "Ethereum1.png",
-    "Solana1.png",
-    "Cardano1.png",
-    "Doge1.png"
-  ];
+  function loadConfiguredWorldImage(src) {
+    if (!src) return null;
+    if (worldImageCache.has(src)) return worldImageCache.get(src);
 
-  const SPECIAL_COIN_FILE = "Bitcoin1.png";
+    const img = new Image();
+    img._ready = false;
+    img.onload = () => { img._ready = true; };
+    img.onerror = () => { img._ready = false; };
+    img.src = new URL(src, window.location.href).href;
+    worldImageCache.set(src, img);
+    return img;
+  }
+
+  function currentWorldBackgroundImage(isMenuScreen) {
+    const assets = currentWorldAssets();
+    const src = isMenuScreen ? (assets.menuBackground || assets.background) : assets.background;
+    return loadConfiguredWorldImage(src);
+  }
 
   const coinImages = {
     normal: [],
-    special: null
+    special: null,
+    bonus: null,
+    worldKey: null,
   };
 
   function loadCoinImages(){
+    const worldKey = currentWorldKey();
+    const coinConfig = currentWorldCoinConfig();
+    const normalCoins = Array.isArray(coinConfig.normal) && coinConfig.normal.length
+      ? coinConfig.normal
+      : DEFAULT_NORMAL_COIN_FILES;
+    const specialCoin = coinConfig.special || DEFAULT_SPECIAL_COIN_FILE;
+    const bonusCoin = coinConfig.bonus || normalCoins[0];
+
+    if (coinImages.worldKey === worldKey && coinImages.normal.length) return;
+
     const fallbackMap = {
       "Ethereum1.png": "assets/img/ethereum.png",
       "Solana1.png": "assets/img/solana.png",
@@ -738,7 +1012,7 @@
     function buildImage(name){
       const i = new Image();
       i._ready = false;
-      i._url = new URL("assets/" + name, window.location.href).href + "?v=coins6";
+      i._url = new URL("assets/" + name, window.location.href).href + `?v=coins7-${worldKey}`;
 
       i.onload = () => {
         i._ready = true;
@@ -748,7 +1022,7 @@
       i.onerror = () => {
         if (i.dataset.fallbackTried === "1") return;
         i.dataset.fallbackTried = "1";
-        i.src = new URL(fallbackMap[name] || ("assets/" + name), window.location.href).href + "?v=coins6fb";
+        i.src = new URL(fallbackMap[name] || ("assets/" + name), window.location.href).href + `?v=coins7fb-${worldKey}`;
         console.log("coin fallback:", i.src);
       };
 
@@ -757,8 +1031,22 @@
       return i;
     }
 
-    coinImages.normal = NORMAL_COIN_FILES.map(buildImage);
-    coinImages.special = buildImage(SPECIAL_COIN_FILE);
+    coinImages.normal = normalCoins.map(buildImage);
+    coinImages.special = buildImage(specialCoin);
+    coinImages.bonus = buildImage(bonusCoin);
+    coinImages.worldKey = worldKey;
+  }
+
+  function currentNormalCoinCount() {
+    const coinConfig = currentWorldCoinConfig();
+    return Math.max(1, Array.isArray(coinConfig.normal) ? coinConfig.normal.length : DEFAULT_NORMAL_COIN_FILES.length);
+  }
+
+  function preloadWorldAssets() {
+    loadCoinImages();
+    currentWorldBackgroundImage(false);
+    currentWorldBackgroundImage(true);
+    setAudioSource(gameMusic, currentWorldMusic());
   }
 
 
@@ -900,32 +1188,7 @@
   }
 
   function getWorldSnakePalette() {
-    const world = typeof currentWorldKey === "function" ? currentWorldKey() : "medium";
-
-    if (world === "small") {
-      return {
-        head: "#ffd089",
-        body: "#ffb347",
-        tail: "#c97a1f",
-        shadow: "rgba(255,180,60,0.30)",
-      };
-    }
-
-    if (world === "large") {
-      return {
-        head: "#ddb0ff",
-        body: "#a855f7",
-        tail: "#6d28d9",
-        shadow: "rgba(170,90,255,0.30)",
-      };
-    }
-
-    return {
-      head: "#8ee7ff",
-      body: "#38bdf8",
-      tail: "#0f6fa8",
-      shadow: "rgba(70,170,255,0.30)",
-    };
+    return currentWorldColors().snake || WORLDS[0].colors.snake;
   }
 
   function visualDir() {
@@ -1453,29 +1716,9 @@
   }
 
   function syncHud() {
-    const world = typeof currentWorldKey === "function" ? currentWorldKey() : "medium";
-    const worldName = world === "small" ? "Neon Amber" : world === "large" ? "Neon Violet" : "Neon Blue";
-
-    const theme = world === "small"
-      ? {
-          accent: "#ffcf86",
-          glow: "rgba(255,170,60,0.28)",
-          border: "rgba(255,190,90,0.34)",
-          font: "Trebuchet MS, Arial, sans-serif",
-        }
-      : world === "large"
-        ? {
-            accent: "#ddb0ff",
-            glow: "rgba(180,90,255,0.28)",
-            border: "rgba(205,130,255,0.34)",
-            font: "Verdana, Arial, sans-serif",
-          }
-        : {
-            accent: "#9fddff",
-            glow: "rgba(70,140,255,0.28)",
-            border: "rgba(105,205,255,0.34)",
-            font: "Segoe UI, Arial, sans-serif",
-          };
+    const world = currentWorldConfig();
+    const worldName = world.displayName ? world.displayName.replace("NEON ", "Neon ") : world.name;
+    const theme = currentWorldColors().hud || WORLDS[0].colors.hud;
 
     el.score && (el.score.textContent = String(score));
     el.best && (el.best.textContent = `$${cashValue.toLocaleString("en-US")}`);
@@ -1534,7 +1777,7 @@
           x, y,
           type: canSpawnBlueBonus ? "blue_bonus" : (isSpecial ? "special" : "normal"),
           power,
-          spriteIndex: (canSpawnBlueBonus || isSpecial) ? -1 : Math.floor(Math.random() * NORMAL_COIN_FILES.length)
+          spriteIndex: (canSpawnBlueBonus || isSpecial) ? -1 : Math.floor(Math.random() * currentNormalCoinCount())
         };
 
         blueBonusUntil = canSpawnBlueBonus ? nowMs() + WORLD2_BLUE_BONUS.durationMs : 0;
@@ -1883,33 +2126,14 @@
 
   // ---------- Render ----------
   function drawBackground() {
-    const world = typeof currentWorldKey === "function" ? currentWorldKey() : "medium";
+    const world = currentWorldConfig();
     const isMenuScreen = state === State.MENU;
-    const bgToUse = isMenuScreen ? menuBgImg : bgImg;
-
-    const theme = world === "small"
-      ? {
-          name: "NEON AMBER",
-          accent: "rgba(255,190,90,0.86)",
-          glow: "rgba(255,170,60,0.18)",
-          bgA: "#120b06",
-          bgB: "#1a1208",
-        }
-      : world === "large"
-        ? {
-            name: "NEON VIOLET",
-            accent: "rgba(205,130,255,0.88)",
-            glow: "rgba(170,90,255,0.18)",
-            bgA: "#0d0716",
-            bgB: "#160a24",
-          }
-        : {
-            name: "NEON BLUE",
-            accent: "rgba(105,205,255,0.88)",
-            glow: "rgba(70,150,255,0.18)",
-            bgA: "#050812",
-            bgB: "#091226",
-          };
+    const configuredBg = currentWorldBackgroundImage(isMenuScreen);
+    const bgToUse = isMenuScreen ? (menuBgImg || configuredBg) : (bgImg || configuredBg);
+    const theme = {
+      name: world.displayName || world.name,
+      ...(currentWorldColors().background || WORLDS[0].colors.background),
+    };
 
     const bgGrad = ctx.createLinearGradient(0, 0, 0, cssH);
     bgGrad.addColorStop(0, theme.bgA);
@@ -2074,12 +2298,13 @@
     const x = ox + food.x * cell;
     const y = oy + food.y * cell;
     const spriteScale = currentSpriteScale();
+    const foodColors = currentWorldColors().food || WORLDS[0].colors.food;
 
     let img = null;
     if (food.type === "special") {
       img = coinImages.special;
     } else if (food.type === "blue_bonus") {
-      img = coinImages.normal[0] || coinImages.normal[1] || null;
+      img = coinImages.bonus || coinImages.normal[0] || coinImages.normal[1] || null;
     } else {
       const idx = Number.isInteger(food.spriteIndex) ? food.spriteIndex : 0;
       img = coinImages.normal[idx] || coinImages.normal[0] || null;
@@ -2115,15 +2340,15 @@
         ctx.globalAlpha = 1;
       } else if (food.type === "blue_bonus") {
         ctx.shadowBlur = Math.max(12, Math.floor(cell * 0.66 * spriteScale));
-        ctx.shadowColor = "rgba(90,190,255,0.90)";
-        ctx.strokeStyle = "rgba(120,220,255,0.95)";
+        ctx.shadowColor = foodColors.bonusGlow;
+        ctx.strokeStyle = foodColors.bonusRing;
         ctx.lineWidth = Math.max(2, Math.floor(cell * 0.08));
         ctx.beginPath();
         ctx.arc(x + cell / 2, y + cell / 2, Math.max(8, cell * 0.42 * spriteScale), 0, Math.PI * 2);
         ctx.stroke();
       } else {
         ctx.shadowBlur = Math.max(5, Math.floor(cell * 0.32 * spriteScale));
-        ctx.shadowColor = "rgba(125, 249, 255, 0.35)";
+        ctx.shadowColor = foodColors.normalGlow;
       }
       ctx.drawImage(img, dx, dy, size, size);
       ctx.restore();
@@ -2146,14 +2371,14 @@
     ctx.fillStyle = food.type === "special"
       ? pTheme.color
       : food.type === "blue_bonus"
-        ? "rgba(90,190,255,0.96)"
-        : "rgba(34,197,94,0.95)";
+        ? foodColors.bonus
+        : foodColors.normalFallback;
     ctx.shadowBlur = food.type === "special" || food.type === "blue_bonus" ? 14 : 6;
     ctx.shadowColor = food.type === "special"
       ? pTheme.glow
       : food.type === "blue_bonus"
-        ? "rgba(90,190,255,0.85)"
-        : "rgba(34,197,94,0.35)";
+        ? foodColors.bonusGlow
+        : foodColors.normalGlow;
     ctx.beginPath();
     ctx.arc(
       x + cell / 2,
@@ -2165,7 +2390,7 @@
     ctx.fill();
 
     if (food.type === "special" || food.type === "blue_bonus") {
-      ctx.strokeStyle = food.type === "blue_bonus" ? "rgba(120,220,255,0.95)" : pTheme.ring;
+      ctx.strokeStyle = food.type === "blue_bonus" ? foodColors.bonusRing : pTheme.ring;
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.arc(x + cell / 2, y + cell / 2, Math.max(8, cell * 0.40 * spriteScale), 0, Math.PI * 2);
@@ -2369,8 +2594,8 @@
 
   function startGame() {
     unlockAudioOnce();
-    loadCoinImages();
     syncWorldToMode();
+    preloadWorldAssets();
     resizeCanvas();
     initGameFromMenu();
     particles = [];
@@ -2567,6 +2792,7 @@
     });
     el.boardSize?.addEventListener("change", () => {
       localStorage.setItem(LS.boardSize, String(el.boardSize.value));
+      preloadWorldAssets();
       resizeCanvas();
       syncHud();
       drawBackground();
@@ -2581,8 +2807,8 @@
         const data = String(reader.result || "");
         localStorage.setItem(LS.bgData, data);
         loadMenuBackground();
-  loadBgFromStorage();
-  loadCoinImages();
+        loadBgFromStorage();
+        preloadWorldAssets();
       };
       reader.readAsDataURL(f);
     });
@@ -2593,6 +2819,7 @@
   ProgressManager.load();
   applySavedSettingsToUI();
   loadBgFromStorage();
+  preloadWorldAssets();
   
   wireSettingsSave();
 
