@@ -852,7 +852,7 @@
       tutorialStartTimer = null;
       if (!tutorialActive || state !== State.RUNNING) return;
       tutorialIntroShown = true;
-      showTutorialMessage("Usa WASD ou as setas para te mover.", 0, true);
+      showTutorialMessage("Usa WASD ou as setas para te mover.", 0);
     }, 300);
   }
 
