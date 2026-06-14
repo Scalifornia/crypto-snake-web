@@ -1480,3 +1480,89 @@ input[type="range"]{
     min-height:220px;
   }
 }
+
+@media (max-width: 950px){
+  .options-panel{
+    position:fixed;
+    inset:0;
+    z-index:120;
+    display:flex;
+    align-items:stretch;
+    justify-content:center;
+    padding:12px;
+    overflow:hidden;
+    background:rgba(5,8,18,0.78);
+  }
+
+  .options-panel.hidden{
+    display:none !important;
+  }
+
+  .options-panel .menu-shell{
+    width:min(420px, 100%);
+    min-width:0;
+    max-width:100%;
+    height:100%;
+    margin:0 auto;
+    border:0;
+    border-radius:18px;
+    overflow:hidden;
+    background:rgba(8,10,24,0.94);
+    box-shadow:0 18px 48px rgba(0,0,0,0.42), 0 0 26px rgba(105,205,255,0.12);
+  }
+
+  .options-card{
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    height:100%;
+    margin:0;
+    padding:14px 12px 18px;
+    border:1px solid rgba(125,249,255,0.14);
+    border-radius:18px;
+    overflow:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  .options-header{
+    position:sticky;
+    top:0;
+    z-index:2;
+    display:grid;
+    grid-template-columns:minmax(0, 1fr) auto;
+    align-items:center;
+    gap:10px;
+    margin:-14px -12px 12px;
+    padding:12px;
+    background:rgba(8,10,24,0.96);
+    border-bottom:1px solid rgba(125,249,255,0.12);
+  }
+
+  .options-header h2{
+    min-width:0;
+    font-size:18px;
+    line-height:1.1;
+  }
+
+  #btnCloseOptions{
+    min-width:74px;
+    min-height:34px;
+    padding:7px 10px;
+    font-size:11px;
+    white-space:nowrap;
+  }
+
+  .options-card .row{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:7px;
+    margin:10px 0;
+  }
+
+  .options-card select,
+  .options-card input[type="range"],
+  .options-card input[type="file"]{
+    width:100%;
+    max-width:100%;
+  }
+}
