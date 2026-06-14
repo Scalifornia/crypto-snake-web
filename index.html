@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Crypto Snake Web</title>
-  <link rel="stylesheet" href="style.css?v=161" />
+  <link rel="stylesheet" href="style.css?v=162" />
 </head>
 
 <body>
@@ -38,18 +38,37 @@
           <p>Three focused arcade modes with distinct neon identities.</p>
         </div>
 
-        <div id="progressSummary" class="progress-summary" aria-live="polite">
-          <div id="progressLevel" class="progress-level">LEVEL 1</div>
-          <div id="progressXp" class="progress-xp">XP: 0 / 100</div>
-          <div class="progress-bar" aria-hidden="true">
-            <span id="progressFill"></span>
-          </div>
-          <div id="progressWorlds" class="progress-worlds">Worlds: 1/5</div>
-        </div>
-
         <div class="menu-home-actions">
           <button id="btnPlay" class="btn btn-primary btn-home">Play</button>
-          <button id="btnOptions" class="btn btn-home">Options</button>
+          <button id="btnProfile" class="btn btn-home">Profile</button>
+          <button id="btnWorlds" class="btn btn-home">Worlds</button>
+          <button id="btnRanking" class="btn btn-home">Ranking</button>
+          <button id="btnOptions" class="btn btn-home">Settings</button>
+          <button id="btnExit" class="btn btn-home">Exit</button>
+        </div>
+      </div>
+
+      <div id="profilePanel" class="menu-screen-panel hidden">
+        <div class="menu-shell">
+          <div class="menu-card profile-card">
+            <div class="options-header">
+              <h2>Player Profile</h2>
+              <button id="btnCloseProfile" class="btn">Back</button>
+            </div>
+            <div id="profileContent" class="profile-content"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="worldsPanel" class="menu-screen-panel hidden">
+        <div class="menu-shell">
+          <div class="menu-card worlds-card">
+            <div class="options-header">
+              <h2>Worlds</h2>
+              <button id="btnCloseWorlds" class="btn">Back</button>
+            </div>
+            <div id="worldsList" class="worlds-list"></div>
+          </div>
         </div>
       </div>
 
@@ -255,6 +274,6 @@
     </div>
   </div>
 
-  <script defer src="app.js?v=176"></script>
+  <script defer src="app.js?v=177"></script>
 </body>
 </html>

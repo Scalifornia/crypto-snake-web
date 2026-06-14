@@ -866,7 +866,7 @@ input[type="range"]{
 .menu-home-actions{
   display:flex;
   flex-direction:column;
-  gap:12px;
+  gap:9px;
   width:min(320px, 86vw);
   margin-bottom:2vh;
 }
@@ -933,16 +933,17 @@ input[type="range"]{
 }
 
 .btn-home{
-  min-height:56px;
-  font-size:18px;
+  min-height:46px;
+  font-size:15px;
   font-weight:700;
-  border-radius:18px;
+  border-radius:14px;
   backdrop-filter:blur(10px);
   background:rgba(8,10,24,0.48);
   border:1px solid rgba(255,255,255,0.12);
   box-shadow:0 10px 26px rgba(0,0,0,0.24), 0 0 18px rgba(105,205,255,0.10);
 }
 
+.menu-screen-panel,
 .options-panel{
   position:absolute;
   inset:0;
@@ -956,6 +957,8 @@ input[type="range"]{
   padding:0;
 }
 
+.profile-card,
+.worlds-card,
 .options-card{
   width:420px;
   min-width:420px;
@@ -971,6 +974,132 @@ input[type="range"]{
   box-shadow:-18px 0 44px rgba(0,0,0,0.34), 0 0 24px rgba(105,205,255,0.08);
   overflow:auto;
   padding:16px 14px 22px;
+}
+
+.profile-content,
+.worlds-list{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.profile-summary{
+  padding:18px 16px;
+  border:1px solid rgba(105,205,255,0.22);
+  border-radius:16px;
+  background:rgba(255,255,255,0.045);
+}
+
+.profile-level{
+  color:#fff;
+  font-size:30px;
+  font-weight:900;
+  line-height:1;
+}
+
+.profile-xp{
+  margin-top:8px;
+  color:rgba(255,255,255,0.78);
+  font-size:14px;
+  font-weight:800;
+  letter-spacing:0.04em;
+}
+
+.profile-xp-track{
+  height:8px;
+  margin-top:12px;
+  overflow:hidden;
+  border-radius:999px;
+  background:rgba(255,255,255,0.10);
+}
+
+.profile-xp-track span{
+  display:block;
+  height:100%;
+  border-radius:inherit;
+  background:linear-gradient(90deg, #ffcf86, #69cdff, #a855f7);
+  box-shadow:0 0 16px rgba(105,205,255,0.38);
+}
+
+.profile-stats{
+  display:grid;
+  gap:8px;
+}
+
+.profile-stats div{
+  display:flex;
+  justify-content:space-between;
+  gap:14px;
+  padding:12px 13px;
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:12px;
+  background:rgba(255,255,255,0.035);
+}
+
+.profile-stats span{
+  color:rgba(255,255,255,0.68);
+  font-size:13px;
+  font-weight:700;
+}
+
+.profile-stats strong{
+  color:#fff;
+  font-size:14px;
+  font-weight:900;
+}
+
+.world-entry{
+  display:grid;
+  grid-template-columns:48px minmax(0, 1fr) auto;
+  gap:12px;
+  align-items:center;
+  padding:13px;
+  border:1px solid rgba(255,255,255,0.09);
+  border-radius:14px;
+  background:rgba(255,255,255,0.04);
+}
+
+.world-entry.locked{
+  opacity:0.62;
+}
+
+.world-entry-art{
+  display:grid;
+  place-items:center;
+  width:48px;
+  height:48px;
+  border-radius:12px;
+  color:#fff;
+  font-weight:900;
+  background:linear-gradient(135deg, rgba(255,207,134,0.25), rgba(105,205,255,0.18), rgba(168,85,247,0.22));
+  border:1px solid rgba(255,255,255,0.12);
+}
+
+.world-entry-body{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+}
+
+.world-entry-body strong{
+  color:#fff;
+  font-size:15px;
+  font-weight:900;
+}
+
+.world-entry-body span,
+.world-entry-body small{
+  color:rgba(255,255,255,0.68);
+  font-size:12px;
+  font-weight:700;
+}
+
+.world-entry-status{
+  color:#9fddff;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:0.08em;
 }
 
 .options-header{
@@ -990,11 +1119,15 @@ input[type="range"]{
 
 
 @media (min-width: 951px){
+  .menu-screen-panel,
   .options-panel{
     justify-content:flex-end;
   }
 
+  .menu-screen-panel .menu-shell,
   .options-panel .menu-shell,
+  .profile-card,
+  .worlds-card,
   .options-card{
     width:420px;
     min-width:420px;
@@ -1107,27 +1240,34 @@ input[type="range"]{
   }
 
   .btn-home{
-    min-height:50px;
-    font-size:17px;
+    min-height:44px;
+    font-size:14px;
   }
 
+  .menu-screen-panel,
   .options-panel{
     padding:0;
     align-items:stretch;
     justify-content:flex-end;
   }
 
+  .profile-card,
+  .worlds-card,
   .options-card{
     width:min(100vw, 440px);
     height:100%;
     margin:0;
     border-radius:0;
   }
+  .profile-card .row,
+  .worlds-card .row,
   .options-card .row{
     grid-template-columns: 1fr;
     gap:8px;
   }
 
+  .profile-card .row label,
+  .worlds-card .row label,
   .options-card .row label{
     font-size:11px;
   }
@@ -1597,6 +1737,7 @@ input[type="range"]{
 }
 
 @media (max-width: 950px){
+  .menu-screen-panel,
   .options-panel{
     position:fixed;
     inset:0;
@@ -1609,10 +1750,12 @@ input[type="range"]{
     background:rgba(5,8,18,0.78);
   }
 
+  .menu-screen-panel.hidden,
   .options-panel.hidden{
     display:none !important;
   }
 
+  .menu-screen-panel .menu-shell,
   .options-panel .menu-shell{
     width:min(420px, 100%);
     min-width:0;
@@ -1626,6 +1769,8 @@ input[type="range"]{
     box-shadow:0 18px 48px rgba(0,0,0,0.42), 0 0 26px rgba(105,205,255,0.12);
   }
 
+  .profile-card,
+  .worlds-card,
   .options-card{
     width:100%;
     min-width:0;
@@ -1659,7 +1804,9 @@ input[type="range"]{
     line-height:1.1;
   }
 
-  #btnCloseOptions{
+  #btnCloseOptions,
+  #btnCloseProfile,
+  #btnCloseWorlds{
     min-width:74px;
     min-height:34px;
     padding:7px 10px;
@@ -1667,6 +1814,8 @@ input[type="range"]{
     white-space:nowrap;
   }
 
+  .profile-card .row,
+  .worlds-card .row,
   .options-card .row{
     display:grid;
     grid-template-columns:1fr;
@@ -1674,6 +1823,12 @@ input[type="range"]{
     margin:10px 0;
   }
 
+  .profile-card select,
+  .profile-card input[type="range"],
+  .profile-card input[type="file"],
+  .worlds-card select,
+  .worlds-card input[type="range"],
+  .worlds-card input[type="file"],
   .options-card select,
   .options-card input[type="range"],
   .options-card input[type="file"]{

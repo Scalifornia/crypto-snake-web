@@ -17,11 +17,16 @@
     rankingNameInput: document.getElementById("rankingNameInput"),
     btnSaveRank: document.getElementById("btnSaveRank"),
     worldToast: document.getElementById("worldToast"),
-    progressSummary: document.getElementById("progressSummary"),
-    progressLevel: document.getElementById("progressLevel"),
-    progressXp: document.getElementById("progressXp"),
-    progressFill: document.getElementById("progressFill"),
-    progressWorlds: document.getElementById("progressWorlds"),
+    btnProfile: document.getElementById("btnProfile"),
+    btnWorlds: document.getElementById("btnWorlds"),
+    btnRanking: document.getElementById("btnRanking"),
+    btnExit: document.getElementById("btnExit"),
+    profilePanel: document.getElementById("profilePanel"),
+    profileContent: document.getElementById("profileContent"),
+    btnCloseProfile: document.getElementById("btnCloseProfile"),
+    worldsPanel: document.getElementById("worldsPanel"),
+    worldsList: document.getElementById("worldsList"),
+    btnCloseWorlds: document.getElementById("btnCloseWorlds"),
     levelUpToast: document.getElementById("levelUpToast"),
     levelUpText: document.getElementById("levelUpText"),
     tutorialCard: document.getElementById("tutorialCard"),
@@ -116,11 +121,11 @@
     growth: 1.18,
   };
   const WORLDS = [
-    { id: "bitcoin_city", number: 1, name: "Bitcoin City", unlockLevel: 1 },
-    { id: "ethereum_network", number: 2, name: "Ethereum Network", unlockLevel: 5 },
-    { id: "solana_speed_chain", number: 3, name: "Solana Speed Chain", unlockLevel: 10 },
-    { id: "doge_moon", number: 4, name: "Doge Moon", unlockLevel: 15 },
-    { id: "cardano_labs", number: 5, name: "Cardano Labs", unlockLevel: 20 },
+    { id: "bitcoin_city", number: 1, name: "Bitcoin City", image: null, music: null, unlockLevel: 1 },
+    { id: "ethereum_network", number: 2, name: "Ethereum Network", image: null, music: null, unlockLevel: 5 },
+    { id: "solana_speed", number: 3, name: "Solana Speed", image: null, music: null, unlockLevel: 10 },
+    { id: "doge_moon", number: 4, name: "Doge Moon", image: null, music: null, unlockLevel: 15 },
+    { id: "cardano_labs", number: 5, name: "Cardano Labs", image: null, music: null, unlockLevel: 20 },
   ];
 
   const BACKGROUND_LIBRARY = {
@@ -292,6 +297,7 @@
         jogos_jogados: 0,
         melhor_score: 0,
         tempo_total_jogado: 0,
+        achievements_desbloqueados: 0,
       };
     },
 
@@ -305,6 +311,7 @@
         jogos_jogados: Math.max(0, Math.floor(Number(source.jogos_jogados ?? base.jogos_jogados) || 0)),
         melhor_score: Math.max(0, Math.floor(Number(source.melhor_score ?? base.melhor_score) || 0)),
         tempo_total_jogado: Math.max(0, Math.floor(Number(source.tempo_total_jogado ?? base.tempo_total_jogado) || 0)),
+        achievements_desbloqueados: Math.max(0, Math.floor(Number(source.achievements_desbloqueados ?? base.achievements_desbloqueados) || 0)),
       };
 
       progress.nivel = ProgressManager.calculateLevel(progress.xp_total);
@@ -406,6 +413,89 @@
       this.state.nivel = this.calculateLevel(this.state.xp_total);
       this.save();
       syncProgressUI();
+    },
+  };
+
+  const ProfileScreen = {
+    formatTime(totalSeconds) {
+      const seconds = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      const rest = seconds % 60;
+      if (hours) return `${hours}h ${minutes}m`;
+      if (minutes) return `${minutes}m ${rest}s`;
+      return `${rest}s`;
+    },
+
+    render() {
+      if (!el.profileContent) return;
+      if (!ProgressManager.state) ProgressManager.load();
+
+      const progress = ProgressManager.state;
+      const levelStartXp = ProgressManager.xpForLevel(progress.nivel);
+      const nextLevelXp = ProgressManager.nextLevelXp(progress.nivel);
+      const unlockedWorlds = WorldManager.unlockedWorlds(progress.nivel).length;
+
+      el.profileContent.innerHTML = `
+        <section class="profile-summary">
+          <div class="profile-level">Level ${progress.nivel}</div>
+          <div class="profile-xp">XP ${progress.xp_total} / ${nextLevelXp}</div>
+          <div class="profile-xp-track" aria-hidden="true">
+            <span style="width:${Math.round(Math.max(0, Math.min(1, (progress.xp_total - levelStartXp) / Math.max(1, nextLevelXp - levelStartXp))) * 100)}%"></span>
+          </div>
+        </section>
+        <section class="profile-stats">
+          <div><span>Total Coins Collected</span><strong>${progress.moedas_recolhidas}</strong></div>
+          <div><span>Games Played</span><strong>${progress.jogos_jogados}</strong></div>
+          <div><span>Best Score</span><strong>${progress.melhor_score}</strong></div>
+          <div><span>Total Play Time</span><strong>${this.formatTime(progress.tempo_total_jogado)}</strong></div>
+          <div><span>Achievements Unlocked</span><strong>${progress.achievements_desbloqueados}</strong></div>
+          <div><span>Worlds Unlocked</span><strong>${unlockedWorlds}/${WORLDS.length}</strong></div>
+        </section>
+      `;
+    },
+
+    show() {
+      closeMenuScreens();
+      this.render();
+      el.profilePanel?.classList.remove("hidden");
+    },
+
+    hide() {
+      el.profilePanel?.classList.add("hidden");
+    },
+  };
+
+  const WorldScreen = {
+    render() {
+      if (!el.worldsList) return;
+      if (!ProgressManager.state) ProgressManager.load();
+
+      const currentLevel = ProgressManager.state.nivel;
+      el.worldsList.innerHTML = WORLDS.map((world) => {
+        const unlocked = WorldManager.isUnlocked(world, currentLevel);
+        return `
+          <article class="world-entry ${unlocked ? "unlocked" : "locked"}">
+            <div class="world-entry-art" aria-hidden="true">${world.number}</div>
+            <div class="world-entry-body">
+              <strong>${world.name}</strong>
+              <span>${unlocked ? "Unlocked" : `Unlocks at Level ${world.unlockLevel}`}</span>
+              <small>Image: ${world.image || "not set"} · Music: ${world.music || "not set"}</small>
+            </div>
+            <div class="world-entry-status">${unlocked ? "OPEN" : "LOCKED"}</div>
+          </article>
+        `;
+      }).join("");
+    },
+
+    show() {
+      closeMenuScreens();
+      this.render();
+      el.worldsPanel?.classList.remove("hidden");
+    },
+
+    hide() {
+      el.worldsPanel?.classList.add("hidden");
     },
   };
 
@@ -1268,6 +1358,7 @@
     el.btnOverlayReset && el.btnOverlayReset.classList.remove("hidden");
     el.btnOverlayReset && (el.btnOverlayReset.textContent = "Try Again");
     el.btnOverlayWorlds && el.btnOverlayWorlds.classList.remove("hidden");
+    el.btnOverlayWorlds && (el.btnOverlayWorlds.textContent = "Worlds");
     el.btnOverlayMenu && el.btnOverlayMenu.classList.remove("hidden");
     el.btnOverlayMenu && (el.btnOverlayMenu.textContent = "Menu");
 
@@ -1290,32 +1381,17 @@
     el.menu?.classList.toggle("hidden", !show);
     el.topbar?.classList.toggle("menu-hidden", !!show);
     document.body.classList.toggle("game-active", !show);
-    if (show) syncProgressUI();
   }
 
   function syncProgressUI() {
-    if (!el.progressSummary) return;
-    if (!ProgressManager.state) ProgressManager.load();
+    if (!el.profilePanel?.classList.contains("hidden")) ProfileScreen.render();
+    if (!el.worldsPanel?.classList.contains("hidden")) WorldScreen.render();
+  }
 
-    const progress = ProgressManager.state;
-    const currentLevel = progress.nivel;
-    const currentXp = progress.xp_total;
-    const levelStartXp = ProgressManager.xpForLevel(currentLevel);
-    const nextLevelXp = ProgressManager.nextLevelXp(currentLevel);
-    const levelSpan = Math.max(1, nextLevelXp - levelStartXp);
-    const levelProgress = Math.max(0, Math.min(1, (currentXp - levelStartXp) / levelSpan));
-    const unlockedWorlds = WorldManager.unlockedWorlds(currentLevel);
-    const nextWorld = WorldManager.nextLockedWorld(currentLevel);
-
-    el.progressLevel && (el.progressLevel.textContent = `LEVEL ${currentLevel}`);
-    el.progressXp && (el.progressXp.textContent = `XP: ${currentXp} / ${nextLevelXp}`);
-    el.progressFill && (el.progressFill.style.width = `${Math.round(levelProgress * 100)}%`);
-
-    if (el.progressWorlds) {
-      el.progressWorlds.textContent = nextWorld
-        ? `Worlds: ${unlockedWorlds.length}/${WORLDS.length} · Next: ${nextWorld.name} L${nextWorld.unlockLevel}`
-        : `Worlds: ${unlockedWorlds.length}/${WORLDS.length} · All unlocked`;
-    }
+  function closeMenuScreens() {
+    el.profilePanel?.classList.add("hidden");
+    el.worldsPanel?.classList.add("hidden");
+    showOptions(false);
   }
 
   let levelUpToastTimer = null;
@@ -1338,7 +1414,28 @@
   }
 
   function showOptions(show) {
+    if (show) {
+      ProfileScreen.hide();
+      WorldScreen.hide();
+    }
     el.optionsPanel?.classList.toggle("hidden", !show);
+  }
+
+  function showRankingFromMenu() {
+    closeMenuScreens();
+    pendingRankEntry = null;
+    el.rankingNameWrap?.classList.add("hidden");
+    el.overlayRanking?.classList.remove("hidden");
+    el.btnOverlayReset?.classList.add("hidden");
+    el.btnOverlayWorlds?.classList.add("hidden");
+    el.btnOverlayMenu?.classList.remove("hidden");
+    el.btnOverlayMenu && (el.btnOverlayMenu.textContent = "Back");
+    renderRankingList(currentModeKey());
+    showOverlay(true, "Ranking", "Current mode records.");
+  }
+
+  function exitGame() {
+    window.close();
   }
 
   function syncModeOptionsVisibility() {
@@ -2278,7 +2375,7 @@
     initGameFromMenu();
     particles = [];
     lastFrameTs = 0;
-    showOptions(false);
+    closeMenuScreens();
     state = State.RUNNING;
 
     showMenu(false);
@@ -2317,7 +2414,7 @@
   function backToMenu() {
     stopLoop();
     stopTutorial(false);
-    showOptions(false);
+    closeMenuScreens();
     pendingRankEntry = null;
     state = State.MENU;
     configureOverlayForPause();
@@ -2371,9 +2468,15 @@
   }
 
   el.btnPlay?.addEventListener("click", startGame);
+  el.btnProfile?.addEventListener("click", () => ProfileScreen.show());
+  el.btnWorlds?.addEventListener("click", () => WorldScreen.show());
+  el.btnRanking?.addEventListener("click", showRankingFromMenu);
+  el.btnExit?.addEventListener("click", exitGame);
   bindActionButton(el.btnHint, toggleAlignmentHint);
   el.btnOptions?.addEventListener("click", () => showOptions(true));
   el.btnCloseOptions?.addEventListener("click", () => showOptions(false));
+  el.btnCloseProfile?.addEventListener("click", () => ProfileScreen.hide());
+  el.btnCloseWorlds?.addEventListener("click", () => WorldScreen.hide());
   el.mode?.addEventListener("change", () => {
     localStorage.setItem(LS.mode, String(el.mode.value));
     applyModeExperience();
@@ -2399,7 +2502,7 @@
   el.btnOverlayMenu?.addEventListener("click", backToMenu);
   el.btnOverlayWorlds?.addEventListener("click", () => {
     backToMenu();
-    showOptions(true);
+    WorldScreen.show();
   });
   el.btnSaveRank?.addEventListener("click", () => {
     if (!pendingRankEntry) return;
