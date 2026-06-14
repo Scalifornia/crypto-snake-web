@@ -1161,6 +1161,7 @@
   function showMenu(show) {
     el.menu?.classList.toggle("hidden", !show);
     el.topbar?.classList.toggle("menu-hidden", !!show);
+    document.body.classList.toggle("game-active", !show);
   }
 
   function showOptions(show) {
@@ -1391,6 +1392,7 @@
   }
 
   function onTouchEnd(e) {
+    if (isUiTarget(e)) return;
     if (state !== State.RUNNING) return;
     const still = findActiveTouch(e.touches);
     if (!still) {
@@ -2124,8 +2126,26 @@
     else if (k === "arrowright" || k === "d") setNextDir(1, 0);
   });
 
+  function bindActionButton(button, action) {
+    if (!button) return;
+    let handledAt = 0;
+    const run = (e) => {
+      e?.preventDefault?.();
+      e?.stopPropagation?.();
+      handledAt = nowMs();
+      action();
+    };
+    button.addEventListener("pointerdown", run, { passive:false });
+    button.addEventListener("touchstart", run, { passive:false });
+    button.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (nowMs() - handledAt > 450) action();
+    });
+  }
+
   el.btnPlay?.addEventListener("click", startGame);
-  el.btnHint?.addEventListener("click", toggleAlignmentHint);
+  bindActionButton(el.btnHint, toggleAlignmentHint);
   el.btnOptions?.addEventListener("click", () => showOptions(true));
   el.btnCloseOptions?.addEventListener("click", () => showOptions(false));
   el.mode?.addEventListener("change", () => {
@@ -2143,7 +2163,7 @@
     applyBuiltInBackground(v);
   });
   el.btnReset?.addEventListener("click", reset);
-  el.btnMenu?.addEventListener("click", backToMenu);
+  bindActionButton(el.btnMenu, backToMenu);
   el.btnFull?.addEventListener("click", toggleFullscreen);
 
   el.btnOverlayReset?.addEventListener("click", () => {

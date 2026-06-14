@@ -1460,3 +1460,60 @@ input[type="range"]{
     object-position: center 42%;
   }
 }
+
+@media (max-width: 950px){
+  .topbar{
+    position:relative;
+    z-index:200;
+    pointer-events:auto;
+  }
+
+  .actions,
+  .actions .btn,
+  .btn-hint,
+  #btnMenu{
+    pointer-events:auto;
+    touch-action:manipulation;
+  }
+
+  .actions #btnHint,
+  .actions #btnMenu{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:34px;
+    padding:6px 10px;
+    font-size:11px;
+    position:relative;
+    z-index:220;
+  }
+
+  body.game-active #app{
+    grid-template-rows:auto minmax(0, 1fr);
+  }
+
+  body.game-active .stage{
+    height:auto;
+    min-height:0;
+    padding-top:22px;
+    align-items:flex-start;
+    overflow:hidden;
+  }
+
+  body.game-active #game{
+    height:calc(100dvh - 188px);
+    min-height:320px;
+    margin-top:0;
+  }
+}
+
+@media (max-width: 950px) and (orientation: landscape){
+  body.game-active .stage{
+    padding-top:10px;
+  }
+
+  body.game-active #game{
+    height:calc(100dvh - 92px);
+    min-height:220px;
+  }
+}
