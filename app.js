@@ -2132,6 +2132,7 @@
     const run = (e) => {
       e?.preventDefault?.();
       e?.stopPropagation?.();
+      if (nowMs() - handledAt < 450) return;
       handledAt = nowMs();
       action();
     };
