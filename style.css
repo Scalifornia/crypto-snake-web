@@ -322,43 +322,6 @@ input[type="range"]{
     0 0 16px rgba(255,0,220,0.28);
 }
 
-.tutorial-keys{
-  position:relative;
-  z-index:1;
-  display:flex;
-  justify-content:center;
-  gap:5px;
-  flex-wrap:wrap;
-  margin-top:8px;
-}
-
-.tutorial-keys span{
-  min-width:25px;
-  height:23px;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  border-radius:7px;
-  border:1px solid rgba(0,255,255,0.66);
-  background:rgba(0,255,255,0.16);
-  color:#ffffff;
-  font-size:12px;
-  font-weight:900;
-  box-shadow:
-    inset 0 0 10px rgba(0,255,255,0.16),
-    0 0 12px rgba(0,255,255,0.20);
-}
-
-.tutorial-keys.pulse span{
-  animation:tutorialKeyPulse 1s ease both;
-}
-
-@keyframes tutorialKeyPulse{
-  0%{ transform:translateY(0); background:rgba(125,249,255,0.10); }
-  38%{ transform:translateY(-2px); background:rgba(125,249,255,0.22); }
-  100%{ transform:translateY(0); background:rgba(125,249,255,0.10); }
-}
-
 @keyframes tutorialCardBurst{
   0%{
     opacity:0;

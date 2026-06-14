@@ -19,7 +19,6 @@
     worldToast: document.getElementById("worldToast"),
     tutorialCard: document.getElementById("tutorialCard"),
     tutorialText: document.getElementById("tutorialText"),
-    tutorialKeys: document.getElementById("tutorialKeys"),
 
     btnPlay: document.getElementById("btnPlay"),
     btnReset: document.getElementById("btnReset"),
@@ -164,7 +163,6 @@
   let tutorialFinalShown = false;
   let tutorialMessageTimer = null;
   let tutorialStartTimer = null;
-  let tutorialKeysTimer = null;
 
   let score = 0;
   let cashValue = 0;
@@ -780,17 +778,13 @@
   function clearTutorialTimers() {
     if (tutorialMessageTimer) clearTimeout(tutorialMessageTimer);
     if (tutorialStartTimer) clearTimeout(tutorialStartTimer);
-    if (tutorialKeysTimer) clearTimeout(tutorialKeysTimer);
     tutorialMessageTimer = null;
     tutorialStartTimer = null;
-    tutorialKeysTimer = null;
   }
 
   function hideTutorialMessage() {
     if (!el.tutorialCard) return;
     el.tutorialCard.classList.remove("show");
-    el.tutorialKeys?.classList.add("hidden");
-    el.tutorialKeys?.classList.remove("pulse");
     setTimeout(() => {
       if (!el.tutorialCard?.classList.contains("show")) {
         el.tutorialCard?.classList.add("hidden");
@@ -801,26 +795,12 @@
   function showTutorialMessage(text, durationMs = 3600, showKeys = false, onDone = null) {
     if (!el.tutorialCard || !el.tutorialText) return;
     if (tutorialMessageTimer) clearTimeout(tutorialMessageTimer);
-    if (tutorialKeysTimer) clearTimeout(tutorialKeysTimer);
-    tutorialKeysTimer = null;
 
     el.tutorialText.textContent = text;
     el.tutorialCard.classList.remove("hidden");
     el.tutorialCard.classList.remove("show");
     void el.tutorialCard.offsetWidth;
     requestAnimationFrame(() => el.tutorialCard?.classList.add("show"));
-
-    if (el.tutorialKeys) {
-      el.tutorialKeys.classList.toggle("hidden", !showKeys);
-      el.tutorialKeys.classList.toggle("pulse", showKeys);
-      if (showKeys && durationMs > 0) {
-        tutorialKeysTimer = setTimeout(() => {
-          el.tutorialKeys?.classList.add("hidden");
-          el.tutorialKeys?.classList.remove("pulse");
-          tutorialKeysTimer = null;
-        }, 1000);
-      }
-    }
 
     if (durationMs > 0) {
       tutorialMessageTimer = setTimeout(() => {
@@ -852,7 +832,7 @@
       tutorialStartTimer = null;
       if (!tutorialActive || state !== State.RUNNING) return;
       tutorialIntroShown = true;
-      showTutorialMessage("Usa WASD ou as setas para te mover.", 0);
+      showTutorialMessage("Move a cobra para apanhar moedas.", 0);
     }, 300);
   }
 
