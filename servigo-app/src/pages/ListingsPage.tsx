@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ListingCard } from '../components/ListingCard';
 import {
@@ -47,6 +47,20 @@ export function ListingsPage() {
   );
   const [minRating, setMinRating] = useState(Number(searchParams.get('rating') ?? 0));
   const [sortMode, setSortMode] = useState<ListingSortMode>('recommended');
+
+  useEffect(() => {
+    setCategorySlug(searchParams.get('category') ?? '');
+    setSubcategorySlug(searchParams.get('subcategory') ?? '');
+    setSpecialtySlug(searchParams.get('specialty') ?? '');
+    setSearchQuery(searchParams.get('q') ?? '');
+    setCountryCode(searchParams.get('country') ?? '');
+    setLocationId(searchParams.get('location') ?? '');
+    setProviderType((searchParams.get('providerType') as ProviderType | null) ?? 'all');
+    setUrgentOnly(searchParams.get('urgent') === 'true');
+    setPriceShownOnly(searchParams.get('priceShown') === 'true');
+    setListingLanguage((searchParams.get('language') as Locale | null) ?? 'all');
+    setMinRating(Number(searchParams.get('rating') ?? 0));
+  }, [searchParams]);
 
   const selectedCategory = findCategory(categorySlug);
   const selectedSubcategory = findSubcategory(categorySlug, subcategorySlug);

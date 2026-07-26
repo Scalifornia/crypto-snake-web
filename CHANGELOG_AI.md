@@ -2,6 +2,45 @@
 
 This file is an append-only chronological record of meaningful work performed by AI assistants on this project.
 
+## 2026-07-26 05:00 — Add compact search to internal pages
+
+### Objective
+Give users a search entry point on category and other internal pages, using the same practical service/profession search as the homepage.
+
+### Backup
+- Created a pre-change backup at `backups/kliko-before-global-page-search-20260726/`.
+
+### Work Completed
+- Added `GlobalSearchBar`, a reusable compact search component with a magnifying-glass visual.
+- Placed the compact search below the shared header on all internal pages except the homepage.
+- Reused the existing service/profession-first search logic so searches like `pintor` route to filtered listing results.
+- Kept the homepage search unchanged to avoid duplicate search bars on `/`.
+- Updated listing results to react when query parameters change from the global search while already on `/listings`.
+- Added responsive/sticky styling for desktop and mobile.
+
+### Files Changed
+- `servigo-app/src/components/GlobalSearchBar.tsx`
+  - Added reusable internal search component.
+- `servigo-app/src/components/Layout.tsx`
+  - Added the global search bar below the header on internal routes.
+- `servigo-app/src/pages/ListingsPage.tsx`
+  - Synced listing filter state with URL search parameters.
+- `servigo-app/src/styles/global.css`
+  - Added compact search bar, suggestions, and mobile responsive styles.
+- `servigo-app/README.md`
+  - Documented compact global search on internal pages.
+- `PROJECT_CONTEXT.md`
+  - Added current status and feature notes for global internal search.
+- `CHANGELOG_AI.md`
+  - Added this changelog entry.
+
+### Validation
+- Ran `pnpm run build` in `servigo-app/`; TypeScript and Vite production build passed.
+- Ran `pnpm run build:github-pages` in `servigo-app/`; static GitHub Pages output was generated in `kliko/`.
+
+### Risks or Known Limitations
+- Search remains frontend-only and mock-data based until backend search/persistence is added.
+
 ## 2026-07-26 04:47 — Make homepage search service-first
 
 ### Objective

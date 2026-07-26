@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, NavLink, Outlet } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { brand } from '../config/brand';
 import { getCoverageCountries } from '../data/euCoverageOptions';
 import {
@@ -14,6 +14,7 @@ import { getLanguageForCountry } from '../i18n/countryLanguage';
 import { languageNames, supportedLanguages } from '../i18n/translations';
 import { useTranslation } from '../i18n/useTranslation';
 import type { Locale } from '../types/servigo';
+import { GlobalSearchBar } from './GlobalSearchBar';
 
 type ThemePreference = 'light' | 'dark' | 'auto';
 
@@ -44,6 +45,7 @@ function resolveTheme(preference: ThemePreference): 'light' | 'dark' {
 
 export function Layout() {
   const { language, setLanguage, t } = useTranslation();
+  const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [themePreference, setThemePreference] = useState<ThemePreference>(getInitialThemePreference);
   const storedLocation = getStoredUserLocation();
@@ -144,6 +146,7 @@ export function Layout() {
     setThemePreference(nextThemePreference);
     window.localStorage.setItem(themeStorageKey, nextThemePreference);
   };
+  const showGlobalSearch = location.pathname !== '/';
 
   return (
     <div className="app-shell">
@@ -219,6 +222,8 @@ export function Layout() {
           </div>
         </div>
       </header>
+
+      {showGlobalSearch && <GlobalSearchBar />}
 
       <main className="app-main">
         <Outlet />
