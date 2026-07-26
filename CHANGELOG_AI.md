@@ -2,6 +2,39 @@
 
 This file is an append-only chronological record of meaningful work performed by AI assistants on this project.
 
+## 2026-07-26 05:12 — Add primary apply button to listing filters
+
+### Objective
+Make the `/listings` filter panel feel coherent by adding a clear search/apply action instead of leaving `Repor` as the only visible button.
+
+### Backup
+- Created a pre-change backup at `backups/kliko-before-listing-filter-submit-button-20260726/`.
+
+### Work Completed
+- Added a primary `Kliko` button at the bottom of the listing filter panel.
+- The button applies the current filters to the URL so the filtered results can be refreshed or shared.
+- Kept `Repor` as a secondary reset action and made it clear the URL filters too.
+- Preserved the existing live filtering behavior.
+
+### Files Changed
+- `servigo-app/src/pages/ListingsPage.tsx`
+  - Added filter apply URL logic and primary filter action button.
+- `servigo-app/src/styles/global.css`
+  - Added spacing for listing filter actions.
+- `servigo-app/README.md`
+  - Documented the primary/secondary filter actions.
+- `PROJECT_CONTEXT.md`
+  - Updated the listing results feature note.
+- `CHANGELOG_AI.md`
+  - Added this changelog entry.
+
+### Validation
+- Ran `pnpm run build` in `servigo-app/`; TypeScript and Vite production build passed.
+- Ran `pnpm run build:github-pages` in `servigo-app/`; static GitHub Pages output was generated in `kliko/`.
+
+### Risks or Known Limitations
+- Filters still update live as well as through the button. This is intentional for now; the button gives users a clear action without slowing the interface.
+
 ## 2026-07-26 05:09 — Improve listing filter service search
 
 ### Objective

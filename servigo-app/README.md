@@ -148,7 +148,7 @@ Homepage search is service/profession-first. A query such as `pintor`, `p`, `lim
 
 All internal pages except `/` include the compact global search bar. It uses the same service/profession-first search logic as the homepage and navigates to `/listings` with the best matching category, subcategory, specialty, country, and location filters.
 
-The `/listings` filter panel also uses the same service/profession-first suggestions. Typing terms such as `femme de menage`, `femme de ménage`, `pintor`, `limpeza`, or `limpesa` should immediately show matching services/listings and narrow the category dropdown to relevant categories while the query is active.
+The `/listings` filter panel also uses the same service/profession-first suggestions. Typing terms such as `femme de menage`, `femme de ménage`, `pintor`, `limpeza`, or `limpesa` should immediately show matching services/listings and narrow the category dropdown to relevant categories while the query is active. The panel keeps `Kliko` as the primary apply/search action and `Repor` as the secondary reset action.
 
 When a seeker creates or implies a quote request, the frontend mock logic can identify eligible listings/providers by matching category, subcategory, specialty, and selected area.
 

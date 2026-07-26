@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ListingCard } from '../components/ListingCard';
 import {
   filterListings,
@@ -32,6 +32,7 @@ function getListingNumericPrice(listing: ServiceListing, language: Locale) {
 
 export function ListingsPage() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { language, t } = useTranslation();
   const [categorySlug, setCategorySlug] = useState(searchParams.get('category') ?? '');
   const [subcategorySlug, setSubcategorySlug] = useState(searchParams.get('subcategory') ?? '');
@@ -141,6 +142,57 @@ export function ListingsPage() {
     return filteredListings;
   }, [filteredListings, language, locationId, sortMode]);
 
+  const applyFilters = () => {
+    const params = new URLSearchParams();
+    const trimmedSearchQuery = searchQuery.trim();
+
+    if (trimmedSearchQuery) {
+      params.set('q', trimmedSearchQuery);
+    }
+
+    if (categorySlug) {
+      params.set('category', categorySlug);
+    }
+
+    if (subcategorySlug) {
+      params.set('subcategory', subcategorySlug);
+    }
+
+    if (specialtySlug) {
+      params.set('specialty', specialtySlug);
+    }
+
+    if (countryCode) {
+      params.set('country', countryCode);
+    }
+
+    if (locationId) {
+      params.set('location', locationId);
+    }
+
+    if (providerType !== 'all') {
+      params.set('providerType', providerType);
+    }
+
+    if (urgentOnly) {
+      params.set('urgent', 'true');
+    }
+
+    if (priceShownOnly) {
+      params.set('priceShown', 'true');
+    }
+
+    if (listingLanguage !== 'all') {
+      params.set('language', listingLanguage);
+    }
+
+    if (minRating > 0) {
+      params.set('rating', String(minRating));
+    }
+
+    navigate(`/listings${params.toString() ? `?${params.toString()}` : ''}`);
+  };
+
   const resetFilters = () => {
     setCategorySlug('');
     setSubcategorySlug('');
@@ -154,6 +206,7 @@ export function ListingsPage() {
     setListingLanguage('all');
     setMinRating(0);
     setSortMode('recommended');
+    navigate('/listings');
   };
 
   const getMatchLabel = (match: ServiceSearchMatch) =>
@@ -350,9 +403,14 @@ export function ListingsPage() {
             <span>{t('filters.priceShown')}</span>
           </label>
 
-          <button className="button button-ghost" type="button" onClick={resetFilters}>
-            {t('filters.reset')}
-          </button>
+          <div className="filter-actions">
+            <button className="button button-primary" type="button" onClick={applyFilters}>
+              {t('home.searchButton')}
+            </button>
+            <button className="button button-ghost" type="button" onClick={resetFilters}>
+              {t('filters.reset')}
+            </button>
+          </div>
         </aside>
 
         <section>

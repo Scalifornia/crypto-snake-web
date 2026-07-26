@@ -2026,6 +2026,11 @@ a {
   font-weight: 850;
 }
 
+.filter-actions {
+  display: grid;
+  gap: 0.55rem;
+}
+
 .results-toolbar {
   align-items: center;
   display: flex;
