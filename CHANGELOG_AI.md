@@ -2,6 +2,39 @@
 
 This file is an append-only chronological record of meaningful work performed by AI assistants on this project.
 
+## 2026-07-26 05:16 — Make listing filters and results scroll independently
+
+### Objective
+Fix the `/listings` desktop scroll behavior so the filters column and available services/results column behave as independent areas.
+
+### Backup
+- Created a pre-change backup at `backups/kliko-before-independent-listing-scroll-20260726/`.
+
+### Work Completed
+- Added a dedicated `listings-results-panel` wrapper class to the listing results column.
+- On desktop, the listings layout now keeps filters and results in independent scrollable columns.
+- Added scroll containment so scrolling inside one column does not immediately drag the other column/page.
+- Kept mobile behavior as a normal vertical flow to avoid awkward nested scroll on small screens.
+
+### Files Changed
+- `servigo-app/src/pages/ListingsPage.tsx`
+  - Added a semantic class to the results column.
+- `servigo-app/src/styles/global.css`
+  - Added desktop-only independent scroll behavior for filters and results.
+- `servigo-app/README.md`
+  - Documented the listing page scroll behavior.
+- `PROJECT_CONTEXT.md`
+  - Updated the listing results feature note.
+- `CHANGELOG_AI.md`
+  - Added this changelog entry.
+
+### Validation
+- Ran `pnpm run build` in `servigo-app/`; TypeScript and Vite production build passed.
+- Ran `pnpm run build:github-pages` in `servigo-app/`; static GitHub Pages output was generated in `kliko/`.
+
+### Risks or Known Limitations
+- Desktop nested scroll should be visually checked in the browser because trackpad and mouse-wheel behavior can feel slightly different across devices.
+
 ## 2026-07-26 05:12 — Add primary apply button to listing filters
 
 ### Objective

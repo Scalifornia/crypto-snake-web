@@ -1973,6 +1973,10 @@ a {
   grid-template-columns: minmax(220px, 0.32fr) minmax(0, 1fr);
 }
 
+.listings-results-panel {
+  min-width: 0;
+}
+
 .filter-panel {
   display: grid;
   gap: 0.9rem;
@@ -2029,6 +2033,32 @@ a {
 .filter-actions {
   display: grid;
   gap: 0.55rem;
+}
+
+@media (min-width: 901px) {
+  .listings-page .listings-layout {
+    align-items: stretch;
+    height: calc(100svh - 8.5rem);
+    overflow: hidden;
+  }
+
+  .listings-page .filter-panel,
+  .listings-results-panel {
+    max-height: 100%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+  }
+
+  .listings-page .filter-panel {
+    align-self: start;
+    position: static;
+  }
+
+  .listings-results-panel {
+    padding-right: 0.25rem;
+  }
 }
 
 .results-toolbar {

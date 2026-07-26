@@ -413,7 +413,7 @@ export function ListingsPage() {
           </div>
         </aside>
 
-        <section>
+        <section className="listings-results-panel">
           <div className="results-heading">
             <div>
               <strong>
