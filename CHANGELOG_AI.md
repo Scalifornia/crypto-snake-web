@@ -2,6 +2,42 @@
 
 This file is an append-only chronological record of meaningful work performed by AI assistants on this project.
 
+## 2026-07-26 05:09 — Improve listing filter service search
+
+### Objective
+Make the `/listings` filter panel behave coherently with the homepage search: typing a service or profession should immediately suggest matching services/listings and keep category choices relevant to the query.
+
+### Backup
+- Created a pre-change backup at `backups/kliko-before-listing-filter-smart-search-20260726/`.
+
+### Work Completed
+- Added service/profession-first suggestions inside the listing filter search field.
+- Selecting a suggestion now fills the relevant category, subcategory, and specialty filters.
+- While a search query is active, the category dropdown narrows to categories that match the query instead of showing an unrelated full list.
+- Added French/Portuguese/English cleaning aliases such as `femme de menage`, `femme de ménage`, `aide ménage`, `empregada doméstica`, and `housekeeper`.
+- Kept all logic frontend-only and reused the existing mock search model.
+
+### Files Changed
+- `servigo-app/src/pages/ListingsPage.tsx`
+  - Added smart filter suggestions and query-aware category options.
+- `servigo-app/src/data/marketplaceData.ts`
+  - Added cleaning-service search aliases.
+- `servigo-app/src/styles/global.css`
+  - Added compact styles for filter-panel suggestions.
+- `servigo-app/README.md`
+  - Documented smart listing filter search.
+- `PROJECT_CONTEXT.md`
+  - Updated project status and feature notes.
+- `CHANGELOG_AI.md`
+  - Added this changelog entry.
+
+### Validation
+- Ran `pnpm run build` in `servigo-app/`; TypeScript and Vite production build passed.
+- Ran `pnpm run build:github-pages` in `servigo-app/`; static GitHub Pages output was generated in `kliko/`.
+
+### Risks or Known Limitations
+- Search is still mock-data and alias based. A backend search index will eventually be needed for real marketplace scale.
+
 ## 2026-07-26 05:00 — Add compact search to internal pages
 
 ### Objective

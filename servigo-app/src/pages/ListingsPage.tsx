@@ -9,7 +9,9 @@ import {
   getLocationPriority,
   listingLanguages,
   marketplaceCategories,
-  providerTypes
+  providerTypes,
+  searchServiceMatches,
+  type ServiceSearchMatch
 } from '../data/marketplaceData';
 import { getCoverageCountries } from '../data/euCoverageOptions';
 import { getLocationsByCountry } from '../data/locationData';
@@ -69,6 +71,21 @@ export function ListingsPage() {
   const locationOptions = getLocationsByCountry(countryCode);
   const selectedLocation = locationOptions.find((location) => location.id === locationId);
   const selectedCountry = countryOptions.find((country) => country.countryCode === countryCode);
+  const serviceMatches = useMemo(
+    () => (searchQuery.trim() ? searchServiceMatches(searchQuery, locationId) : []),
+    [locationId, searchQuery]
+  );
+  const queryCategorySlugs = useMemo(
+    () => Array.from(new Set(serviceMatches.map((match) => match.category.slug))),
+    [serviceMatches]
+  );
+  const categoryOptions = useMemo(() => {
+    if (!searchQuery.trim() || queryCategorySlugs.length === 0) {
+      return marketplaceCategories;
+    }
+
+    return marketplaceCategories.filter((category) => queryCategorySlugs.includes(category.slug));
+  }, [queryCategorySlugs, searchQuery]);
   const filteredListings = useMemo(
     () =>
       filterListings({
@@ -139,6 +156,28 @@ export function ListingsPage() {
     setSortMode('recommended');
   };
 
+  const getMatchLabel = (match: ServiceSearchMatch) =>
+    match.listing?.title[language] ??
+    match.specialty?.labels[language] ??
+    match.subcategory?.labels[language] ??
+    match.category.labels[language];
+
+  const getMatchContext = (match: ServiceSearchMatch) =>
+    [
+      match.category.labels[language],
+      match.subcategory?.labels[language],
+      match.specialty && match.level === 'listing' ? match.specialty.labels[language] : undefined
+    ]
+      .filter(Boolean)
+      .join(' / ');
+
+  const selectServiceMatch = (match: ServiceSearchMatch) => {
+    setSearchQuery(getMatchLabel(match));
+    setCategorySlug(match.category.slug);
+    setSubcategorySlug(match.subcategory?.slug ?? match.listing?.subcategorySlug ?? '');
+    setSpecialtySlug(match.specialty?.slug ?? match.listing?.specialtySlug ?? '');
+  };
+
   return (
     <section className="page-section listings-page">
       <div className="page-heading page-heading-row">
@@ -156,10 +195,33 @@ export function ListingsPage() {
         <aside className="filter-panel">
           <h2>{t('filters.title')}</h2>
 
-          <label className="field">
-            <span>{t('home.searchLabel')}</span>
-            <input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} />
-          </label>
+          <div className="filter-search-control">
+            <label className="field">
+              <span>{t('home.searchLabel')}</span>
+              <input
+                value={searchQuery}
+                placeholder={t('home.searchPlaceholder')}
+                onChange={(event) => {
+                  setSearchQuery(event.target.value);
+                  setCategorySlug('');
+                  setSubcategorySlug('');
+                  setSpecialtySlug('');
+                }}
+              />
+            </label>
+
+            {serviceMatches.length > 0 && (
+              <div className="filter-search-suggestions" role="listbox" aria-label={t('home.serviceSuggestions')}>
+                {serviceMatches.map((match) => (
+                  <button key={match.id} type="button" role="option" onClick={() => selectServiceMatch(match)}>
+                    <span className="small-label">{getMatchContext(match)}</span>
+                    <strong>{getMatchLabel(match)}</strong>
+                    <small>{t('home.serviceMatchCount', { count: match.listingCount })}</small>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           <label className="field">
             <span>{t('filters.category')}</span>
@@ -172,7 +234,7 @@ export function ListingsPage() {
               }}
             >
               <option value="">{t('common.all')}</option>
-              {marketplaceCategories.map((category) => (
+              {categoryOptions.map((category) => (
                 <option key={category.slug} value={category.slug}>
                   {category.labels[language]}
                 </option>

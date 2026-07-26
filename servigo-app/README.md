@@ -148,6 +148,8 @@ Homepage search is service/profession-first. A query such as `pintor`, `p`, `lim
 
 All internal pages except `/` include the compact global search bar. It uses the same service/profession-first search logic as the homepage and navigates to `/listings` with the best matching category, subcategory, specialty, country, and location filters.
 
+The `/listings` filter panel also uses the same service/profession-first suggestions. Typing terms such as `femme de menage`, `femme de ménage`, `pintor`, `limpeza`, or `limpesa` should immediately show matching services/listings and narrow the category dropdown to relevant categories while the query is active.
+
 When a seeker creates or implies a quote request, the frontend mock logic can identify eligible listings/providers by matching category, subcategory, specialty, and selected area.
 
 Quote request context is stored with the local draft and submitted mock request. It can include the selected listing, provider, category, subcategory, specialty, area, displayed price model, eligible notification targets, and compatible alternatives. The review page now shows the source context before submission so the user understands which service/listing/provider led to the request. This is still frontend-only logic: backend persistence, real notifications, provider inboxes, and quote delivery remain future work.
