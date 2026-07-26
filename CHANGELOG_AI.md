@@ -2,6 +2,44 @@
 
 This file is an append-only chronological record of meaningful work performed by AI assistants on this project.
 
+## 2026-07-26 04:47 — Make homepage search service-first
+
+### Objective
+Make the homepage search feel practical for normal users: typing `p`, `pintor`, `limpeza`, or similar should suggest concrete services/professions before broad parent categories.
+
+### Backup
+- Created a pre-change backup at `backups/kliko-before-service-first-home-search-20260726/`.
+
+### Work Completed
+- Added a service/profession search model that scans subcategories, specialties, listings, provider names, service titles, descriptions, and practical aliases.
+- Updated the homepage search suggestions to show services/specialties/providers with listing counts and examples.
+- Changed homepage search submit behavior so it navigates to listing results prefiltered by category, subcategory, and specialty when a concrete match exists.
+- Added Painting/Pintura as a proper subcategory under Home and Repairs, including painting specialties.
+- Added a mock painter listing so searches like `pintor` lead to a useful result.
+- Added aliases for common natural terms and typos such as `pintor`, `painter`, `peintre`, `limpesa`, and service-specific phrases.
+- Updated translated homepage search placeholder and suggestion labels in all supported UI languages.
+
+### Files Changed
+- `servigo-app/src/data/marketplaceData.ts`
+  - Added painting taxonomy/listing data and `searchServiceMatches`.
+- `servigo-app/src/components/LandingPage.tsx`
+  - Replaced category-first suggestions with service/profession-first suggestions.
+- `servigo-app/src/i18n/translations.ts`
+  - Updated homepage search text and added service suggestion labels.
+- `servigo-app/README.md`
+  - Documented the service/profession-first homepage search direction.
+- `PROJECT_CONTEXT.md`
+  - Updated current status and homepage search feature notes.
+- `CHANGELOG_AI.md`
+  - Added this changelog entry.
+
+### Validation
+- Ran `pnpm run build` in `servigo-app/`; TypeScript and Vite production build passed.
+- Ran `pnpm run build:github-pages` in `servigo-app/`; static GitHub Pages output was generated in `kliko/`.
+
+### Risks or Known Limitations
+- Search is still frontend-only and based on simple aliases/tokens. A backend search index will eventually be needed for a full marketplace.
+
 ## 2026-07-26 04:32 — Improve Kliko mobile app layout
 
 ### Objective

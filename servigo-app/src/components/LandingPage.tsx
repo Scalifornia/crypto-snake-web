@@ -4,8 +4,9 @@ import { ListingCard } from './ListingCard';
 import { ServiceIcon } from './ServiceIcon';
 import {
   marketplaceCategories,
-  searchCategoryMatches,
-  searchListings
+  searchListings,
+  searchServiceMatches,
+  type ServiceSearchMatch
 } from '../data/marketplaceData';
 import {
   getLocation,
@@ -40,11 +41,11 @@ export function LandingPage() {
   const [noMatch, setNoMatch] = useState(false);
 
   const selectedLocation = getLocation(locationId);
-  const categoryMatches = useMemo(
-    () => (searchQuery.trim() ? searchCategoryMatches(searchQuery, locationId) : []),
+  const serviceMatches = useMemo(
+    () => (searchQuery.trim() ? searchServiceMatches(searchQuery, locationId) : []),
     [locationId, searchQuery]
   );
-  const suggestedResults = categoryMatches[0]?.listings ?? [];
+  const suggestedResults = serviceMatches.find((match) => match.listings.length > 0)?.listings ?? [];
   const featuredResults = useMemo(() => searchListings('', locationId).slice(0, 4), [locationId]);
   const displayedListings = suggestedResults.length > 0 ? suggestedResults : featuredResults;
 
@@ -59,7 +60,14 @@ export function LandingPage() {
     return () => window.removeEventListener(locationChangeEventName, syncLocation);
   }, []);
 
-  const buildSearchPath = (query: string, categorySlug?: string) => {
+  const buildSearchPath = (
+    query: string,
+    filters: {
+      categorySlug?: string;
+      subcategorySlug?: string;
+      specialtySlug?: string;
+    } = {}
+  ) => {
     const trimmedQuery = query.trim();
     const params = new URLSearchParams();
 
@@ -67,8 +75,16 @@ export function LandingPage() {
       params.set('q', trimmedQuery);
     }
 
-    if (categorySlug) {
-      params.set('category', categorySlug);
+    if (filters.categorySlug) {
+      params.set('category', filters.categorySlug);
+    }
+
+    if (filters.subcategorySlug) {
+      params.set('subcategory', filters.subcategorySlug);
+    }
+
+    if (filters.specialtySlug) {
+      params.set('specialty', filters.specialtySlug);
     }
 
     if (countryCode || selectedLocation?.countryCode) {
@@ -82,14 +98,20 @@ export function LandingPage() {
     return `/listings${params.toString() ? `?${params.toString()}` : ''}`;
   };
 
-  const runCategorySearch = (query: string, categorySlug: string) => {
+  const runServiceSearch = (query: string, match: ServiceSearchMatch) => {
     setNoMatch(false);
-    navigate(buildSearchPath(query, categorySlug));
+    navigate(
+      buildSearchPath(query, {
+        categorySlug: match.category.slug,
+        subcategorySlug: match.subcategory?.slug ?? match.listing?.subcategorySlug,
+        specialtySlug: match.specialty?.slug ?? match.listing?.specialtySlug
+      })
+    );
   };
 
   const runSearch = (query: string) => {
     const trimmedQuery = query.trim();
-    const matches = trimmedQuery ? searchCategoryMatches(trimmedQuery, locationId) : [];
+    const matches = trimmedQuery ? searchServiceMatches(trimmedQuery, locationId) : [];
 
     if (trimmedQuery && matches.length === 0) {
       setSearchQuery(trimmedQuery);
@@ -98,8 +120,29 @@ export function LandingPage() {
     }
 
     setNoMatch(false);
-    navigate(buildSearchPath(trimmedQuery, matches[0]?.category.slug));
+    navigate(
+      buildSearchPath(trimmedQuery, {
+        categorySlug: matches[0]?.category.slug,
+        subcategorySlug: matches[0]?.subcategory?.slug ?? matches[0]?.listing?.subcategorySlug,
+        specialtySlug: matches[0]?.specialty?.slug ?? matches[0]?.listing?.specialtySlug
+      })
+    );
   };
+
+  const getMatchLabel = (match: ServiceSearchMatch) =>
+    match.listing?.title[language] ??
+    match.specialty?.labels[language] ??
+    match.subcategory?.labels[language] ??
+    match.category.labels[language];
+
+  const getMatchContext = (match: ServiceSearchMatch) =>
+    [
+      match.category.labels[language],
+      match.subcategory?.labels[language],
+      match.specialty && match.level === 'listing' ? match.specialty.labels[language] : undefined
+    ]
+      .filter(Boolean)
+      .join(' / ');
 
   const submitSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -131,25 +174,25 @@ export function LandingPage() {
               </button>
             </form>
 
-            {categoryMatches.length > 0 && (
-              <div className="home-search-suggestions home-category-suggestions" role="listbox" aria-label={t('home.categorySuggestions')}>
-                {categoryMatches.map(({ category, listingCount, listings }) => (
+            {serviceMatches.length > 0 && (
+              <div className="home-search-suggestions home-category-suggestions" role="listbox" aria-label={t('home.serviceSuggestions')}>
+                {serviceMatches.map((match) => (
                   <button
-                    key={category.slug}
+                    key={match.id}
                     type="button"
                     role="option"
-                    onClick={() => runCategorySearch(searchQuery, category.slug)}
+                    onClick={() => runServiceSearch(searchQuery, match)}
                   >
-                    <span className="small-label">{t('field.category')}</span>
-                    <strong>{category.labels[language]}</strong>
+                    <span className="small-label">{getMatchContext(match)}</span>
+                    <strong>{getMatchLabel(match)}</strong>
                     <small>
-                      {t('home.categoryMatchCount', {
-                        count: listingCount
+                      {t('home.serviceMatchCount', {
+                        count: match.listingCount
                       })}
                     </small>
-                    {listings.length > 0 && (
+                    {match.listings.length > 0 && (
                       <span className="home-category-suggestions__examples">
-                        {listings
+                        {match.listings
                           .map((listing) => `${listing.title[language]} · ${listing.providerName}`)
                           .join(' • ')}
                       </span>

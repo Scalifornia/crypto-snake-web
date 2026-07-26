@@ -72,6 +72,21 @@ const baseMarketplaceCategories: Category[] = [
         ]
       },
       {
+        slug: 'painting',
+        labels: { fr: 'Peinture', pt: 'Pintura', en: 'Painting' },
+        description: {
+          fr: 'Peinture intérieure, retouches, murs, plafonds et petites finitions.',
+          pt: 'Pintura interior, retoques, paredes, tetos e pequenos acabamentos.',
+          en: 'Interior painting, touch-ups, walls, ceilings, and small finishes.'
+        },
+        specialties: [
+          { slug: 'interior-painting', labels: { fr: 'Peinture intérieure', pt: 'Pintura interior', en: 'Interior painting' } },
+          { slug: 'walls-ceilings', labels: { fr: 'Murs et plafonds', pt: 'Paredes e tetos', en: 'Walls and ceilings' } },
+          { slug: 'small-touchups', labels: { fr: 'Retouches peinture', pt: 'Pequenos retoques', en: 'Small paint touch-ups' } },
+          { slug: 'exterior-painting', labels: { fr: 'Peinture extérieure', pt: 'Pintura exterior', en: 'Exterior painting' } }
+        ]
+      },
+      {
         slug: 'handyman',
         labels: { fr: 'Bricolage', pt: 'Bricolage', en: 'Handyman' },
         description: {
@@ -2313,6 +2328,35 @@ const rawServiceListings: RawServiceListing[] = [
     reviews: 89
   },
   {
+    id: 'listing-painting-silva',
+    providerId: 'pintura-silva',
+    providerName: 'Pintura Silva',
+    providerType: 'professional',
+    email: 'pintura.silva@example.lu',
+    phone: '+352 621 100 215',
+    mainCommune: 'Luxembourg',
+    serviceArea: ['Luxembourg', 'Strassen', 'Bertrange', 'Esch-sur-Alzette'],
+    categorySlug: 'home-repairs',
+    subcategorySlug: 'painting',
+    specialtySlug: 'interior-painting',
+    title: { fr: 'Peintre pour murs et plafonds', pt: 'Pintor para paredes e tetos', en: 'Painter for walls and ceilings' },
+    shortDescription: {
+      fr: 'Peinture intérieure, protection du mobilier, petites réparations avant finition.',
+      pt: 'Pintura interior, proteção de móveis e pequenas reparações antes do acabamento.',
+      en: 'Interior painting, furniture protection, and small repairs before finishing.'
+    },
+    priceModel: 'hourly',
+    priceLabel: { fr: '62 EUR / heure', pt: '62 EUR / hora', en: 'EUR 62 / hour' },
+    availability: { weekdays: true, weekends: true, urgent: false },
+    languages: ['fr', 'pt'],
+    travelToClient: true,
+    professionalRegistration: 'LU-PAINT-420',
+    vatNumber: 'LU55667788',
+    insurance: 'RC professionnelle',
+    rating: 4.8,
+    reviews: 36
+  },
+  {
     id: 'listing-private-garden',
     providerId: 'tom-garden-help',
     providerName: 'Tom Garden Help',
@@ -2649,7 +2693,13 @@ const categorySearchAliases: Record<string, string[]> = {
     'plomberie',
     'electricidade',
     'electricien',
-    'handyman'
+    'handyman',
+    'peinture',
+    'pintura',
+    'pintor',
+    'pintores',
+    'pintre',
+    'painter'
   ],
   'cleaning-facility': [
     'limpeza',
@@ -2684,6 +2734,98 @@ const categorySearchAliases: Record<string, string[]> = {
   events: ['eventos', 'événements', 'events', 'festa', 'party', 'casamento'],
   'business-services': ['empresa', 'business', 'negocio', 'negócio', 'comptabilite', 'comptabilité', 'fiscalidade']
 };
+
+const serviceSearchAliases: Record<string, string[]> = {
+  'home-repairs/plumbing': ['canalizador', 'canalizadores', 'plombier', 'fuite', 'fuga'],
+  'home-repairs/electricity': ['eletricista', 'electricista', 'electricien', 'électricien', 'electrician'],
+  'home-repairs/painting': ['pintor', 'pintores', 'pintura', 'peintre', 'peintres', 'peinture', 'painter', 'painters'],
+  'home-repairs/painting/interior-painting': ['pintor interior', 'pintura interior', 'peinture intérieure', 'interior painter'],
+  'home-repairs/painting/walls-ceilings': ['paredes', 'tetos', 'tectos', 'murs', 'plafonds', 'walls', 'ceilings'],
+  'home-repairs/painting/small-touchups': ['retoques', 'retouches', 'acabamentos', 'touch ups', 'touch-ups'],
+  'home-repairs/handyman': ['faz tudo', 'bricoleur', 'homem para reparacoes', 'homem para reparações'],
+  'cleaning-facility/home-cleaning': ['limpeza', 'limpesa', 'faxina', 'menage', 'ménage', 'cleaner', 'cleaning'],
+  'cleaning-facility/end-of-tenancy': [
+    'limpeza',
+    'limpesa',
+    'limpeza fim de arrendamento',
+    'fim arrendamento',
+    'fin de bail',
+    'end tenancy',
+    'end of tenancy'
+  ],
+  'cleaning-facility/office-cleaning': [
+    'limpeza',
+    'limpesa',
+    'limpeza escritorio',
+    'limpeza escritório',
+    'nettoyage bureaux',
+    'office cleaning'
+  ],
+  'automotive-mechanics/car-maintenance': ['mecanico', 'mecânico', 'mécanicien', 'mechanic', 'oleo', 'óleo', 'vidange'],
+  'automotive-mechanics/tyres': ['pneu', 'pneus', 'tyres', 'tires'],
+  'garden-outdoor/garden-maintenance': ['jardineiro', 'jardinier', 'gardener', 'relva', 'poda'],
+  'education-tutoring/school-tutoring': ['professor', 'explicador', 'explicacoes', 'explicações', 'tutor'],
+  'sport-coaching/personal-training': ['personal trainer', 'treinador', 'coach fitness'],
+  'music-audio/music-lessons': ['professor musica', 'professor de musica', 'aulas musica', 'aulas de música']
+};
+
+export type ServiceSearchMatchLevel = 'subcategory' | 'specialty' | 'listing';
+
+export interface ServiceSearchMatch {
+  id: string;
+  level: ServiceSearchMatchLevel;
+  category: Category;
+  subcategory?: Category['subcategories'][number];
+  specialty?: Category['subcategories'][number]['specialties'][number];
+  listing?: ServiceListing;
+  score: number;
+  listingCount: number;
+  listings: ServiceListing[];
+}
+
+function getServiceAliasKey(categorySlug: string, subcategorySlug?: string, specialtySlug?: string) {
+  return [categorySlug, subcategorySlug, specialtySlug].filter(Boolean).join('/');
+}
+
+function getServiceAliases(categorySlug: string, subcategorySlug?: string, specialtySlug?: string) {
+  return [
+    ...(serviceSearchAliases[getServiceAliasKey(categorySlug, subcategorySlug)] ?? []),
+    ...(serviceSearchAliases[getServiceAliasKey(categorySlug, subcategorySlug, specialtySlug)] ?? [])
+  ];
+}
+
+function scoreSearchText(searchText: string, mainLabel: string, query: string) {
+  const normalizedQuery = normalizeSearch(query.trim());
+
+  if (!normalizedQuery) {
+    return 0;
+  }
+
+  const haystack = normalizeSearch(searchText);
+  const label = normalizeSearch(mainLabel);
+  const words = haystack.split(/[^a-z0-9]+/).filter(Boolean);
+  let score = 0;
+
+  for (const token of normalizedQuery.split(/\s+/).filter(Boolean)) {
+    let tokenScore = 0;
+
+    if (words.some((word) => word === token)) {
+      tokenScore = 120 + token.length;
+    } else if (words.some((word) => word.startsWith(token))) {
+      tokenScore = 75 + token.length;
+    } else if (token.length >= 2 && haystack.includes(token)) {
+      tokenScore = 35 + token.length;
+    }
+
+    if (!tokenScore) {
+      return 0;
+    }
+
+    score += tokenScore + (label.includes(token) ? 30 : 0);
+  }
+
+  return score;
+}
 
 export function findCategory(categorySlug?: string) {
   return marketplaceCategories.find((category) => category.slug === categorySlug);
@@ -2875,7 +3017,8 @@ export function getSearchRelevance(listing: ServiceListing, query: string) {
       ...Object.values(listing.shortDescription),
       ...(category ? Object.values(category.labels) : []),
       ...(subcategory ? Object.values(subcategory.labels) : []),
-      ...(specialty ? Object.values(specialty.labels) : [])
+      ...(specialty ? Object.values(specialty.labels) : []),
+      ...(category ? getServiceAliases(category.slug, subcategory?.slug, specialty?.slug) : [])
     ].join(' ')
   );
 
@@ -2907,6 +3050,137 @@ export function searchListings(query: string, locationId?: string) {
     locationId,
     query
   );
+}
+
+function getListingsForServiceMatch(categorySlug: string, subcategorySlug?: string, specialtySlug?: string, locationId?: string) {
+  return rankListings(
+    serviceListings.filter((listing) => {
+      const categoryMatch = listing.categorySlug === categorySlug;
+      const subcategoryMatch = !subcategorySlug || listing.subcategorySlug === subcategorySlug;
+      const specialtyMatch = !specialtySlug || listing.specialtySlug === specialtySlug;
+      const locationMatch = !locationId || listingMatchesLocation(listing, locationId);
+      return categoryMatch && subcategoryMatch && specialtyMatch && locationMatch;
+    }),
+    locationId
+  );
+}
+
+export function searchServiceMatches(query: string, locationId?: string) {
+  const normalizedQuery = normalizeSearch(query.trim());
+
+  if (!normalizedQuery) {
+    return [];
+  }
+
+  const matches: ServiceSearchMatch[] = [];
+
+  for (const category of marketplaceCategories) {
+    for (const subcategory of category.subcategories) {
+      const subcategoryListings = getListingsForServiceMatch(category.slug, subcategory.slug, undefined, locationId);
+      const subcategorySearchText = [
+        ...Object.values(category.labels),
+        ...Object.values(subcategory.labels),
+        ...Object.values(subcategory.description),
+        ...getServiceAliases(category.slug, subcategory.slug),
+        ...subcategory.specialties.flatMap((specialty) => Object.values(specialty.labels)),
+        ...subcategoryListings.flatMap((listing) => [
+          listing.providerName,
+          ...Object.values(listing.title),
+          ...Object.values(listing.shortDescription)
+        ])
+      ].join(' ');
+      const subcategoryLabel = subcategory.labels.pt ?? subcategory.labels.fr ?? subcategory.labels.en;
+      const subcategoryScore = scoreSearchText(subcategorySearchText, subcategoryLabel, query);
+
+      if (subcategoryScore > 0) {
+        matches.push({
+          id: `${category.slug}/${subcategory.slug}`,
+          level: 'subcategory',
+          category,
+          subcategory,
+          score: subcategoryScore + Math.min(subcategoryListings.length, 5),
+          listingCount: subcategoryListings.length,
+          listings: subcategoryListings.slice(0, 3)
+        });
+      }
+
+      for (const specialty of subcategory.specialties) {
+        const specialtyListings = getListingsForServiceMatch(category.slug, subcategory.slug, specialty.slug, locationId);
+        const specialtySearchText = [
+          ...Object.values(category.labels),
+          ...Object.values(subcategory.labels),
+          ...Object.values(specialty.labels),
+          ...getServiceAliases(category.slug, subcategory.slug, specialty.slug),
+          ...specialtyListings.flatMap((listing) => [
+            listing.providerName,
+            ...Object.values(listing.title),
+            ...Object.values(listing.shortDescription)
+          ])
+        ].join(' ');
+        const specialtyLabel = specialty.labels.pt ?? specialty.labels.fr ?? specialty.labels.en;
+        const specialtyScore = scoreSearchText(specialtySearchText, specialtyLabel, query);
+
+        if (specialtyScore > 0) {
+          matches.push({
+            id: `${category.slug}/${subcategory.slug}/${specialty.slug}`,
+            level: 'specialty',
+            category,
+            subcategory,
+            specialty,
+            score: specialtyScore + 20 + Math.min(specialtyListings.length, 5),
+            listingCount: specialtyListings.length,
+            listings: specialtyListings.slice(0, 3)
+          });
+        }
+      }
+    }
+  }
+
+  for (const listing of serviceListings) {
+    const category = findCategory(listing.categorySlug);
+    const subcategory = findSubcategory(listing.categorySlug, listing.subcategorySlug);
+    const specialty = findSpecialty(listing.categorySlug, listing.subcategorySlug, listing.specialtySlug);
+
+    if (!category || !listingMatchesLocation(listing, locationId || listing.baseLocationId)) {
+      continue;
+    }
+
+    const listingSearchText = [
+      listing.providerName,
+      ...Object.values(listing.title),
+      ...Object.values(listing.shortDescription),
+      ...(category ? Object.values(category.labels) : []),
+      ...(subcategory ? Object.values(subcategory.labels) : []),
+      ...(specialty ? Object.values(specialty.labels) : []),
+      ...getServiceAliases(listing.categorySlug, listing.subcategorySlug, listing.specialtySlug)
+    ].join(' ');
+    const listingLabel = listing.title.pt ?? listing.title.fr ?? listing.title.en;
+    const listingScore = scoreSearchText(listingSearchText, listingLabel, query);
+
+    if (listingScore > 0) {
+      matches.push({
+        id: listing.id,
+        level: 'listing',
+        category,
+        subcategory,
+        specialty,
+        listing,
+        score: listingScore,
+        listingCount: 1,
+        listings: [listing]
+      });
+    }
+  }
+
+  return matches
+    .sort((first, second) => {
+      if (second.score !== first.score) {
+        return second.score - first.score;
+      }
+
+      return second.listingCount - first.listingCount;
+    })
+    .slice(0, 8);
 }
 
 export function searchCategoryMatches(query: string, locationId?: string) {

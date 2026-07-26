@@ -29,8 +29,8 @@ http://127.0.0.1:5173/
 - React Router route structure with shared layout, minimal hamburger header, footer, and page surfaces.
 - Header keeps location and language visible; Day, Night, and System display modes are inside the hamburger menu.
 - Choosing a country in the header automatically switches the UI language when a matching translation exists; unsupported country languages fall back to English.
-- Search-first homepage with a Google-like centered search entry, category-first instant suggestions, manual country selection in the header, and frontend-only browser geolocation.
-- Homepage direction: minimal first screen focused on category search, with a brighter day-mode visual identity, stronger Kliko logo, instant category matches, category shortcuts, and short featured listing cards lower on the page.
+- Search-first homepage with a Google-like centered search entry, service/profession-first instant suggestions, manual country selection in the header, and frontend-only browser geolocation.
+- Homepage direction: minimal first screen focused on service search, with a brighter day-mode visual identity, stronger Kliko logo, instant service matches, category shortcuts, and short featured listing cards lower on the page.
 - Homepage baseline is currently approved by the user and should be preserved unless a new homepage-specific change is requested.
 - Mobile experience uses an app-like responsive layer: compact sticky header, bottom navigation for core routes, centered first-screen search, horizontally scrollable category shortcuts, and compact homepage listing cards.
 - P2P classified-services positioning: category browsing first, custom request assistant second.
@@ -143,7 +143,7 @@ Listings include provider name, provider type, email, phone, base location, cove
 
 Provider listing creation also prepares public profile controls that will later map to real provider accounts: public display name, username, profile photo, phone visibility, age visibility, residence/base address for verification, service areas, foreign coverage, professional documents, and category proposals.
 
-Homepage search is category-first. A query such as `limpeza` or even the common typo `limpesa` should first match the cleaning category, then show example listings/providers inside that category. Homepage listing cards intentionally stay short: photo/avatar area, compact price, provider name, service title, brief description, and location. Listing result cards use a compact image/avatar column, essential facts, price, tags, and quote action. Users open the listing detail page for full provider, trust, language, quote, and service information.
+Homepage search is service/profession-first. A query such as `pintor`, `p`, `limpeza`, or even the common typo `limpesa` should show matching services, specialties, and relevant providers before exposing the broader parent category. Clicking a suggestion opens listing results already filtered to the relevant category/subcategory/specialty. Homepage listing cards intentionally stay short: photo/avatar area, compact price, provider name, service title, brief description, and location. Listing result cards use a compact image/avatar column, essential facts, price, tags, and quote action. Users open the listing detail page for full provider, trust, language, quote, and service information.
 
 When a seeker creates or implies a quote request, the frontend mock logic can identify eligible listings/providers by matching category, subcategory, specialty, and selected area.
 
