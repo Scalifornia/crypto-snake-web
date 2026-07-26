@@ -2,3 +2,10 @@
 # macOS
 .DS_Store
 **/.DS_Store
+
+# Package managers
+.pnpm-store/
+
+# Frontend apps
+node_modules/
+dist/
