@@ -2,6 +2,42 @@
 
 This file is an append-only chronological record of meaningful work performed by AI assistants on this project.
 
+## 2026-07-26 04:32 — Improve Kliko mobile app layout
+
+### Objective
+Make Kliko feel better on phones without changing the approved desktop homepage.
+
+### Backup
+- Created a pre-change backup at `backups/kliko-before-mobile-app-polish-20260726/`.
+
+### Work Completed
+- Added a mobile-only bottom navigation for the main actions: search, categories, listings, and publish.
+- Kept the desktop header and homepage structure intact.
+- Improved small-screen header spacing, menu behavior, and safe-area padding.
+- Tuned the homepage first screen for mobile with a centered search experience, shorter vertical rhythm, and better touch targets.
+- Changed quick categories on mobile into a horizontal scroll strip.
+- Changed homepage listing cards on mobile into compact horizontal cards with snap scrolling.
+- Added mobile-safe spacing so the fixed bottom navigation does not cover page content or footer links.
+
+### Files Changed
+- `servigo-app/src/components/Layout.tsx`
+  - Added mobile-only route navigation using existing translated navigation labels.
+- `servigo-app/src/styles/global.css`
+  - Added mobile responsive rules for header, homepage search, category shortcuts, listing cards, bottom navigation, page spacing, and footer padding.
+- `servigo-app/README.md`
+  - Documented the mobile app-style responsive layer.
+- `PROJECT_CONTEXT.md`
+  - Updated current status and added a mobile experience feature note.
+- `CHANGELOG_AI.md`
+  - Added this changelog entry.
+
+### Validation
+- Ran `pnpm run build` in `servigo-app/`; TypeScript and Vite production build passed.
+- Ran `pnpm run build:github-pages` in `servigo-app/`; static GitHub Pages output was generated in `kliko/`.
+
+### Risks or Known Limitations
+- Real-device visual review is still recommended because phone browsers vary in toolbar height, safe-area behavior, and font rendering.
+
 ## 2026-07-25 22:57 — Add persistent project memory files
 
 ### Objective

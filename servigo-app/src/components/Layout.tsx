@@ -61,6 +61,12 @@ export function Layout() {
     { to: '/provider', label: t('nav.provider') },
     { to: '/admin', label: t('nav.admin') }
   ];
+  const mobileNavItems = [
+    { to: '/', label: t('nav.search') },
+    { to: '/categories', label: t('nav.categories') },
+    { to: '/listings', label: t('nav.listings') },
+    { to: '/provider/create-listing', label: t('nav.createListing') }
+  ];
 
   const detectLocation = () => {
     if (!navigator.geolocation) {
@@ -217,6 +223,21 @@ export function Layout() {
       <main className="app-main">
         <Outlet />
       </main>
+
+      <nav className="mobile-app-nav" aria-label={t('nav.primary')}>
+        {mobileNavItems.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            end={item.to === '/'}
+            className={({ isActive }) => (isActive ? 'is-active' : undefined)}
+            onClick={() => setMenuOpen(false)}
+          >
+            <span className="mobile-app-nav__indicator" aria-hidden="true" />
+            <span>{item.label}</span>
+          </NavLink>
+        ))}
+      </nav>
 
       <footer className="site-footer">
         <div>

@@ -4,7 +4,7 @@
 - Main objectives: Build Kliko as a location-first P2P classified-services marketplace; keep the old snake game available for later work; avoid WordPress for Kliko.
 - Target users: Service seekers, private service providers, professional service providers, and future admins for Kliko; arcade players for Crypto Snake.
 - Current development stage: Frontend prototype with mock data.
-- Current project status: Kliko is the active product work. The current version with the approved homepage, category-first search, request attachments, provider-focused request review context, richer listing results, stronger listing detail, public provider profile controls, and richer mock dashboards has been advanced to the pre-backend boundary. It is now prepared for GitHub Pages as a static subsite under `/kliko/`, preserving the existing Crypto Snake GitHub Pages root. The earlier approved homepage snapshot is saved as `backups/kliko-approved-version-20260726-0235/`; the pre-backend work started from `backups/kliko-before-pre-backend-marketplace-20260726/`; the GitHub Pages prep started from `backups/kliko-before-github-pages-20260726/`. Separate Desktop folders now exist for individual work: `/Users/ivangomes/Desktop/Kliko` for the Kliko React app and `/Users/ivangomes/Desktop/Crypto-Snake` for the Crypto Snake HTML/JS/CSS game. The old mixed root remains as workspace/archive/history.
+- Current project status: Kliko is the active product work. The current version with the approved homepage, category-first search, request attachments, provider-focused request review context, richer listing results, stronger listing detail, public provider profile controls, richer mock dashboards, GitHub Pages preview, and mobile app-style responsive polish has been advanced to the pre-backend boundary. It is prepared for GitHub Pages as a static subsite under `/kliko/`, preserving the existing Crypto Snake GitHub Pages root. The earlier approved homepage snapshot is saved as `backups/kliko-approved-version-20260726-0235/`; the pre-backend work started from `backups/kliko-before-pre-backend-marketplace-20260726/`; the GitHub Pages prep started from `backups/kliko-before-github-pages-20260726/`; the mobile polish started from `backups/kliko-before-mobile-app-polish-20260726/`. Separate Desktop folders now exist for individual work: `/Users/ivangomes/Desktop/Kliko` for the Kliko React app and `/Users/ivangomes/Desktop/Crypto-Snake` for the Crypto Snake HTML/JS/CSS game. The old mixed root remains as workspace/archive/history.
 
 # Product Scope
 - Core functionality: Browse/search service listings, browse category/subcategory/specialty taxonomy, create mock quote requests, review/confirm requests, view mock dashboards, create mock provider listings, and switch language/theme/location.
@@ -86,10 +86,17 @@
 
 ## Kliko Homepage Search
 - Description: Google-like search-first homepage with a centered "what are you looking for" question, large search bar, category-first instant suggestions from the first typed letters, category shortcuts lower on the page, and short featured/suggested listing cards that link to full details.
-- Status: Approved Baseline With Category-First Search.
+- Status: Approved Baseline With Category-First Search And Mobile Polish.
 - Main related files: `servigo-app/src/components/LandingPage.tsx`, `servigo-app/src/components/ListingCard.tsx`, `servigo-app/src/styles/global.css`.
 - Dependencies: `searchCategoryMatches`, `searchListings`, localStorage location.
 - Known limitations: Search ranking is simple token/category matching; no backend index.
+
+## Kliko Mobile Experience
+- Description: Mobile screens use an app-like layer with compact sticky header, bottom navigation for search/categories/listings/publish, centered search first screen, horizontally scrollable quick categories, and compact horizontal homepage listing cards.
+- Status: In Progress.
+- Main related files: `servigo-app/src/components/Layout.tsx`, `servigo-app/src/styles/global.css`, `LandingPage.tsx`, `ListingCard.tsx`.
+- Dependencies: Existing React Router navigation and i18n labels.
+- Known limitations: Mobile polish has been build-validated but should still be visually reviewed on real phones for taste and thumb ergonomics.
 
 ## Kliko Listing Results And Details
 - Description: Service listings can be filtered, sorted, ranked by proximity/relevance, opened, and used to start quote requests. Result cards emphasize a compact visual/avatar, provider, location, rating, price, and direct quote action; detail pages use a stronger hero/action card plus a provider profile strip, trust metrics, fit reasons, and next-step guidance before full information.

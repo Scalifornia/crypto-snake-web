@@ -32,6 +32,7 @@ http://127.0.0.1:5173/
 - Search-first homepage with a Google-like centered search entry, category-first instant suggestions, manual country selection in the header, and frontend-only browser geolocation.
 - Homepage direction: minimal first screen focused on category search, with a brighter day-mode visual identity, stronger Kliko logo, instant category matches, category shortcuts, and short featured listing cards lower on the page.
 - Homepage baseline is currently approved by the user and should be preserved unless a new homepage-specific change is requested.
+- Mobile experience uses an app-like responsive layer: compact sticky header, bottom navigation for core routes, centered first-screen search, horizontally scrollable category shortcuts, and compact homepage listing cards.
 - P2P classified-services positioning: category browsing first, custom request assistant second.
 - Category, subcategory, specialty, and service listing model.
 - Provider create-listing mock form for private individuals and professional companies, including a live public listing preview before submission.
