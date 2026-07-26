@@ -2196,6 +2196,7 @@ const rawServiceListings: RawServiceListing[] = [
     categorySlug: 'cleaning-facility',
     subcategorySlug: 'end-of-tenancy',
     specialtySlug: 'apartment-handover',
+    professionTitle: { fr: 'Entreprise de nettoyage', pt: 'Empresa de limpeza', en: 'Cleaning company' },
     title: { fr: 'Nettoyage fin de bail avec vitres', pt: 'Limpeza fim de arrendamento com janelas', en: 'End-of-tenancy cleaning with windows' },
     shortDescription: {
       fr: 'Équipe professionnelle pour appartements vides, cuisine, salle de bain, vitres et balcon.',
@@ -2225,6 +2226,7 @@ const rawServiceListings: RawServiceListing[] = [
     categorySlug: 'home-repairs',
     subcategorySlug: 'plumbing',
     specialtySlug: 'leak-repair',
+    professionTitle: { fr: 'Plombier', pt: 'Canalizador', en: 'Plumber' },
     title: { fr: 'Réparation de fuite cuisine ou salle de bain', pt: 'Reparação de fuga em cozinha ou casa de banho', en: 'Kitchen or bathroom leak repair' },
     shortDescription: {
       fr: 'Diagnostic, petite réparation et remplacement de joints ou flexibles courants.',
@@ -2254,6 +2256,7 @@ const rawServiceListings: RawServiceListing[] = [
     categorySlug: 'automotive-mechanics',
     subcategorySlug: 'car-maintenance',
     specialtySlug: 'oil-service',
+    professionTitle: { fr: 'Mécanicien mobile', pt: 'Mecânico ao domicílio', en: 'Mobile mechanic' },
     title: { fr: 'Vidange et filtres à domicile', pt: 'Mudança de óleo e filtros ao domicílio', en: 'Oil and filters at your location' },
     shortDescription: {
       fr: 'Entretien courant pour véhicules particuliers, pièces à confirmer selon modèle.',
@@ -2282,6 +2285,7 @@ const rawServiceListings: RawServiceListing[] = [
     categorySlug: 'automotive-mechanics',
     subcategorySlug: 'tyres',
     specialtySlug: 'tyre-change',
+    professionTitle: { fr: 'Spécialiste pneus', pt: 'Especialista em pneus', en: 'Tyre specialist' },
     title: { fr: 'Changement de pneus week-end', pt: 'Troca de pneus ao fim de semana', en: 'Weekend tyre change' },
     shortDescription: {
       fr: 'Permutation pneus hiver/été, contrôle pression et montage sur rendez-vous.',
@@ -2310,6 +2314,7 @@ const rawServiceListings: RawServiceListing[] = [
     categorySlug: 'home-repairs',
     subcategorySlug: 'handyman',
     specialtySlug: 'furniture-assembly',
+    professionTitle: { fr: 'Bricoleur professionnel', pt: 'Técnico de reparações', en: 'Handyman' },
     title: { fr: 'Montage de meubles et fixation murale', pt: 'Montagem de móveis e fixação na parede', en: 'Furniture assembly and wall fixing' },
     shortDescription: {
       fr: 'Montage IKEA et autres marques, étagères, tringles, cadres et petits ajustements.',
@@ -2339,6 +2344,7 @@ const rawServiceListings: RawServiceListing[] = [
     categorySlug: 'home-repairs',
     subcategorySlug: 'painting',
     specialtySlug: 'interior-painting',
+    professionTitle: { fr: 'Peintre', pt: 'Pintor', en: 'Painter' },
     title: { fr: 'Peintre pour murs et plafonds', pt: 'Pintor para paredes e tetos', en: 'Painter for walls and ceilings' },
     shortDescription: {
       fr: 'Peinture intérieure, protection du mobilier, petites réparations avant finition.',
@@ -2368,6 +2374,7 @@ const rawServiceListings: RawServiceListing[] = [
     categorySlug: 'garden-outdoor',
     subcategorySlug: 'garden-maintenance',
     specialtySlug: 'lawn-mowing',
+    professionTitle: { fr: 'Jardinier', pt: 'Jardineiro', en: 'Gardener' },
     title: { fr: 'Tonte de pelouse après le travail', pt: 'Corte de relva ao fim do dia', en: 'Lawn mowing after work' },
     shortDescription: {
       fr: 'Service privé flexible pour petites et moyennes pelouses, matériel inclus.',
@@ -2394,6 +2401,7 @@ const rawServiceListings: RawServiceListing[] = [
     categorySlug: 'moving-transport',
     subcategorySlug: 'moving-help',
     specialtySlug: 'small-move',
+    professionTitle: { fr: 'Équipe de déménagement', pt: 'Equipa de mudanças', en: 'Moving team' },
     title: { fr: 'Petit déménagement avec deux personnes', pt: 'Mudança pequena com duas pessoas', en: 'Small move with two helpers' },
     shortDescription: {
       fr: 'Studio, cartons, petit mobilier, chargement et déchargement inclus.',
@@ -2423,6 +2431,7 @@ const rawServiceListings: RawServiceListing[] = [
     categorySlug: 'digital-admin',
     subcategorySlug: 'it-help',
     specialtySlug: 'wifi-setup',
+    professionTitle: { fr: 'Aide informatique', pt: 'Ajuda informática', en: 'IT helper' },
     title: { fr: 'Configuration Wi-Fi et imprimante', pt: 'Configuração Wi-Fi e impressora', en: 'Wi-Fi and printer setup' },
     shortDescription: {
       fr: 'Aide simple pour box internet, Wi-Fi, imprimante et téléphone.',
@@ -2453,6 +2462,7 @@ const rawServiceListings: RawServiceListing[] = [
     categorySlug: 'home-repairs',
     subcategorySlug: 'electricity',
     specialtySlug: 'socket-installation',
+    professionTitle: { fr: 'Électricien', pt: 'Eletricista', en: 'Electrician' },
     title: { fr: 'Électricien prises et éclairage à Paris', pt: 'Eletricista para tomadas e luzes em Paris', en: 'Sockets and lighting electrician in Paris' },
     shortDescription: {
       fr: 'Petites interventions électriques, remplacement de prises, luminaires et diagnostic simple.',
@@ -2486,6 +2496,7 @@ const rawServiceListings: RawServiceListing[] = [
     categorySlug: 'events',
     subcategorySlug: 'event-help',
     specialtySlug: 'event-staff',
+    professionTitle: { fr: 'Assistant événementiel', pt: 'Assistente de eventos', en: 'Event assistant' },
     title: { fr: 'Aide événementielle pour petits événements', pt: 'Ajuda para pequenos eventos', en: 'Event help for small events' },
     shortDescription: {
       fr: 'Accueil, installation légère, rangement et assistance logistique.',
@@ -2517,6 +2528,7 @@ const rawServiceListings: RawServiceListing[] = [
     categorySlug: 'garden-outdoor',
     subcategorySlug: 'garden-maintenance',
     specialtySlug: 'hedge-trimming',
+    professionTitle: { fr: 'Jardinier', pt: 'Jardineiro', en: 'Gardener' },
     title: { fr: 'Taille de haies et entretien jardin à Viseu', pt: 'Poda de sebes e manutenção de jardim em Viseu', en: 'Hedge trimming and garden care in Viseu' },
     shortDescription: {
       fr: 'Entretien régulier ou ponctuel, taille, tonte et déchets verts.',
@@ -2549,6 +2561,7 @@ const rawServiceListings: RawServiceListing[] = [
     categorySlug: 'automotive-mechanics',
     subcategorySlug: 'car-maintenance',
     specialtySlug: 'basic-diagnostic',
+    professionTitle: { fr: 'Mécanicien', pt: 'Mecânico', en: 'Mechanic' },
     title: { fr: 'Diagnostic auto mobile Porto', pt: 'Diagnóstico automóvel móvel no Porto', en: 'Mobile car diagnostics in Porto' },
     shortDescription: {
       fr: 'Lecture défauts, contrôle batterie et diagnostic simple à domicile.',
@@ -2581,6 +2594,7 @@ const rawServiceListings: RawServiceListing[] = [
     categorySlug: 'cleaning-facility',
     subcategorySlug: 'home-cleaning',
     specialtySlug: 'regular-cleaning',
+    professionTitle: { fr: 'Professionnel du ménage', pt: 'Profissional de limpeza', en: 'Cleaning professional' },
     title: { fr: 'Nettoyage régulier à Bruxelles', pt: 'Limpeza regular em Bruxelas', en: 'Regular cleaning in Brussels' },
     shortDescription: {
       fr: 'Ménage hebdomadaire ou bihebdomadaire pour appartements et maisons.',
@@ -2613,6 +2627,7 @@ const rawServiceListings: RawServiceListing[] = [
     categorySlug: 'home-repairs',
     subcategorySlug: 'handyman',
     specialtySlug: 'small-repairs',
+    professionTitle: { fr: 'Bricoleur', pt: 'Técnico de reparações', en: 'Handyman' },
     title: { fr: 'Petites réparations Arlon et frontière', pt: 'Pequenas reparações em Arlon e fronteira', en: 'Small repairs around Arlon and border areas' },
     shortDescription: {
       fr: 'Interventions maison autour d’Arlon, Luxembourg et zones proches.',
@@ -2645,6 +2660,7 @@ const rawServiceListings: RawServiceListing[] = [
     categorySlug: 'business-services',
     subcategorySlug: 'admin-support',
     specialtySlug: 'document-admin',
+    professionTitle: { fr: 'Assistant administratif', pt: 'Assistente administrativo', en: 'Administrative assistant' },
     title: { fr: 'Support administratif à distance', pt: 'Apoio administrativo remoto', en: 'Remote administrative support' },
     shortDescription: {
       fr: 'Aide documents, formulaires, organisation et suivi administratif en ligne.',
@@ -3032,6 +3048,7 @@ export function getSearchRelevance(listing: ServiceListing, query: string) {
   const haystack = normalizeSearch(
     [
       listing.providerName,
+      ...(listing.professionTitle ? Object.values(listing.professionTitle) : []),
       ...Object.values(listing.title),
       ...Object.values(listing.shortDescription),
       ...(category ? Object.values(category.labels) : []),
@@ -3104,6 +3121,7 @@ export function searchServiceMatches(query: string, locationId?: string) {
         ...subcategory.specialties.flatMap((specialty) => Object.values(specialty.labels)),
         ...subcategoryListings.flatMap((listing) => [
           listing.providerName,
+          ...(listing.professionTitle ? Object.values(listing.professionTitle) : []),
           ...Object.values(listing.title),
           ...Object.values(listing.shortDescription)
         ])
@@ -3132,6 +3150,7 @@ export function searchServiceMatches(query: string, locationId?: string) {
           ...getServiceAliases(category.slug, subcategory.slug, specialty.slug),
           ...specialtyListings.flatMap((listing) => [
             listing.providerName,
+            ...(listing.professionTitle ? Object.values(listing.professionTitle) : []),
             ...Object.values(listing.title),
             ...Object.values(listing.shortDescription)
           ])
@@ -3166,6 +3185,7 @@ export function searchServiceMatches(query: string, locationId?: string) {
 
     const listingSearchText = [
       listing.providerName,
+      ...(listing.professionTitle ? Object.values(listing.professionTitle) : []),
       ...Object.values(listing.title),
       ...Object.values(listing.shortDescription),
       ...(category ? Object.values(category.labels) : []),

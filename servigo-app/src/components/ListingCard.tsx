@@ -23,6 +23,13 @@ export function ListingCard({ listing, requestLocationId, searchQuery, variant =
   const providerInitial = listing.providerName.trim().charAt(0).toUpperCase();
   const locationLabel = formatLocation(baseLocation);
   const categoryLabel = category?.labels[language] ?? t('field.category');
+  const professionLabel =
+    listing.professionTitle?.[language] ??
+    listing.professionTitle?.fr ??
+    specialty?.labels[language] ??
+    subcategory?.labels[language] ??
+    listing.title[language];
+  const offerTitle = listing.title[language] ?? listing.title.fr ?? '';
 
   const requestQuote = () => {
     const context = buildQuoteContextFromListing(listing, {
@@ -82,7 +89,7 @@ export function ListingCard({ listing, requestLocationId, searchQuery, variant =
 
   return (
     <article className="listing-card">
-      <Link className="listing-card__result-visual" to={`/listings/${listing.id}`} aria-label={listing.title[language]}>
+      <Link className="listing-card__result-visual" to={`/listings/${listing.id}`} aria-label={professionLabel}>
         {listing.photos?.[0] ? (
           <img src={listing.photos[0]} alt="" />
         ) : (
@@ -99,8 +106,9 @@ export function ListingCard({ listing, requestLocationId, searchQuery, variant =
       <div className="listing-card__main">
         <span className="small-label">{categoryLabel}</span>
         <h2>
-          <Link to={`/listings/${listing.id}`}>{listing.title[language]}</Link>
+          <Link to={`/listings/${listing.id}`}>{professionLabel}</Link>
         </h2>
+        <strong className="listing-card__offer-title">{offerTitle}</strong>
         <p>{listing.shortDescription[language]}</p>
         <div className="listing-card__facts">
           <span>{listing.providerName}</span>

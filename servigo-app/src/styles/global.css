@@ -1936,6 +1936,14 @@ a {
   margin: 0.35rem 0 0;
 }
 
+.listing-card__offer-title {
+  color: var(--ink);
+  display: block;
+  font-size: 0.94rem;
+  line-height: 1.25;
+  margin-top: 0.35rem;
+}
+
 .marketplace-card__meta,
 .results-heading {
   align-items: center;

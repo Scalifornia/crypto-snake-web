@@ -175,6 +175,7 @@ export interface ServiceListing {
   categorySlug: string;
   subcategorySlug: string;
   specialtySlug: string;
+  professionTitle?: LocalizedText;
   title: LocalizedText;
   shortDescription: LocalizedText;
   priceModel: PriceModel;

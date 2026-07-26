@@ -2,6 +2,44 @@
 
 This file is an append-only chronological record of meaningful work performed by AI assistants on this project.
 
+## 2026-07-26 05:21 — Make listing result cards profession-first
+
+### Objective
+Make listing result cards highlight the provider's profession/activity first instead of using the specific offer title as the main headline.
+
+### Backup
+- Created a pre-change backup at `backups/kliko-before-listing-profession-first-cards-20260726/`.
+
+### Work Completed
+- Added optional `professionTitle` metadata to service listings.
+- Filled current mock listings with profession/activity labels such as `Canalizador`, `Pintor`, `Jardineiro`, `Mecânico`, and `Assistente administrativo`.
+- Updated listing result cards so the main heading is the profession/activity and the concrete offer appears underneath.
+- Added profession labels to search relevance so profession names are searchable.
+- Kept homepage showcase cards and listing detail pages structurally unchanged.
+
+### Files Changed
+- `servigo-app/src/types/servigo.ts`
+  - Added optional listing profession title metadata.
+- `servigo-app/src/data/marketplaceData.ts`
+  - Added profession labels to existing mock listings and search text.
+- `servigo-app/src/components/ListingCard.tsx`
+  - Made default listing result cards profession-first.
+- `servigo-app/src/styles/global.css`
+  - Added styling for the secondary offer title line.
+- `servigo-app/README.md`
+  - Documented profession-first result cards.
+- `PROJECT_CONTEXT.md`
+  - Updated listing result feature notes.
+- `CHANGELOG_AI.md`
+  - Added this changelog entry.
+
+### Validation
+- Ran `pnpm run build` in `servigo-app/`; TypeScript and Vite production build passed.
+- Ran `pnpm run build:github-pages` in `servigo-app/`; static GitHub Pages output was generated in `kliko/`.
+
+### Risks or Known Limitations
+- Profession labels are still mock-data fields. In the future provider creation should derive or request these labels explicitly when real publishing is added.
+
 ## 2026-07-26 05:16 — Make listing filters and results scroll independently
 
 ### Objective
