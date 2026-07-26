@@ -2,6 +2,38 @@
 
 This file is an append-only chronological record of meaningful work performed by AI assistants on this project.
 
+## 2026-07-26 05:40 — Add manual city or area fallback to listing filters
+
+### Objective
+Allow seekers to continue filtering listings when their city or zone is not present in the predefined mock location list.
+
+### Backup
+- Created a pre-change backup at `backups/kliko-before-custom-location-filter-20260726/`.
+
+### Work Completed
+- Added an `Other` option to the `/listings` city/area filter.
+- Added a free-text field that appears when `Other` is selected.
+- Persisted the manual city/area value in the URL as frontend-only filter context.
+- Displayed the manual city/area in the active filter strip.
+- Added multilingual labels and placeholders for the new manual location field.
+- Documented that real matching for unknown locations remains future backend/geocoding work.
+
+### Files Changed
+- `servigo-app/src/pages/ListingsPage.tsx`
+  - Added custom location state, URL persistence, active filter display, and manual filtering support.
+- `servigo-app/src/i18n/translations.ts`
+  - Added translated labels/placeholders for manual city/area entry.
+- `servigo-app/README.md`
+  - Documented the manual location fallback rule.
+- `PROJECT_CONTEXT.md`
+  - Updated current status and removed a duplicated status line.
+
+### Validation
+- `npm run build` passed in `servigo-app/`.
+
+### Limitations
+- Manual city/area text is still frontend-only. Real geocoding, postal-code normalization, and provider coverage matching for unknown places remain future backend work.
+
 ## 2026-07-26 05:30 — Add Other option to service taxonomy menus
 
 ### Objective

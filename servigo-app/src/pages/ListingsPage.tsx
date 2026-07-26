@@ -14,13 +14,43 @@ import {
   type ServiceSearchMatch
 } from '../data/marketplaceData';
 import { getCoverageCountries } from '../data/euCoverageOptions';
-import { getLocationsByCountry } from '../data/locationData';
+import { getLocation, getLocationsByCountry } from '../data/locationData';
 import { useTranslation } from '../i18n/useTranslation';
 import type { Locale, ProviderType, ServiceListing } from '../types/servigo';
 
 type ListingSortMode = 'recommended' | 'rating' | 'price_low' | 'location' | 'urgent';
 
 const customTaxonomyValue = 'custom';
+const customLocationValue = 'custom-location';
+
+function normalizeFilterText(value: string) {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function getListingLocationText(listing: ServiceListing) {
+  const locations = [listing.baseLocationId, ...listing.coveredLocationIds]
+    .map((locationId) => getLocation(locationId))
+    .filter(Boolean);
+
+  return normalizeFilterText(
+    [
+      listing.mainCommune,
+      ...listing.serviceArea,
+      ...locations.flatMap((location) => [
+        location?.city,
+        location?.region,
+        location?.district,
+        location?.country,
+        location?.countryCode
+      ])
+    ]
+      .filter(Boolean)
+      .join(' ')
+  );
+}
 
 function getListingNumericPrice(listing: ServiceListing, language: Locale) {
   if (listing.priceModel === 'free' || listing.priceModel === 'charity') {
@@ -45,6 +75,7 @@ export function ListingsPage() {
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') ?? '');
   const [countryCode, setCountryCode] = useState(searchParams.get('country') ?? '');
   const [locationId, setLocationId] = useState(searchParams.get('location') ?? '');
+  const [customLocation, setCustomLocation] = useState(searchParams.get('customLocation') ?? '');
   const [providerType, setProviderType] = useState<ProviderType | 'all'>(
     (searchParams.get('providerType') as ProviderType | null) ?? 'all'
   );
@@ -66,6 +97,7 @@ export function ListingsPage() {
     setSearchQuery(searchParams.get('q') ?? '');
     setCountryCode(searchParams.get('country') ?? '');
     setLocationId(searchParams.get('location') ?? '');
+    setCustomLocation(searchParams.get('customLocation') ?? '');
     setProviderType((searchParams.get('providerType') as ProviderType | null) ?? 'all');
     setUrgentOnly(searchParams.get('urgent') === 'true');
     setPriceShownOnly(searchParams.get('priceShown') === 'true');
@@ -79,6 +111,8 @@ export function ListingsPage() {
   const isCustomCategory = categorySlug === customTaxonomyValue;
   const isCustomSubcategory = subcategorySlug === customTaxonomyValue;
   const isCustomSpecialty = specialtySlug === customTaxonomyValue;
+  const isCustomLocation = locationId === customLocationValue;
+  const activeLocationId = isCustomLocation ? '' : locationId;
   const customTaxonomyQuery = [customCategory, customSubcategory, customSpecialty]
     .map((value) => value.trim())
     .filter(Boolean)
@@ -86,11 +120,11 @@ export function ListingsPage() {
   const effectiveSearchQuery = searchQuery.trim() || customTaxonomyQuery;
   const countryOptions = useMemo(() => getCoverageCountries(language), [language]);
   const locationOptions = getLocationsByCountry(countryCode);
-  const selectedLocation = locationOptions.find((location) => location.id === locationId);
+  const selectedLocation = isCustomLocation ? undefined : locationOptions.find((location) => location.id === locationId);
   const selectedCountry = countryOptions.find((country) => country.countryCode === countryCode);
   const serviceMatches = useMemo(
-    () => (searchQuery.trim() ? searchServiceMatches(searchQuery, locationId) : []),
-    [locationId, searchQuery]
+    () => (searchQuery.trim() ? searchServiceMatches(searchQuery, activeLocationId) : []),
+    [activeLocationId, searchQuery]
   );
   const queryCategorySlugs = useMemo(
     () => Array.from(new Set(serviceMatches.map((match) => match.category.slug))),
@@ -109,22 +143,35 @@ export function ListingsPage() {
         categorySlug: isCustomCategory ? '' : categorySlug,
         subcategorySlug: isCustomSubcategory ? '' : subcategorySlug,
         specialtySlug: isCustomSpecialty ? '' : specialtySlug,
-        locationId,
+        locationId: activeLocationId,
         searchQuery: effectiveSearchQuery,
         providerType,
         urgentOnly,
         priceShownOnly,
         language: listingLanguage,
         minRating
+      }).filter((listing) => {
+        if (!isCustomLocation || !customLocation.trim()) {
+          return true;
+        }
+
+        const locationTokens = normalizeFilterText(customLocation)
+          .split(/\s+/)
+          .filter(Boolean);
+        const listingLocationText = getListingLocationText(listing);
+
+        return locationTokens.every((token) => listingLocationText.includes(token));
       }),
     [
+      activeLocationId,
       categorySlug,
+      customLocation,
       effectiveSearchQuery,
       isCustomCategory,
+      isCustomLocation,
       isCustomSpecialty,
       isCustomSubcategory,
       listingLanguage,
-      locationId,
       minRating,
       priceShownOnly,
       providerType,
@@ -148,7 +195,7 @@ export function ListingsPage() {
 
     if (sortMode === 'location') {
       return listings.sort(
-        (first, second) => getLocationPriority(first, locationId) - getLocationPriority(second, locationId)
+        (first, second) => getLocationPriority(first, activeLocationId) - getLocationPriority(second, activeLocationId)
       );
     }
 
@@ -159,7 +206,7 @@ export function ListingsPage() {
     }
 
     return filteredListings;
-  }, [filteredListings, language, locationId, sortMode]);
+  }, [activeLocationId, filteredListings, language, sortMode]);
 
   const applyFilters = () => {
     const params = new URLSearchParams();
@@ -167,6 +214,7 @@ export function ListingsPage() {
     const trimmedCustomCategory = customCategory.trim();
     const trimmedCustomSubcategory = customSubcategory.trim();
     const trimmedCustomSpecialty = customSpecialty.trim();
+    const trimmedCustomLocation = customLocation.trim();
     const fallbackCustomQuery = [trimmedCustomCategory, trimmedCustomSubcategory, trimmedCustomSpecialty]
       .filter(Boolean)
       .join(' ');
@@ -207,6 +255,10 @@ export function ListingsPage() {
       params.set('location', locationId);
     }
 
+    if (isCustomLocation && trimmedCustomLocation) {
+      params.set('customLocation', trimmedCustomLocation);
+    }
+
     if (providerType !== 'all') {
       params.set('providerType', providerType);
     }
@@ -240,6 +292,7 @@ export function ListingsPage() {
     setSearchQuery('');
     setCountryCode('');
     setLocationId('');
+    setCustomLocation('');
     setProviderType('all');
     setUrgentOnly(false);
     setPriceShownOnly(false);
@@ -434,6 +487,7 @@ export function ListingsPage() {
               onChange={(event) => {
                 setCountryCode(event.target.value);
                 setLocationId('');
+                setCustomLocation('');
               }}
             >
               <option value="">{t('common.all')}</option>
@@ -447,15 +501,36 @@ export function ListingsPage() {
 
           <label className="field">
             <span>{t('filters.location')}</span>
-            <select value={locationId} onChange={(event) => setLocationId(event.target.value)}>
+            <select
+              value={locationId}
+              onChange={(event) => {
+                const nextLocationId = event.target.value;
+                setLocationId(nextLocationId);
+                if (nextLocationId !== customLocationValue) {
+                  setCustomLocation('');
+                }
+              }}
+            >
               <option value="">{t('common.all')}</option>
               {locationOptions.map((location) => (
                 <option key={location.id} value={location.id}>
                   {location.city} · {location.region}
                 </option>
               ))}
+              <option value={customLocationValue}>{t('field.otherOption')}</option>
             </select>
           </label>
+
+          {isCustomLocation && (
+            <label className="field">
+              <span>{t('field.customLocation')}</span>
+              <input
+                value={customLocation}
+                placeholder={t('field.customLocationPlaceholder')}
+                onChange={(event) => setCustomLocation(event.target.value)}
+              />
+            </label>
+          )}
 
           <label className="field">
             <span>{t('filters.providerType')}</span>
@@ -549,6 +624,7 @@ export function ListingsPage() {
             {isCustomSpecialty && <span>{customSpecialty || t('field.otherOption')}</span>}
             {!isCustomSpecialty && selectedSpecialty && <span>{selectedSpecialty.labels[language]}</span>}
             {selectedCountry && <span>{selectedCountry.labels[language]}</span>}
+            {isCustomLocation && <span>{customLocation || t('field.otherOption')}</span>}
             {selectedLocation && <span>{selectedLocation.city}</span>}
             {providerType !== 'all' && <span>{t(`providerType.${providerType}`)}</span>}
             {urgentOnly && <span>{t('filters.urgent')}</span>}
@@ -566,6 +642,7 @@ export function ListingsPage() {
               !selectedSpecialty &&
               !isCustomSpecialty &&
               !selectedCountry &&
+              !isCustomLocation &&
               !selectedLocation &&
               providerType === 'all' &&
               !urgentOnly &&
@@ -578,7 +655,12 @@ export function ListingsPage() {
           {sortedListings.length > 0 ? (
             <div className="listing-grid">
               {sortedListings.map((listing) => (
-                <ListingCard key={listing.id} listing={listing} requestLocationId={locationId} searchQuery={effectiveSearchQuery} />
+                <ListingCard
+                  key={listing.id}
+                  listing={listing}
+                  requestLocationId={activeLocationId}
+                  searchQuery={effectiveSearchQuery}
+                />
               ))}
             </div>
           ) : (

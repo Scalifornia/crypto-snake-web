@@ -156,6 +156,8 @@ Quote request context is stored with the local draft and submitted mock request.
 
 Taxonomy menus should never trap users inside predefined choices. Category, subcategory, and specialty selectors include an `Other` option where relevant. When selected, a free-text field appears so the user can describe the missing category, subcategory, profession, or service type. These values are treated as proposal/mock data for future admin review, not as official taxonomy entries yet.
 
+The `/listings` location filter also includes an `Other` path. If the city or zone is missing from the predefined mock list, the user can enter it manually. In the current frontend-only prototype this text is persisted in the URL and shown in the active filters; real geographic matching for unknown places remains backend/geocoding work for later.
+
 ## Location Model
 
 Kliko is location-first, not Luxembourg-only. Mock locations are stored in:
