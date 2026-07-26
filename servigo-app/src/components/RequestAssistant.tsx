@@ -71,6 +71,7 @@ export function RequestAssistant() {
       ...current,
       description: value,
       categoryId: detectedCategory ?? current.categoryId,
+      customCategory: detectedCategory ? '' : current.customCategory,
       includeSizeDetails: detectedCategory
         ? requestCategoryUsesSizeByDefault(detectedCategory)
         : current.includeSizeDetails
@@ -81,9 +82,15 @@ export function RequestAssistant() {
     setDraft((current) => ({
       ...current,
       categoryId,
+      customCategory: categoryId === 'other' ? current.customCategory : '',
       includeSizeDetails: requestCategoryUsesSizeByDefault(categoryId)
     }));
   };
+
+  const categoryDisplayLabel =
+    draft.categoryId === 'other' && draft.customCategory?.trim()
+      ? draft.customCategory.trim()
+      : categoryLabel(draft.categoryId, language);
 
   const updateCommune = (nextCommune: string) => {
     const nextLocation = findRequestLocation(nextCommune);
@@ -140,6 +147,16 @@ export function RequestAssistant() {
                   </button>
                 ))}
               </div>
+              {draft.categoryId === 'other' && (
+                <label className="field custom-taxonomy-field">
+                  <span>{t('field.customCategory')}</span>
+                  <input
+                    value={draft.customCategory ?? ''}
+                    placeholder={t('field.customCategoryPlaceholder')}
+                    onChange={(event) => updateDraft('customCategory', event.target.value)}
+                  />
+                </label>
+              )}
             </div>
 
             <div className="form-grid">
@@ -269,7 +286,7 @@ export function RequestAssistant() {
 
                 <dl className="brief-list">
                   <dt>{t('field.category')}</dt>
-                  <dd>{categoryLabel(draft.categoryId, language)}</dd>
+                  <dd>{categoryDisplayLabel}</dd>
                   <dt>{t('field.commune')}</dt>
                   <dd>{draft.commune}</dd>
                   <dt>{t('field.urgency')}</dt>

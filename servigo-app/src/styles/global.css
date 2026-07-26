@@ -2043,6 +2043,10 @@ a {
   gap: 0.55rem;
 }
 
+.custom-taxonomy-field {
+  margin-top: 0.8rem;
+}
+
 @media (min-width: 901px) {
   .listings-page .listings-layout {
     align-items: stretch;

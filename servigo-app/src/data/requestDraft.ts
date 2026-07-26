@@ -229,6 +229,7 @@ export function createSubmittedRequest(draft: RequestAssistantDraft, brief = bui
     client: draft.client,
     title: draft.description ? draft.description.slice(0, 72) : `Nouvelle demande ${brand.brandName}`,
     categoryId: draft.categoryId,
+    customCategory: draft.customCategory,
     commune: draft.commune,
     addressHint: draft.address || draft.accessNotes || 'Adresse à préciser après contact',
     urgency: draft.urgency,

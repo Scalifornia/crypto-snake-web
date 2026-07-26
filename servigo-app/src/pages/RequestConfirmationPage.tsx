@@ -28,6 +28,10 @@ export function RequestConfirmationPage() {
   const selectedListing = quoteContext?.listingId ? findListing(quoteContext.listingId) : undefined;
   const eligibleListings = quoteContext ? getEligibleListingsForContext(quoteContext) : [];
   const eligibleProviderCount = new Set(eligibleListings.map((listing) => listing.providerId)).size;
+  const requestServiceLabel =
+    submittedRequest.categoryId === 'other' && submittedRequest.customCategory?.trim()
+      ? submittedRequest.customCategory.trim()
+      : categoryLabel(submittedRequest.categoryId, language);
 
   return (
     <section className="page-section confirmation-page">
@@ -43,7 +47,7 @@ export function RequestConfirmationPage() {
           <h2>{t('confirmation.summary')}</h2>
           <dl className="brief-list">
             <dt>{t('field.service')}</dt>
-            <dd>{quoteContext?.serviceTitle?.[language] ?? categoryLabel(submittedRequest.categoryId, language)}</dd>
+            <dd>{quoteContext?.serviceTitle?.[language] ?? requestServiceLabel}</dd>
             {selectedListing && (
               <>
                 <dt>{t('quoteContext.selectedListing')}</dt>

@@ -20,6 +20,8 @@ import type { Locale, ProviderType, ServiceListing } from '../types/servigo';
 
 type ListingSortMode = 'recommended' | 'rating' | 'price_low' | 'location' | 'urgent';
 
+const customTaxonomyValue = 'custom';
+
 function getListingNumericPrice(listing: ServiceListing, language: Locale) {
   if (listing.priceModel === 'free' || listing.priceModel === 'charity') {
     return 0;
@@ -37,6 +39,9 @@ export function ListingsPage() {
   const [categorySlug, setCategorySlug] = useState(searchParams.get('category') ?? '');
   const [subcategorySlug, setSubcategorySlug] = useState(searchParams.get('subcategory') ?? '');
   const [specialtySlug, setSpecialtySlug] = useState(searchParams.get('specialty') ?? '');
+  const [customCategory, setCustomCategory] = useState(searchParams.get('customCategory') ?? '');
+  const [customSubcategory, setCustomSubcategory] = useState(searchParams.get('customSubcategory') ?? '');
+  const [customSpecialty, setCustomSpecialty] = useState(searchParams.get('customSpecialty') ?? '');
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') ?? '');
   const [countryCode, setCountryCode] = useState(searchParams.get('country') ?? '');
   const [locationId, setLocationId] = useState(searchParams.get('location') ?? '');
@@ -55,6 +60,9 @@ export function ListingsPage() {
     setCategorySlug(searchParams.get('category') ?? '');
     setSubcategorySlug(searchParams.get('subcategory') ?? '');
     setSpecialtySlug(searchParams.get('specialty') ?? '');
+    setCustomCategory(searchParams.get('customCategory') ?? '');
+    setCustomSubcategory(searchParams.get('customSubcategory') ?? '');
+    setCustomSpecialty(searchParams.get('customSpecialty') ?? '');
     setSearchQuery(searchParams.get('q') ?? '');
     setCountryCode(searchParams.get('country') ?? '');
     setLocationId(searchParams.get('location') ?? '');
@@ -68,6 +76,14 @@ export function ListingsPage() {
   const selectedCategory = findCategory(categorySlug);
   const selectedSubcategory = findSubcategory(categorySlug, subcategorySlug);
   const selectedSpecialty = findSpecialty(categorySlug, subcategorySlug, specialtySlug);
+  const isCustomCategory = categorySlug === customTaxonomyValue;
+  const isCustomSubcategory = subcategorySlug === customTaxonomyValue;
+  const isCustomSpecialty = specialtySlug === customTaxonomyValue;
+  const customTaxonomyQuery = [customCategory, customSubcategory, customSpecialty]
+    .map((value) => value.trim())
+    .filter(Boolean)
+    .join(' ');
+  const effectiveSearchQuery = searchQuery.trim() || customTaxonomyQuery;
   const countryOptions = useMemo(() => getCoverageCountries(language), [language]);
   const locationOptions = getLocationsByCountry(countryCode);
   const selectedLocation = locationOptions.find((location) => location.id === locationId);
@@ -90,11 +106,11 @@ export function ListingsPage() {
   const filteredListings = useMemo(
     () =>
       filterListings({
-        categorySlug,
-        subcategorySlug,
-        specialtySlug,
+        categorySlug: isCustomCategory ? '' : categorySlug,
+        subcategorySlug: isCustomSubcategory ? '' : subcategorySlug,
+        specialtySlug: isCustomSpecialty ? '' : specialtySlug,
         locationId,
-        searchQuery,
+        searchQuery: effectiveSearchQuery,
         providerType,
         urgentOnly,
         priceShownOnly,
@@ -103,12 +119,15 @@ export function ListingsPage() {
       }),
     [
       categorySlug,
+      effectiveSearchQuery,
+      isCustomCategory,
+      isCustomSpecialty,
+      isCustomSubcategory,
       listingLanguage,
       locationId,
       minRating,
       priceShownOnly,
       providerType,
-      searchQuery,
       specialtySlug,
       subcategorySlug,
       urgentOnly
@@ -145,21 +164,39 @@ export function ListingsPage() {
   const applyFilters = () => {
     const params = new URLSearchParams();
     const trimmedSearchQuery = searchQuery.trim();
+    const trimmedCustomCategory = customCategory.trim();
+    const trimmedCustomSubcategory = customSubcategory.trim();
+    const trimmedCustomSpecialty = customSpecialty.trim();
+    const fallbackCustomQuery = [trimmedCustomCategory, trimmedCustomSubcategory, trimmedCustomSpecialty]
+      .filter(Boolean)
+      .join(' ');
 
-    if (trimmedSearchQuery) {
-      params.set('q', trimmedSearchQuery);
+    if (trimmedSearchQuery || fallbackCustomQuery) {
+      params.set('q', trimmedSearchQuery || fallbackCustomQuery);
     }
 
     if (categorySlug) {
       params.set('category', categorySlug);
     }
 
+    if (isCustomCategory && trimmedCustomCategory) {
+      params.set('customCategory', trimmedCustomCategory);
+    }
+
     if (subcategorySlug) {
       params.set('subcategory', subcategorySlug);
     }
 
+    if (isCustomSubcategory && trimmedCustomSubcategory) {
+      params.set('customSubcategory', trimmedCustomSubcategory);
+    }
+
     if (specialtySlug) {
       params.set('specialty', specialtySlug);
+    }
+
+    if (isCustomSpecialty && trimmedCustomSpecialty) {
+      params.set('customSpecialty', trimmedCustomSpecialty);
     }
 
     if (countryCode) {
@@ -197,6 +234,9 @@ export function ListingsPage() {
     setCategorySlug('');
     setSubcategorySlug('');
     setSpecialtySlug('');
+    setCustomCategory('');
+    setCustomSubcategory('');
+    setCustomSpecialty('');
     setSearchQuery('');
     setCountryCode('');
     setLocationId('');
@@ -229,6 +269,9 @@ export function ListingsPage() {
     setCategorySlug(match.category.slug);
     setSubcategorySlug(match.subcategory?.slug ?? match.listing?.subcategorySlug ?? '');
     setSpecialtySlug(match.specialty?.slug ?? match.listing?.specialtySlug ?? '');
+    setCustomCategory('');
+    setCustomSubcategory('');
+    setCustomSpecialty('');
   };
 
   return (
@@ -259,6 +302,9 @@ export function ListingsPage() {
                   setCategorySlug('');
                   setSubcategorySlug('');
                   setSpecialtySlug('');
+                  setCustomCategory('');
+                  setCustomSubcategory('');
+                  setCustomSpecialty('');
                 }}
               />
             </label>
@@ -281,9 +327,15 @@ export function ListingsPage() {
             <select
               value={categorySlug}
               onChange={(event) => {
-                setCategorySlug(event.target.value);
+                const nextCategorySlug = event.target.value;
+                setCategorySlug(nextCategorySlug);
                 setSubcategorySlug('');
                 setSpecialtySlug('');
+                if (nextCategorySlug !== customTaxonomyValue) {
+                  setCustomCategory('');
+                  setCustomSubcategory('');
+                  setCustomSpecialty('');
+                }
               }}
             >
               <option value="">{t('common.all')}</option>
@@ -292,16 +344,33 @@ export function ListingsPage() {
                   {category.labels[language]}
                 </option>
               ))}
+              <option value={customTaxonomyValue}>{t('field.otherOption')}</option>
             </select>
           </label>
+
+          {isCustomCategory && (
+            <label className="field">
+              <span>{t('field.customCategory')}</span>
+              <input
+                value={customCategory}
+                placeholder={t('field.customCategoryPlaceholder')}
+                onChange={(event) => setCustomCategory(event.target.value)}
+              />
+            </label>
+          )}
 
           <label className="field">
             <span>{t('filters.subcategory')}</span>
             <select
               value={subcategorySlug}
               onChange={(event) => {
-                setSubcategorySlug(event.target.value);
+                const nextSubcategorySlug = event.target.value;
+                setSubcategorySlug(nextSubcategorySlug);
                 setSpecialtySlug('');
+                if (nextSubcategorySlug !== customTaxonomyValue) {
+                  setCustomSubcategory('');
+                  setCustomSpecialty('');
+                }
               }}
             >
               <option value="">{t('common.all')}</option>
@@ -310,20 +379,53 @@ export function ListingsPage() {
                   {subcategory.labels[language]}
                 </option>
               ))}
+              <option value={customTaxonomyValue}>{t('field.otherOption')}</option>
             </select>
           </label>
 
+          {isCustomSubcategory && (
+            <label className="field">
+              <span>{t('field.customSubcategory')}</span>
+              <input
+                value={customSubcategory}
+                placeholder={t('field.customSubcategoryPlaceholder')}
+                onChange={(event) => setCustomSubcategory(event.target.value)}
+              />
+            </label>
+          )}
+
           <label className="field">
             <span>{t('filters.specialty')}</span>
-            <select value={specialtySlug} onChange={(event) => setSpecialtySlug(event.target.value)}>
+            <select
+              value={specialtySlug}
+              onChange={(event) => {
+                const nextSpecialtySlug = event.target.value;
+                setSpecialtySlug(nextSpecialtySlug);
+                if (nextSpecialtySlug !== customTaxonomyValue) {
+                  setCustomSpecialty('');
+                }
+              }}
+            >
               <option value="">{t('common.all')}</option>
               {selectedSubcategory?.specialties.map((specialty) => (
                 <option key={specialty.slug} value={specialty.slug}>
                   {specialty.labels[language]}
                 </option>
               ))}
+              <option value={customTaxonomyValue}>{t('field.otherOption')}</option>
             </select>
           </label>
+
+          {isCustomSpecialty && (
+            <label className="field">
+              <span>{t('field.customSpecialty')}</span>
+              <input
+                value={customSpecialty}
+                placeholder={t('field.customSpecialtyPlaceholder')}
+                onChange={(event) => setCustomSpecialty(event.target.value)}
+              />
+            </label>
+          )}
 
           <label className="field">
             <span>{t('filters.country')}</span>
@@ -440,9 +542,12 @@ export function ListingsPage() {
 
           <div className="active-filter-strip" aria-label={t('filters.title')}>
             {searchQuery && <span>{searchQuery}</span>}
-            {selectedCategory && <span>{selectedCategory.labels[language]}</span>}
-            {selectedSubcategory && <span>{selectedSubcategory.labels[language]}</span>}
-            {selectedSpecialty && <span>{selectedSpecialty.labels[language]}</span>}
+            {isCustomCategory && <span>{customCategory || t('field.otherOption')}</span>}
+            {!isCustomCategory && selectedCategory && <span>{selectedCategory.labels[language]}</span>}
+            {isCustomSubcategory && <span>{customSubcategory || t('field.otherOption')}</span>}
+            {!isCustomSubcategory && selectedSubcategory && <span>{selectedSubcategory.labels[language]}</span>}
+            {isCustomSpecialty && <span>{customSpecialty || t('field.otherOption')}</span>}
+            {!isCustomSpecialty && selectedSpecialty && <span>{selectedSpecialty.labels[language]}</span>}
             {selectedCountry && <span>{selectedCountry.labels[language]}</span>}
             {selectedLocation && <span>{selectedLocation.city}</span>}
             {providerType !== 'all' && <span>{t(`providerType.${providerType}`)}</span>}
@@ -455,8 +560,11 @@ export function ListingsPage() {
             )}
             {!searchQuery &&
               !selectedCategory &&
+              !isCustomCategory &&
               !selectedSubcategory &&
+              !isCustomSubcategory &&
               !selectedSpecialty &&
+              !isCustomSpecialty &&
               !selectedCountry &&
               !selectedLocation &&
               providerType === 'all' &&
@@ -470,7 +578,7 @@ export function ListingsPage() {
           {sortedListings.length > 0 ? (
             <div className="listing-grid">
               {sortedListings.map((listing) => (
-                <ListingCard key={listing.id} listing={listing} requestLocationId={locationId} searchQuery={searchQuery} />
+                <ListingCard key={listing.id} listing={listing} requestLocationId={locationId} searchQuery={effectiveSearchQuery} />
               ))}
             </div>
           ) : (

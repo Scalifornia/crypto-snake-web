@@ -2,6 +2,56 @@
 
 This file is an append-only chronological record of meaningful work performed by AI assistants on this project.
 
+## 2026-07-26 05:30 — Add Other option to service taxonomy menus
+
+### Objective
+Allow users to continue when a predefined category, subcategory, profession, specialty, or service type is missing.
+
+### Backup
+- Created a pre-change backup at `backups/kliko-before-custom-taxonomy-other-option-20260726/`.
+
+### Work Completed
+- Added `Other` options to the `/listings` category, subcategory, and specialty filters.
+- Added free-text fields that appear when `Other` is selected in listing filters.
+- Added `Other` to the provider create-listing taxonomy flow, including free-text category, subcategory, and specialty proposal fields.
+- Automatically flags provider taxonomy custom choices as proposal/admin-review territory.
+- Added `Other service` to the request assistant/review category flow with a free-text custom category field.
+- Preserved custom request category text through review and confirmation.
+- Added translations for the new option and custom fields across supported UI languages.
+
+### Files Changed
+- `servigo-app/src/pages/ListingsPage.tsx`
+  - Added custom category/subcategory/specialty filter options and URL persistence.
+- `servigo-app/src/pages/ProviderCreateListingPage.tsx`
+  - Added custom taxonomy proposal fields for provider listing creation.
+- `servigo-app/src/components/RequestAssistant.tsx`
+  - Added custom category input when `Other service` is selected.
+- `servigo-app/src/pages/RequestReviewPage.tsx`
+  - Added custom category input and validation on review.
+- `servigo-app/src/pages/RequestConfirmationPage.tsx`
+  - Shows the custom service label after submission.
+- `servigo-app/src/data/servigoData.ts`
+  - Added an `Other service` request category.
+- `servigo-app/src/data/requestDraft.ts`
+  - Preserves custom category text in mock submissions.
+- `servigo-app/src/types/servigo.ts`
+  - Added `other` request category and custom category fields.
+- `servigo-app/src/i18n/translations.ts`
+  - Added multilingual labels/placeholders for the new taxonomy option.
+- `servigo-app/src/styles/global.css`
+  - Added light spacing for custom taxonomy fields.
+- `servigo-app/README.md`
+  - Documented the taxonomy `Other` rule.
+- `PROJECT_CONTEXT.md`
+  - Updated product status and taxonomy notes.
+
+### Validation
+- Ran `pnpm run build` in `servigo-app/`; TypeScript and Vite production build passed.
+- Ran `pnpm run build:github-pages` in `servigo-app/`; static GitHub Pages output was generated in `kliko/`.
+
+### Risks or Known Limitations
+- Custom taxonomy text remains frontend-only proposal/mock data. Backend moderation and duplicate detection remain future work.
+
 ## 2026-07-26 05:21 — Make listing result cards profession-first
 
 ### Objective

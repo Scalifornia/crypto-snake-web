@@ -11,7 +11,8 @@ export type CategoryId =
   | 'painting'
   | 'gardening'
   | 'moving'
-  | 'urgent';
+  | 'urgent'
+  | 'other';
 
 export type Urgency = 'flexible' | 'soon' | 'urgent';
 
@@ -226,6 +227,7 @@ export interface RequestAttachment {
 
 export interface RequestDraft {
   categoryId: CategoryId;
+  customCategory?: string;
   commune: string;
   urgency: Urgency;
   propertyType: PropertyType;
@@ -294,6 +296,7 @@ export interface ServiceRequest {
   };
   title: string;
   categoryId: CategoryId;
+  customCategory?: string;
   commune: string;
   addressHint: string;
   urgency: Urgency;

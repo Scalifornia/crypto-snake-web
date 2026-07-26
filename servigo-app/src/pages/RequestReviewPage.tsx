@@ -140,6 +140,10 @@ export function RequestReviewPage() {
   const contextProviderInitial = (contextProviderName ?? 'K').trim().charAt(0).toUpperCase();
   const contextServiceTitle =
     quoteContext?.serviceTitle?.[language] ?? contextListing?.title[language] ?? t('review.contextNoListing');
+  const draftCategoryLabel =
+    draft.categoryId === 'other' && draft.customCategory?.trim()
+      ? draft.customCategory.trim()
+      : categoryLabel(draft.categoryId, language);
 
   useEffect(() => {
     const syncCountry = () => {
@@ -199,6 +203,7 @@ export function RequestReviewPage() {
       const next = {
         ...current,
         categoryId,
+        customCategory: categoryId === 'other' ? current.customCategory : '',
         includeSizeDetails: requestCategoryUsesSizeByDefault(categoryId)
       };
       saveRequestDraft(next);
@@ -278,7 +283,7 @@ export function RequestReviewPage() {
       nextErrors.commune = t('validation.communeRequired');
     }
 
-    if (!draft.categoryId) {
+    if (!draft.categoryId || (draft.categoryId === 'other' && !draft.customCategory?.trim())) {
       nextErrors.categoryId = t('validation.categoryRequired');
     }
 
@@ -360,6 +365,17 @@ export function RequestReviewPage() {
               </select>
               {errors.categoryId && <small className="field-error">{errors.categoryId}</small>}
             </label>
+
+            {draft.categoryId === 'other' && (
+              <label className="field">
+                <span>{t('field.customCategory')}</span>
+                <input
+                  value={draft.customCategory ?? ''}
+                  placeholder={t('field.customCategoryPlaceholder')}
+                  onChange={(event) => updateDraft('customCategory', event.target.value)}
+                />
+              </label>
+            )}
 
             <label className="field">
               <span>{t('field.commune')}</span>
@@ -545,7 +561,7 @@ export function RequestReviewPage() {
               )}
               <dl className="brief-list">
                 <dt>{t('quoteContext.requestedService')}</dt>
-                <dd>{quoteContext.serviceTitle?.[language] ?? contextListing?.title[language] ?? categoryLabel(draft.categoryId, language)}</dd>
+                <dd>{quoteContext.serviceTitle?.[language] ?? contextListing?.title[language] ?? draftCategoryLabel}</dd>
                 {contextListing && (
                   <>
                     <dt>{t('quoteContext.selectedListing')}</dt>
@@ -588,7 +604,7 @@ export function RequestReviewPage() {
             </ul>
             <dl className="brief-list">
               <dt>{t('field.service')}</dt>
-              <dd>{categoryLabel(draft.categoryId, language)}</dd>
+              <dd>{draftCategoryLabel}</dd>
               <dt>{t('field.commune')}</dt>
               <dd>{draft.commune}</dd>
               <dt>{t('field.priceEstimate')}</dt>

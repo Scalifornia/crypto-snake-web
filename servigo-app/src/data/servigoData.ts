@@ -121,6 +121,14 @@ export const categories: ServiceCategory[] = [
     directBooking: false,
     labels: { fr: 'Intervention urgente', pt: 'Intervenção urgente', en: 'Urgent intervention' },
     keywords: ['urgent', 'urgence', 'emergency', 'immédiat', 'urgente']
+  },
+  {
+    id: 'other',
+    icon: 'tools',
+    baseHourlyRate: 55,
+    directBooking: false,
+    labels: { fr: 'Autre service', pt: 'Outro serviço', en: 'Other service' },
+    keywords: ['autre', 'outro', 'other', 'custom', 'personnalisé', 'personalizado']
   }
 ];
 

@@ -19,6 +19,7 @@ import type { Category, Locale, PriceModel, ProviderType } from '../types/servig
 
 const priceModels: PriceModel[] = ['fixed', 'hourly', 'forfait', 'quote_only', 'free', 'charity'];
 const allTaxonomyValue = 'all';
+const customTaxonomyValue = 'custom-taxonomy';
 const defaultResidenceCountryCode = 'LU';
 const defaultForeignCountryCode = getDefaultForeignCountryCode(defaultResidenceCountryCode);
 const customLanguageValue = 'custom';
@@ -84,6 +85,9 @@ export function ProviderCreateListingPage() {
   const [categorySearch, setCategorySearch] = useState('');
   const [subcategorySlug, setSubcategorySlug] = useState(allTaxonomyValue);
   const [specialtySlug, setSpecialtySlug] = useState(allTaxonomyValue);
+  const [customCategoryName, setCustomCategoryName] = useState('');
+  const [customSubcategoryName, setCustomSubcategoryName] = useState('');
+  const [customSpecialtyName, setCustomSpecialtyName] = useState('');
   const [serviceTitle, setServiceTitle] = useState('');
   const [shortDescription, setShortDescription] = useState('');
   const [priceModel, setPriceModel] = useState<PriceModel>('quote_only');
@@ -118,6 +122,9 @@ export function ProviderCreateListingPage() {
   );
   const coverageCountries = useMemo(() => getCoverageCountries(language), [language]);
 
+  const isCustomCategory = categorySlug === customTaxonomyValue;
+  const isCustomSubcategory = subcategorySlug === customTaxonomyValue;
+  const isCustomSpecialty = specialtySlug === customTaxonomyValue;
   const selectedCategory = useMemo(
     () => marketplaceCategories.find((category) => category.slug === categorySlug) ?? marketplaceCategories[0],
     [categorySlug]
@@ -138,23 +145,29 @@ export function ProviderCreateListingPage() {
         return null;
       }
 
+      if (isCustomCategory || isCustomSubcategory) {
+        return null;
+      }
+
       return (
         selectedCategory.subcategories.find((subcategory) => subcategory.slug === subcategorySlug) ??
         selectedCategory.subcategories[0]
       );
     },
-    [selectedCategory, subcategorySlug]
+    [isCustomCategory, isCustomSubcategory, selectedCategory, subcategorySlug]
   );
   const sortedSubcategories = useMemo(
     () =>
-      [...selectedCategory.subcategories].sort((first, second) =>
-        first.labels[language].localeCompare(second.labels[language], language)
-      ),
-    [language, selectedCategory]
+      isCustomCategory
+        ? []
+        : [...selectedCategory.subcategories].sort((first, second) =>
+            first.labels[language].localeCompare(second.labels[language], language)
+          ),
+    [isCustomCategory, language, selectedCategory]
   );
   const selectedSpecialty = useMemo(
     () => {
-      if (!selectedSubcategory || specialtySlug === allTaxonomyValue) {
+      if (!selectedSubcategory || specialtySlug === allTaxonomyValue || isCustomSpecialty) {
         return null;
       }
 
@@ -163,7 +176,7 @@ export function ProviderCreateListingPage() {
         selectedSubcategory.specialties[0]
       );
     },
-    [selectedSubcategory, specialtySlug]
+    [isCustomSpecialty, selectedSubcategory, specialtySlug]
   );
   const sortedSpecialties = useMemo(
     () =>
@@ -240,8 +253,11 @@ export function ProviderCreateListingPage() {
       (selectedForeignCountryCodes.length > 0 &&
         selectedForeignCountryCodes.every((countryCode) => (foreignServiceAreasByCountry[countryCode] ?? []).length > 0))) &&
     categorySlug &&
+    (!isCustomCategory || customCategoryName.trim()) &&
     subcategorySlug &&
+    (!isCustomSubcategory || customSubcategoryName.trim()) &&
     specialtySlug &&
+    (!isCustomSpecialty || customSpecialtyName.trim()) &&
     serviceTitle.trim() &&
     shortDescription.trim() &&
     languages.length + extraLanguages.length > 0;
@@ -403,10 +419,21 @@ export function ProviderCreateListingPage() {
   };
 
   const updateCategory = (nextCategorySlug: string) => {
+    if (nextCategorySlug === customTaxonomyValue) {
+      setCategorySlug(customTaxonomyValue);
+      setSubcategorySlug(allTaxonomyValue);
+      setSpecialtySlug(allTaxonomyValue);
+      setProposedNew(true);
+      return;
+    }
+
     const nextCategory = marketplaceCategories.find((category) => category.slug === nextCategorySlug) ?? marketplaceCategories[0];
     setCategorySlug(nextCategory.slug);
     setSubcategorySlug(allTaxonomyValue);
     setSpecialtySlug(allTaxonomyValue);
+    setCustomCategoryName('');
+    setCustomSubcategoryName('');
+    setCustomSpecialtyName('');
   };
 
   const updateCategorySearch = (nextSearch: string) => {
@@ -427,6 +454,15 @@ export function ProviderCreateListingPage() {
     if (nextSubcategorySlug === allTaxonomyValue) {
       setSubcategorySlug(allTaxonomyValue);
       setSpecialtySlug(allTaxonomyValue);
+      setCustomSubcategoryName('');
+      setCustomSpecialtyName('');
+      return;
+    }
+
+    if (nextSubcategorySlug === customTaxonomyValue) {
+      setSubcategorySlug(customTaxonomyValue);
+      setSpecialtySlug(allTaxonomyValue);
+      setProposedNew(true);
       return;
     }
 
@@ -435,6 +471,19 @@ export function ProviderCreateListingPage() {
       selectedCategory.subcategories[0];
     setSubcategorySlug(nextSubcategory.slug);
     setSpecialtySlug(allTaxonomyValue);
+    setCustomSubcategoryName('');
+    setCustomSpecialtyName('');
+  };
+
+  const updateSpecialty = (nextSpecialtySlug: string) => {
+    setSpecialtySlug(nextSpecialtySlug);
+
+    if (nextSpecialtySlug === customTaxonomyValue) {
+      setProposedNew(true);
+      return;
+    }
+
+    setCustomSpecialtyName('');
   };
 
   const submitMock = (event: FormEvent<HTMLFormElement>) => {
@@ -788,35 +837,78 @@ export function ProviderCreateListingPage() {
                     {category.labels[language]}
                   </button>
                 ))}
+                <button
+                  className={isCustomCategory ? 'is-active' : ''}
+                  type="button"
+                  role="option"
+                  aria-selected={isCustomCategory}
+                  onClick={() => chooseCategory(customTaxonomyValue)}
+                >
+                  {t('field.otherOption')}
+                </button>
               </div>
               <p className="field-help">
                 {t('field.categorySearchCount', { count: filteredCategories.length })}
               </p>
+              {isCustomCategory && (
+                <label className="field">
+                  <span>{t('field.customCategory')}</span>
+                  <input
+                    value={customCategoryName}
+                    placeholder={t('field.customCategoryPlaceholder')}
+                    onChange={(event) => setCustomCategoryName(event.target.value)}
+                  />
+                </label>
+              )}
             </div>
 
             <label className="field">
               <span>{t('field.subcategory')}</span>
-              <select value={selectedSubcategory?.slug ?? allTaxonomyValue} onChange={(event) => updateSubcategory(event.target.value)}>
+              <select value={isCustomSubcategory ? customTaxonomyValue : selectedSubcategory?.slug ?? allTaxonomyValue} onChange={(event) => updateSubcategory(event.target.value)}>
                 <option value={allTaxonomyValue}>{t('common.all')}</option>
                 {sortedSubcategories.map((subcategory) => (
                   <option key={subcategory.slug} value={subcategory.slug}>
                     {subcategory.labels[language]}
                   </option>
                 ))}
+                <option value={customTaxonomyValue}>{t('field.otherOption')}</option>
               </select>
             </label>
 
+            {isCustomSubcategory && (
+              <label className="field">
+                <span>{t('field.customSubcategory')}</span>
+                <input
+                  value={customSubcategoryName}
+                  placeholder={t('field.customSubcategoryPlaceholder')}
+                  onChange={(event) => setCustomSubcategoryName(event.target.value)}
+                />
+              </label>
+            )}
+
             <label className="field">
               <span>{t('field.specialty')}</span>
-              <select value={selectedSpecialty?.slug ?? allTaxonomyValue} onChange={(event) => setSpecialtySlug(event.target.value)}>
+              <select value={isCustomSpecialty ? customTaxonomyValue : selectedSpecialty?.slug ?? allTaxonomyValue} onChange={(event) => updateSpecialty(event.target.value)}>
                 <option value={allTaxonomyValue}>{t('common.all')}</option>
                 {sortedSpecialties.map((specialty) => (
                   <option key={specialty.slug} value={specialty.slug}>
                     {specialty.labels[language]}
                   </option>
                 ))}
+                <option value={customTaxonomyValue}>{t('field.otherOption')}</option>
               </select>
             </label>
+
+            {isCustomSpecialty && (
+              <label className="field">
+                <span>{t('field.customSpecialty')}</span>
+                <input
+                  value={customSpecialtyName}
+                  placeholder={t('field.customSpecialtyPlaceholder')}
+                  onChange={(event) => setCustomSpecialtyName(event.target.value)}
+                />
+              </label>
+            )}
 
             <label className="field">
               <span>{t('field.priceModel')}</span>
