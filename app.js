@@ -1,6 +1,29 @@
 (() => {
   "use strict";
 
+  // Storage may be unavailable in private sessions or full after an image upload.
+  // Keep a session copy so a failed save never interrupts a running game.
+  const storageCache = new Map();
+  const storage = {
+    getItem(key) {
+      if (storageCache.has(key)) return storageCache.get(key);
+      try {
+        const value = localStorage.getItem(key);
+        storageCache.set(key, value);
+        return value;
+      } catch { return null; }
+    },
+    setItem(key, value) {
+      const text = String(value);
+      storageCache.set(key, text);
+      try { localStorage.setItem(key, text); } catch {}
+    },
+    removeItem(key) {
+      storageCache.set(key, null);
+      try { localStorage.removeItem(key); } catch {}
+    },
+  };
+
   const el = {
     canvas: document.getElementById("game"),
     menu: document.getElementById("menu"),
@@ -11,6 +34,10 @@
     overlay: document.getElementById("overlay"),
     overlayTitle: document.getElementById("overlayTitle"),
     overlayText: document.getElementById("overlayText"),
+    runSummary: document.getElementById("runSummary"),
+    finalScore: document.getElementById("finalScore"),
+    finalTime: document.getElementById("finalTime"),
+    finalCash: document.getElementById("finalCash"),
     overlayRanking: document.getElementById("overlayRanking"),
     rankingList: document.getElementById("rankingList"),
     rankingNameWrap: document.getElementById("rankingNameWrap"),
@@ -33,6 +60,9 @@
     tutorialText: document.getElementById("tutorialText"),
 
     btnPlay: document.getElementById("btnPlay"),
+    btnPause: document.getElementById("btnPause"),
+    btnOverlayResume: document.getElementById("btnOverlayResume"),
+    touchControls: document.getElementById("touchControls"),
     btnReset: document.getElementById("btnReset"),
     btnMenu: document.getElementById("btnMenu"),
     btnHint: document.getElementById("btnHint"),
@@ -78,6 +108,8 @@
   const RANKING_KEY = "cs_rankings_v1";
   const LS = {
     sfxVol: "cs_sfxVol",
+    sound: "cs_sound",
+    music: "cs_music",
     musicVol: "cs_musicVol",
     bgData: "cs_bgData",
     bgPreset: "cs_bgPreset",
@@ -338,6 +370,8 @@
   let timeAttackDuration = 20;
   let lastSecondTs = 0;
   let gameElapsedMs = 0;
+  let lastHudUpdateMs = 0;
+  let runId = 0;
 
   let combo = 0;
   let comboMult = 1.0;
@@ -380,7 +414,7 @@
   const BITCOIN_MS = 5500;
   const ETHEREUM_MS = 6000;
   const SOLANA_MS = 4500;
-  let best = Number(localStorage.getItem(STORAGE_KEY) || 0);
+  let best = Math.max(0, Number(storage.getItem(STORAGE_KEY)) || 0);
   el.best && (el.best.textContent = "$0");
 
   // ---------- Canvas layout ----------
@@ -472,14 +506,14 @@
   function syncWorldToMode() {
     const world = worldForMode(currentModeKey());
     if (el.boardSize) el.boardSize.value = world;
-    localStorage.setItem(LS.boardSize, world);
+    storage.setItem(LS.boardSize, world);
     return world;
   }
 
   function timeAttackDurationForWorld(world) {
-    const selectedTimed = Number(el.timedDuration?.value || 20);
+    const selectedTimed = el.timedDuration?.value || "auto";
     const autoTimed = world === "small" ? 20 : world === "large" ? 30 : 25;
-    return selectedTimed === 20 ? autoTimed : selectedTimed;
+    return ["10", "20", "30"].includes(selectedTimed) ? Number(selectedTimed) : autoTimed;
   }
 
   function applyModeExperience() {
@@ -511,7 +545,10 @@
 
     normalizeProgress(data) {
       const base = this.defaultProgress();
-      const source = data && typeof data === "object" ? data : {};
+      const raw = data && typeof data === "object" ? data : {};
+      const source = Object.fromEntries(Object.keys(base).map(key => [key,
+        Number.isFinite(Number(raw[key])) ? Number(raw[key]) : base[key],
+      ]));
       const progress = {
         xp_total: Math.max(0, Math.floor(Number(source.xp_total ?? base.xp_total) || 0)),
         nivel: Math.max(1, Math.floor(Number(source.nivel ?? base.nivel) || 1)),
@@ -528,7 +565,7 @@
 
     loadProgress() {
       try {
-        return this.normalizeProgress(JSON.parse(localStorage.getItem(LS.progress) || "null"));
+        return this.normalizeProgress(JSON.parse(storage.getItem(LS.progress) || "null"));
       } catch {
         return this.defaultProgress();
       }
@@ -536,7 +573,7 @@
 
     saveProgress(progress) {
       const normalized = this.normalizeProgress(progress);
-      localStorage.setItem(LS.progress, JSON.stringify(normalized));
+      storage.setItem(LS.progress, JSON.stringify(normalized));
       return normalized;
     },
   };
@@ -664,23 +701,22 @@
       const progress = ProgressManager.state;
       const levelStartXp = ProgressManager.xpForLevel(progress.nivel);
       const nextLevelXp = ProgressManager.nextLevelXp(progress.nivel);
-      const unlockedWorlds = WorldManager.unlockedWorlds(progress.nivel).length;
+      const availableWorlds = WORLDS.filter(world => world.key).length;
 
       el.profileContent.innerHTML = `
         <section class="profile-summary">
-          <div class="profile-level">Level ${progress.nivel}</div>
+          <div class="profile-level">Nível ${progress.nivel}</div>
           <div class="profile-xp">XP ${progress.xp_total} / ${nextLevelXp}</div>
           <div class="profile-xp-track" aria-hidden="true">
             <span style="width:${Math.round(Math.max(0, Math.min(1, (progress.xp_total - levelStartXp) / Math.max(1, nextLevelXp - levelStartXp))) * 100)}%"></span>
           </div>
         </section>
         <section class="profile-stats">
-          <div><span>Total Coins Collected</span><strong>${progress.moedas_recolhidas}</strong></div>
-          <div><span>Games Played</span><strong>${progress.jogos_jogados}</strong></div>
-          <div><span>Best Score</span><strong>${progress.melhor_score}</strong></div>
-          <div><span>Total Play Time</span><strong>${this.formatTime(progress.tempo_total_jogado)}</strong></div>
-          <div><span>Achievements Unlocked</span><strong>${progress.achievements_desbloqueados}</strong></div>
-          <div><span>Worlds Unlocked</span><strong>${unlockedWorlds}/${WORLDS.length}</strong></div>
+          <div><span>Moedas recolhidas</span><strong>${progress.moedas_recolhidas}</strong></div>
+          <div><span>Partidas jogadas</span><strong>${progress.jogos_jogados}</strong></div>
+          <div><span>Melhor pontuação</span><strong>${progress.melhor_score}</strong></div>
+          <div><span>Tempo de jogo</span><strong>${this.formatTime(progress.tempo_total_jogado)}</strong></div>
+          <div><span>Mundos disponíveis</span><strong>${availableWorlds}</strong></div>
         </section>
       `;
     },
@@ -701,22 +737,22 @@
       if (!el.worldsList) return;
       if (!ProgressManager.state) ProgressManager.load();
 
-      const currentLevel = ProgressManager.state.nivel;
-      el.worldsList.innerHTML = WORLDS.map((world) => {
-        const unlocked = WorldManager.isUnlocked(world, currentLevel);
-        const assets = WorldManager.assetsForWorld(world);
-        const coinConfig = assets.coins || {};
-        const obstacleCount = WorldManager.obstaclesForWorld(world).length;
+      el.worldsList.innerHTML = WORLDS.filter(world => world.key).map((world) => {
+        const unlocked = true;
+        const descriptions = {
+          small: "Clássico: recolhe moedas e encontra o teu ritmo.",
+          medium: "Contra o tempo: cada moeda dá-te mais segundos.",
+          large: "Sobrevivência: a velocidade sobe a cada moeda.",
+        };
         return `
           <article class="world-entry ${unlocked ? "unlocked" : "locked"}">
             <div class="world-entry-art" aria-hidden="true">${world.number}</div>
             <div class="world-entry-body">
               <strong>${world.name}</strong>
-              <span>${unlocked ? "Unlocked" : `Unlocks at Level ${world.unlockLevel}`}</span>
-              <small>Background: ${assets.background || "not set"} · Music: ${assets.music || "default"}</small>
-              <small>Coins: ${(coinConfig.normal || []).length} · Obstacles: ${obstacleCount}</small>
+              <span>${world.displayName}</span>
+              <small>${descriptions[world.key] || "Novo mundo em preparação."}</small>
             </div>
-            <div class="world-entry-status">${unlocked ? "OPEN" : "LOCKED"}</div>
+            <div class="world-entry-status">${unlocked ? "ABERTO" : "BLOQUEADO"}</div>
           </article>
         `;
       }).join("");
@@ -740,7 +776,7 @@
   function applyWorld(world) {
     const next = world === "small" ? "small" : world === "large" ? "large" : "medium";
     if (el.boardSize) el.boardSize.value = next;
-    localStorage.setItem(LS.boardSize, next);
+    storage.setItem(LS.boardSize, next);
     if (el.worldSelect) el.worldSelect.value = next;
     preloadWorldAssets();
     resizeCanvas();
@@ -792,14 +828,8 @@
     const mode = currentModeKey();
     const nextMode = mode === "classic" ? "timed" : mode === "timed" ? "survival" : "classic";
     if (el.mode) el.mode.value = nextMode;
-    localStorage.setItem(LS.mode, nextMode);
-    const applied = syncWorldToMode();
-    preloadWorldAssets();
-    syncModeOptionsVisibility();
-    resizeCanvas();
-    syncHud();
-    drawBackground();
-    if (typeof announceWorld === "function") announceWorld(applied);
+    el.mode?.dispatchEvent(new Event("change", { bubbles: true }));
+    announceWorld(currentWorldKey());
   }
 
   function resizeCanvas() {
@@ -812,35 +842,15 @@
     el.canvas.height = Math.floor(cssH * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    const preset = currentGridPreset();
-
-    const mobileLandscape = window.matchMedia("(max-width: 950px) and (orientation: landscape)").matches;
-    const mobilePortrait = window.matchMedia("(max-width: 950px) and (orientation: portrait)").matches;
-    const desktopMode = !mobileLandscape && !mobilePortrait;
-
-    const padX = desktopMode ? 0 : 4;
-    const padY = desktopMode ? 0 : 4;
-
-    const usableW = Math.max(1, cssW - padX);
-    const usableH = Math.max(1, cssH - padY);
-
-    if (desktopMode) {
+    // A resize changes the picture, not the rules or coordinates of this run.
+    if (state === State.MENU || !snake.length) {
+      const preset = currentGridPreset();
       gridCols = preset.cols;
-      cell = Math.max(8, Math.floor(usableW / gridCols));
-      boardW = cell * gridCols;
-      gridRows = Math.max(8, Math.floor(usableH / cell));
-      boardH = cell * gridRows;
-      ox = Math.floor((cssW - boardW) / 2);
-      oy = Math.floor((cssH - boardH) / 2);
-      return;
+      gridRows = preset.rows;
     }
-
-    gridCols = preset.cols;
-    gridRows = preset.rows;
-
-    const cellW = Math.floor(usableW / gridCols);
-    const cellH = Math.floor(usableH / gridRows);
-    cell = Math.max(8, Math.min(cellW, cellH));
+    const usableW = Math.max(1, cssW - 4);
+    const usableH = Math.max(1, cssH - 4);
+    cell = Math.min(usableW / gridCols, usableH / gridRows);
 
     boardW = cell * gridCols;
     boardH = cell * gridRows;
@@ -848,7 +858,11 @@
     ox = Math.floor((cssW - boardW) / 2);
     oy = Math.floor((cssH - boardH) / 2);
   }
-  window.addEventListener("resize", resizeCanvas, { passive: true });
+  window.addEventListener("resize", () => {
+    resizeCanvas();
+    if (state === State.MENU) drawBackground();
+    else draw();
+  }, { passive: true });
   resizeCanvas();
 
   // ---------- AUDIO (menu + game + explosion + retro game over) ----------
@@ -932,13 +946,14 @@
     startMenuMusic();
   }
 
-  async function playDeathSequence() {
+  async function playDeathSequence(endedRunId) {
     if (shouldSfx()) {
       try {
         sfx.boom.volume = sfxVolume();
         sfx.boom.currentTime = 0;
         await sfx.boom.play().catch(() => {});
       } catch {}
+      if (runId !== endedRunId || state !== State.OVER) return;
       try {
         sfx.over.volume = sfxVolume();
         sfx.over.currentTime = 0;
@@ -1060,16 +1075,18 @@
   }
 
   function loadBgFromStorage() {
-    const data = localStorage.getItem(LS.bgData);
+    const data = storage.getItem(LS.bgData);
     if (!data) {
       bgImg = null;
+      const preset = storage.getItem(LS.bgPreset);
+      if (preset && BACKGROUND_LIBRARY[preset]) applyBuiltInBackground(preset);
       return;
     }
     const img = new Image();
     img.onload = () => {
       bgImg = img;
       if (el.bgPreset) el.bgPreset.value = "none";
-      localStorage.removeItem(LS.bgPreset);
+      storage.removeItem(LS.bgPreset);
       resizeCanvas();
       if (state === State.RUNNING || state === State.PAUSED || state === State.OVER) draw();
       else drawBackground();
@@ -1084,7 +1101,7 @@
     const reader = new FileReader();
     reader.onload = () => {
       const data = reader.result;
-      try { localStorage.setItem(LS.bgData, data); } catch {}
+      try { storage.setItem(LS.bgData, data); } catch {}
 
       const img = new Image();
       img.onload = () => {
@@ -1101,8 +1118,8 @@
   function applyBuiltInBackground(presetKey) {
     if (!presetKey || presetKey === "none") {
       if (el.bgPreset) el.bgPreset.value = "none";
-      localStorage.removeItem(LS.bgPreset);
-      localStorage.removeItem(LS.bgData);
+      storage.removeItem(LS.bgPreset);
+      storage.removeItem(LS.bgData);
       bgImg = null;
       draw();
       return;
@@ -1115,8 +1132,8 @@
     img.onload = () => {
       bgImg = img;
       if (el.bgPreset) el.bgPreset.value = presetKey;
-      localStorage.setItem(LS.bgPreset, presetKey);
-      localStorage.removeItem(LS.bgData);
+      storage.setItem(LS.bgPreset, presetKey);
+      storage.removeItem(LS.bgData);
       draw();
     };
     img.src = src;
@@ -1124,7 +1141,7 @@
 
 
   function bgOpacity() {
-    const v = Number(el.bgOpacity?.value ?? localStorage.getItem(LS.bgOpacity) ?? 40);
+    const v = Number(el.bgOpacity?.value ?? storage.getItem(LS.bgOpacity) ?? 40);
     return Math.max(0, Math.min(1, v / 100));
   }
 
@@ -1135,20 +1152,20 @@
     return 0.05;
   }
 
-  function nowMs() {
-    return performance.now();
+  function gameNowMs() {
+    return gameElapsedMs;
   }
 
   function isBitcoinActive() {
-    return nowMs() < bitcoinUntil;
+    return gameNowMs() < bitcoinUntil;
   }
 
   function isEthereumActive() {
-    return nowMs() < ethereumUntil;
+    return gameNowMs() < ethereumUntil;
   }
 
   function isSolanaActive() {
-    return nowMs() < solanaUntil;
+    return gameNowMs() < solanaUntil;
   }
 
   function currentActivePower() {
@@ -1197,14 +1214,14 @@
   }
 
   function mouthOpenAmount() {
-    const remain = eatAnimUntil - nowMs();
+    const remain = eatAnimUntil - gameNowMs();
     if (remain <= 0) return 0;
     const t = Math.max(0, Math.min(1, remain / 180));
     return 0.18 + (0.42 * t);
   }
 
   function activatePower(power) {
-    const now = nowMs();
+    const now = gameNowMs();
     if (power === "bitcoin") {
       bitcoinUntil = now + BITCOIN_MS;
     } else if (power === "ethereum") {
@@ -1227,7 +1244,7 @@
   }
 
   function registerEat(baseCoins = 1, baseCash = 100) {
-    const now = nowMs();
+    const now = gameNowMs();
     if (lastEatAt && (now - lastEatAt) <= COMBO_WINDOW_MS) combo += 1;
     else combo = 1;
 
@@ -1248,14 +1265,15 @@
   function syncHintButton() {
     if (!el.btnHint) return;
     const active = hintOn();
-    el.btnHint.textContent = active ? "Hint ON" : "Hint OFF";
+    el.btnHint.textContent = active ? "Guia ligado" : "Guia desligado";
+    el.btnHint.setAttribute("aria-pressed", String(active));
     el.btnHint.classList.toggle("active", active);
   }
 
   function setAlignmentHint(value) {
     const next = value === "off" ? "off" : "on";
     if (el.alignmentHint) el.alignmentHint.value = next;
-    localStorage.setItem(LS.alignmentHint, next);
+    storage.setItem(LS.alignmentHint, next);
     syncHintButton();
     draw();
   }
@@ -1269,11 +1287,11 @@
   }
 
   function tutorialSeen() {
-    return localStorage.getItem(LS.tutorialSeen) === "true";
+    return storage.getItem(LS.tutorialSeen) === "true";
   }
 
   function shouldRunTutorial() {
-    return tutorialEnabled();
+    return tutorialEnabled() && !tutorialSeen();
   }
 
   function clearTutorialTimers() {
@@ -1340,7 +1358,7 @@
   function stopTutorial(complete = false) {
     clearTutorialTimers();
     hideTutorialMessage();
-    if (complete) localStorage.setItem(LS.tutorialSeen, "true");
+    if (complete) storage.setItem(LS.tutorialSeen, "true");
     tutorialActive = false;
   }
 
@@ -1362,7 +1380,7 @@
 
     if (tutorialCoins >= 3 && !tutorialFinalShown) {
       tutorialFinalShown = true;
-      showTutorialMessage("Está pronto. Boa sorte.", 2600, false, () => stopTutorial(true));
+      showTutorialMessage("Estás pronto. Boa sorte!", 2600, false, () => stopTutorial(true));
     }
   }
 
@@ -1504,20 +1522,27 @@
 
   function getRankings() {
     try {
-      const raw = localStorage.getItem(RANKING_KEY);
+      const raw = storage.getItem(RANKING_KEY);
       const data = raw ? JSON.parse(raw) : {};
-      return {
-        classic: Array.isArray(data.classic) ? data.classic : [],
-        timed: Array.isArray(data.timed) ? data.timed : [],
-        survival: Array.isArray(data.survival) ? data.survival : [],
-      };
+      const clean = mode => (Array.isArray(data?.[mode]) ? data[mode] : [])
+        .filter(entry => entry && typeof entry === "object")
+        .map(entry => ({
+          ...entry,
+          mode,
+          name: String(entry.name || "JOGADOR").slice(0, 12),
+          coins: Number.isFinite(Number(entry.coins)) ? Math.max(0, Number(entry.coins)) : 0,
+          cash: Number.isFinite(Number(entry.cash)) ? Math.max(0, Number(entry.cash)) : 0,
+          timeSeconds: Number.isFinite(Number(entry.timeSeconds)) ? Math.max(0, Number(entry.timeSeconds)) : 0,
+        }))
+        .sort(compareRankingEntries).slice(0, 3);
+      return { classic: clean("classic"), timed: clean("timed"), survival: clean("survival") };
     } catch {
       return { classic: [], timed: [], survival: [] };
     }
   }
 
   function saveRankings(data) {
-    localStorage.setItem(RANKING_KEY, JSON.stringify(data));
+    storage.setItem(RANKING_KEY, JSON.stringify(data));
   }
 
   function compareRankingEntries(a, b) {
@@ -1532,6 +1557,7 @@
   }
 
   function formatRankingEntry(entry, index) {
+    const name = String(entry.name).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
     const pos = index === 0 ? "1º" : index === 1 ? "2º" : "3º";
     const world = entry.world === "small" ? "W1" : entry.world === "large" ? "W3" : "W2";
     const metric = entry.mode === "survival"
@@ -1544,7 +1570,7 @@
     return `
       <div class="ranking-row rank-${index + 1}">
         <div class="rank-pos">${pos}</div>
-        <div class="rank-name">${entry.name}</div>
+        <div class="rank-name">${name}</div>
         <div class="rank-metric">${metric}</div>
         <div class="rank-extra">${extra}</div>
         <div class="rank-world">${world}</div>
@@ -1583,7 +1609,7 @@
     const list = rankings[mode] || [];
 
     const entry = {
-      name: "PLAYER",
+      name: "JOGADOR",
       mode,
       world: currentWorldKey(),
       coins: score,
@@ -1600,7 +1626,7 @@
   function savePendingRanking(name) {
     if (!pendingRankEntry) return false;
     const { mode, rankings, list, entry } = pendingRankEntry;
-    entry.name = (name || "PLAYER").trim().slice(0, 12) || "PLAYER";
+    entry.name = (name || "JOGADOR").trim().slice(0, 12) || "JOGADOR";
     rankings[mode] = [...list, entry].sort(compareRankingEntries).slice(0, 3);
     saveRankings(rankings);
     pendingRankEntry = null;
@@ -1608,8 +1634,10 @@
   }
 
   function configureOverlayForPause() {
+    el.runSummary?.classList.add("hidden");
+    el.btnOverlayResume?.classList.remove("hidden");
     el.btnOverlayReset && el.btnOverlayReset.classList.remove("hidden");
-    el.btnOverlayReset && (el.btnOverlayReset.textContent = "Reset");
+    el.btnOverlayReset && (el.btnOverlayReset.textContent = "Recomeçar");
     el.btnOverlayWorlds && el.btnOverlayWorlds.classList.add("hidden");
     el.btnOverlayMenu && el.btnOverlayMenu.classList.remove("hidden");
     el.btnOverlayMenu && (el.btnOverlayMenu.textContent = "Menu");
@@ -1618,10 +1646,15 @@
   }
 
   function configureOverlayForGameOver(qualifies, mode) {
+    el.runSummary?.classList.remove("hidden");
+    el.finalScore && (el.finalScore.textContent = String(score));
+    el.finalTime && (el.finalTime.textContent = `${(gameElapsedMs / 1000).toFixed(1)}s`);
+    el.finalCash && (el.finalCash.textContent = `$${cashValue.toLocaleString("pt-PT")}`);
+    el.btnOverlayResume?.classList.add("hidden");
     el.btnOverlayReset && el.btnOverlayReset.classList.remove("hidden");
-    el.btnOverlayReset && (el.btnOverlayReset.textContent = "Try Again");
+    el.btnOverlayReset && (el.btnOverlayReset.textContent = "Jogar novamente");
     el.btnOverlayWorlds && el.btnOverlayWorlds.classList.remove("hidden");
-    el.btnOverlayWorlds && (el.btnOverlayWorlds.textContent = "Worlds");
+    el.btnOverlayWorlds && (el.btnOverlayWorlds.textContent = "Modos");
     el.btnOverlayMenu && el.btnOverlayMenu.classList.remove("hidden");
     el.btnOverlayMenu && (el.btnOverlayMenu.textContent = "Menu");
 
@@ -1630,7 +1663,10 @@
       el.rankingNameWrap && el.rankingNameWrap.classList.remove("hidden");
       if (el.rankingNameInput) {
         el.rankingNameInput.value = "";
-        setTimeout(() => el.rankingNameInput?.focus(), 40);
+        const endedRunId = runId;
+        setTimeout(() => {
+          if (state === State.OVER && runId === endedRunId) el.rankingNameInput?.focus();
+        }, 40);
       }
     } else {
       el.rankingNameWrap && el.rankingNameWrap.classList.add("hidden");
@@ -1662,7 +1698,7 @@
   function showLevelUp(nextLevel) {
     if (!el.levelUpToast) return;
 
-    el.levelUpText && (el.levelUpText.textContent = `LEVEL ${nextLevel}`);
+    el.levelUpText && (el.levelUpText.textContent = `NÍVEL ${nextLevel}`);
     el.levelUpToast.classList.remove("hidden");
     el.levelUpToast.classList.remove("show");
     void el.levelUpToast.offsetWidth;
@@ -1686,15 +1722,17 @@
 
   function showRankingFromMenu() {
     closeMenuScreens();
+    el.runSummary?.classList.add("hidden");
     pendingRankEntry = null;
     el.rankingNameWrap?.classList.add("hidden");
     el.overlayRanking?.classList.remove("hidden");
     el.btnOverlayReset?.classList.add("hidden");
+    el.btnOverlayResume?.classList.add("hidden");
     el.btnOverlayWorlds?.classList.add("hidden");
     el.btnOverlayMenu?.classList.remove("hidden");
-    el.btnOverlayMenu && (el.btnOverlayMenu.textContent = "Back");
+    el.btnOverlayMenu && (el.btnOverlayMenu.textContent = "Voltar");
     renderRankingList(currentModeKey());
-    showOverlay(true, "Ranking", "Current mode records.");
+    showOverlay(true, "Classificação", "Os melhores resultados deste modo, neste dispositivo.");
   }
 
   function exitGame() {
@@ -1731,9 +1769,9 @@
 
     if (el.combo) {
       const parts = [];
-      if (isBitcoinActive()) parts.push(`₿ Bitcoin ${((bitcoinUntil - nowMs()) / 1000).toFixed(1)}s`);
-      if (isEthereumActive()) parts.push(`Ξ Ethereum ${((ethereumUntil - nowMs()) / 1000).toFixed(1)}s`);
-      if (isSolanaActive()) parts.push(`◎ Solana ${((solanaUntil - nowMs()) / 1000).toFixed(1)}s`);
+      if (isBitcoinActive()) parts.push(`₿ Bitcoin ${((bitcoinUntil - gameNowMs()) / 1000).toFixed(1)}s`);
+      if (isEthereumActive()) parts.push(`Ξ Ethereum ${((ethereumUntil - gameNowMs()) / 1000).toFixed(1)}s`);
+      if (isSolanaActive()) parts.push(`◎ Solana ${((solanaUntil - gameNowMs()) / 1000).toFixed(1)}s`);
       el.combo.textContent = parts.length ? parts.join(" | ") : "--";
 
       const active = currentActivePower();
@@ -1757,36 +1795,35 @@
 
   // ---------- Game ----------
   function spawnFood() {
-    const world = currentWorldKey();
-
-    for (let tries = 0; tries < 5000; tries++) {
-      const x = Math.floor(Math.random() * gridCols);
-      const y = Math.floor(Math.random() * gridRows);
-      const blocked = snake.some(p => p.x === x && p.y === y);
-      if (!blocked) {
-        const canSpawnBlueBonus = isWorld2() && Math.random() < WORLD2_BLUE_BONUS.chance;
-        const isSpecial = !canSpawnBlueBonus && Math.random() < 0.12;
-
-        let power = null;
-        if (isSpecial) {
-          const roll = Math.random();
-          power = roll < 0.34 ? "bitcoin" : roll < 0.67 ? "ethereum" : "solana";
-        }
-
-        food = {
-          x, y,
-          type: canSpawnBlueBonus ? "blue_bonus" : (isSpecial ? "special" : "normal"),
-          power,
-          spriteIndex: (canSpawnBlueBonus || isSpecial) ? -1 : Math.floor(Math.random() * currentNormalCoinCount())
-        };
-
-        blueBonusUntil = canSpawnBlueBonus ? nowMs() + WORLD2_BLUE_BONUS.durationMs : 0;
-        return;
+    const occupied = new Set(snake.map(segment => `${segment.x},${segment.y}`));
+    const available = [];
+    for (let y = 0; y < gridRows; y += 1) {
+      for (let x = 0; x < gridCols; x += 1) {
+        if (!occupied.has(`${x},${y}`)) available.push({ x, y });
       }
     }
-
-    food = { x: 1, y: 1, type: "normal", power: null, spriteIndex: 0 };
-    blueBonusUntil = 0;
+    if (!available.length) {
+      food = null;
+      blueBonusUntil = 0;
+      if (state === State.RUNNING) gameOver("Encheste o tabuleiro. Excelente partida!", "Vitória!");
+      return false;
+    }
+    const position = available[Math.floor(Math.random() * available.length)];
+    const canSpawnBlueBonus = isWorld2() && Math.random() < WORLD2_BLUE_BONUS.chance;
+    const isSpecial = !canSpawnBlueBonus && Math.random() < 0.12;
+    let power = null;
+    if (isSpecial) {
+      const roll = Math.random();
+      power = roll < 0.34 ? "bitcoin" : roll < 0.67 ? "ethereum" : "solana";
+    }
+    food = {
+      ...position,
+      type: canSpawnBlueBonus ? "blue_bonus" : (isSpecial ? "special" : "normal"),
+      power,
+      spriteIndex: (canSpawnBlueBonus || isSpecial) ? -1 : Math.floor(Math.random() * currentNormalCoinCount()),
+    };
+    blueBonusUntil = canSpawnBlueBonus ? gameNowMs() + WORLD2_BLUE_BONUS.durationMs : 0;
+    return true;
   }
 
   function initGameFromMenu() {
@@ -1795,7 +1832,10 @@
     gridSize = currentGridSize();
 
     score = 0;
+    cashValue = 0;
+    pendingRankEntry = null;
     gameElapsedMs = 0;
+    lastHudUpdateMs = 0;
     speedMult = 1.0;
     blueBonusUntil = 0;
     resetCombo();
@@ -1806,15 +1846,9 @@
     if (el.mode?.value === "timed") wallsOn = false;
     if (el.mode?.value === "classic" && el.walls?.value === "off") wallsOn = false;
 
-    const mid = Math.floor(gridSize / 2);
-    snake = [
-      { x: mid, y: mid },
-      { x: mid - 1, y: mid },
-      { x: mid - 2, y: mid },
-      { x: mid - 3, y: mid },
-      { x: mid - 4, y: mid },
-      { x: mid - 5, y: mid },
-    ];
+    const midX = Math.floor(gridCols / 2);
+    const midY = Math.floor(gridRows / 2);
+    snake = Array.from({ length: Math.min(6, midX + 1) }, (_, index) => ({ x: midX - index, y: midY }));
 
     if (el.mode?.value === "timed") {
       const world = currentWorldKey();
@@ -1829,33 +1863,35 @@
     spawnFood();
     lastTs = 0;
     accMs = 0;
-    touchDirectionQueue = [];
-    lastTouchDirectionAt = 0;
+    clearDirectionInput();
     syncHud();
   }
 
   function setNextDir(x, y) {
-    if (x === -dir.x && y === -dir.y) return;
-    const changed = x !== dir.x || y !== dir.y;
-    nextDir = { x, y };
-    if (changed) onTutorialDirectionChange();
+    return enqueueDirection(x, y);
   }
 
-  // Swipe: 1 viragem por tick
+  // All controls share one queue, with exactly one turn consumed per tick.
   let activeTouchId = null;
   let swipeX = null;
   let swipeY = null;
-  let touchDirectionQueue = [];
-  let lastTouchDirectionAt = 0;
+  let directionQueue = [];
   const TOUCH_MIN_SWIPE_DISTANCE = 24;
-  const TOUCH_DIRECTION_COOLDOWN_MS = 100;
   const TOUCH_AXIS_DOMINANCE_RATIO = 1.25;
-  const TOUCH_MAX_QUEUED_DIRECTIONS = 2;
+  const MAX_QUEUED_DIRECTIONS = 2;
+
+  function clearDirectionInput() {
+    directionQueue = [];
+    activeTouchId = null;
+    swipeX = null;
+    swipeY = null;
+    nextDir = { ...dir };
+  }
 
   function isUiTarget(e) {
     const t = e.target;
     if (!t) return false;
-    if (t.closest && (t.closest(".topbar") || t.closest(".panel") || t.closest(".overlay"))) return true;
+    if (t.closest && (t.closest(".topbar") || t.closest(".panel") || t.closest(".overlay") || t.closest("#touchControls"))) return true;
     const tag = (t.tagName || "").toLowerCase();
     return ["button","select","input","label","a"].includes(tag);
   }
@@ -1876,31 +1912,23 @@
     return !!a && !!b && a.x === -b.x && a.y === -b.y;
   }
 
-  function lastQueuedTouchDirection() {
-    return touchDirectionQueue.length ? touchDirectionQueue[touchDirectionQueue.length - 1] : null;
-  }
-
-  function enqueueTouchDirection(x, y) {
+  function enqueueDirection(x, y) {
+    if (state !== State.RUNNING || Math.abs(x) + Math.abs(y) !== 1) return false;
     const queuedDir = { x, y };
-    const lastQueued = lastQueuedTouchDirection();
-    const referenceDir = lastQueued || nextDir || dir;
-    const now = nowMs();
+    const referenceDir = directionQueue[directionQueue.length - 1] || dir;
 
-    if (touchDirectionQueue.length >= TOUCH_MAX_QUEUED_DIRECTIONS) return false;
+    if (directionQueue.length >= MAX_QUEUED_DIRECTIONS) return false;
     if (sameDirection(queuedDir, referenceDir)) return false;
     if (oppositeDirection(queuedDir, referenceDir)) return false;
-    if (!lastQueued && oppositeDirection(queuedDir, dir)) return false;
-    if (now - lastTouchDirectionAt < TOUCH_DIRECTION_COOLDOWN_MS) return false;
 
-    touchDirectionQueue.push(queuedDir);
-    lastTouchDirectionAt = now;
+    directionQueue.push(queuedDir);
     onTutorialDirectionChange();
     return true;
   }
 
-  function consumeTouchDirectionQueue() {
-    if (!touchDirectionQueue.length) return;
-    const queuedDir = touchDirectionQueue.shift();
+  function consumeDirectionQueue() {
+    if (!directionQueue.length) return;
+    const queuedDir = directionQueue.shift();
     if (oppositeDirection(queuedDir, dir)) return;
     nextDir = queuedDir;
   }
@@ -1914,7 +1942,6 @@
     activeTouchId = t.identifier;
     swipeX = t.clientX;
     swipeY = t.clientY;
-    lastTouchDirectionAt = 0;
     e.preventDefault();
   }
 
@@ -1940,14 +1967,16 @@
       return;
     }
 
-    let accepted = false;
+    let recognized = false;
     if (ax > ay * TOUCH_AXIS_DOMINANCE_RATIO) {
-      accepted = enqueueTouchDirection(dx > 0 ? 1 : -1, 0);
+      enqueueDirection(dx > 0 ? 1 : -1, 0);
+      recognized = true;
     } else if (ay > ax * TOUCH_AXIS_DOMINANCE_RATIO) {
-      accepted = enqueueTouchDirection(0, dy > 0 ? 1 : -1);
+      enqueueDirection(0, dy > 0 ? 1 : -1);
+      recognized = true;
     }
 
-    if (accepted) {
+    if (recognized) {
       swipeX = x;
       swipeY = y;
     }
@@ -1962,7 +1991,6 @@
       activeTouchId = null;
       swipeX = null;
       swipeY = null;
-      lastTouchDirectionAt = 0;
     }
     e.preventDefault();
   }
@@ -1973,7 +2001,8 @@
   document.addEventListener("touchcancel", onTouchEnd, { passive:false });
 
   function step() {
-    consumeTouchDirectionQueue();
+    if (state !== State.RUNNING || !food || !snake.length) return;
+    consumeDirectionQueue();
     dir = nextDir;
 
     const head = snake[0];
@@ -1984,7 +2013,7 @@
       newHead.y = (newHead.y + gridRows) % gridRows;
     } else if (wallsOn) {
       if (!isBitcoinActive() && (newHead.x < 0 || newHead.y < 0 || newHead.x >= gridCols || newHead.y >= gridRows)) {
-        gameOver("Bateu na parede.");
+        gameOver("A cobra bateu na parede.");
         return;
       }
       newHead.x = (newHead.x + gridCols) % gridCols;
@@ -1994,14 +2023,16 @@
       newHead.y = (newHead.y + gridRows) % gridRows;
     }
 
-    if (el.mode?.value !== "timed" && !isBitcoinActive() && snake.some(p => p.x === newHead.x && p.y === newHead.y)) {
-      gameOver("Colisão com o corpo.");
+    const willEat = newHead.x === food.x && newHead.y === food.y;
+    const collisionBody = willEat ? snake : snake.slice(0, -1);
+    if (el.mode?.value !== "timed" && !isBitcoinActive() && collisionBody.some(p => p.x === newHead.x && p.y === newHead.y)) {
+      gameOver("A cobra tocou no próprio corpo.");
       return;
     }
 
     snake.unshift(newHead);
 
-    if (newHead.x === food.x && newHead.y === food.y) {
+    if (willEat) {
       const eatenType = food.type || "normal";
       const eatenPower = food.power || null;
 
@@ -2015,7 +2046,7 @@
       registerEat(eatenType === "blue_bonus" ? WORLD2_BLUE_BONUS.coins : 1, cashAward);
       onTutorialCoin();
       playSfx(sfx.eat);
-      eatAnimUntil = nowMs() + 180;
+      eatAnimUntil = gameNowMs() + 180;
 
       if (eatenType === "special") {
         activatePower(eatenPower);
@@ -2052,13 +2083,12 @@
         }
 
         timeLeft += timeGain;
-        lastSecondTs = nowMs();
         emitFloatingText(newHead.x, newHead.y, `+${timeGain}s`, popupColor);
       } else {
         emitCoinBurst(newHead.x, newHead.y, eatenType === "blue_bonus" ? "special" : eatenType, eatenPower);
       }
 
-      spawnFood();
+      if (!spawnFood()) return;
 
       if (el.mode?.value === "survival") {
         const before = speedMult;
@@ -2088,20 +2118,20 @@
     if (!lastTs) lastTs = ts;
     if (!lastFrameTs) lastFrameTs = ts;
 
-    const dt = ts - lastTs;
-    const frameDt = (ts - lastFrameTs) / 1000;
+    // Bound catch-up after a stalled frame; hidden tabs are paused separately.
+    const dt = Math.max(0, Math.min(250, ts - lastTs));
+    const frameDt = dt / 1000;
     gameElapsedMs += dt;
     lastTs = ts;
     lastFrameTs = ts;
     accMs += dt;
 
     if (el.mode?.value === "timed") {
-      if (!lastSecondTs) lastSecondTs = ts;
-      if (ts - lastSecondTs >= 1000) {
-        lastSecondTs += 1000;
-        timeLeft -= 1;
+      const elapsedSeconds = Math.floor((gameElapsedMs - lastSecondTs) / 1000);
+      if (elapsedSeconds > 0) {
+        lastSecondTs += elapsedSeconds * 1000;
+        timeLeft -= elapsedSeconds;
         if (timeLeft <= 0) { gameOver("Tempo esgotado."); return; }
-        syncHud();
       }
     }
 
@@ -2114,12 +2144,16 @@
       if (state !== State.RUNNING) return;
     }
 
-    if (food.type === "blue_bonus" && nowMs() >= blueBonusUntil) {
+    if (food?.type === "blue_bonus" && gameNowMs() >= blueBonusUntil) {
       spawnFood();
     }
 
     updateParticles(frameDt);
     updateFloatingTexts(frameDt);
+    if (gameElapsedMs - lastHudUpdateMs >= 100) {
+      syncHud();
+      lastHudUpdateMs = gameElapsedMs;
+    }
     draw();
     rafId = requestAnimationFrame(loop);
   }
@@ -2295,6 +2329,7 @@
   }
 
   function drawFood() {
+    if (!food) return;
     const x = ox + food.x * cell;
     const y = oy + food.y * cell;
     const spriteScale = currentSpriteScale();
@@ -2350,6 +2385,10 @@
         ctx.shadowBlur = Math.max(5, Math.floor(cell * 0.32 * spriteScale));
         ctx.shadowColor = foodColors.normalGlow;
       }
+      // Keep the legacy coin artwork inside a round token, without square corners.
+      ctx.beginPath();
+      ctx.arc(dx + size / 2, dy + size / 2, size * 0.46, 0, Math.PI * 2);
+      ctx.clip();
       ctx.drawImage(img, dx, dy, size, size);
       ctx.restore();
 
@@ -2562,7 +2601,7 @@
     drawFloatingTexts();
   }
 
-  function gameOver(msg) {
+  function gameOver(msg, title = "Fim de jogo") {
     if (state === State.OVER) return;
 
     state = State.OVER;
@@ -2570,46 +2609,49 @@
     stopAllMusic();
     stopTutorial(false);
 
-    activeTouchId = null;
-    swipeX = null;
-    swipeY = null;
+    clearDirectionInput();
     resetCombo();
     ProgressManager.recordGame(score, gameElapsedMs);
 
     const rankingEval = evaluateRankingEntry();
     pendingRankEntry = rankingEval.qualifies ? rankingEval : null;
 
-    playDeathSequence().finally(() => {
-      if (score > best) {
-        best = score;
-        localStorage.setItem(STORAGE_KEY, String(best));
-      }
-
-      syncHud();
-      configureOverlayForGameOver(rankingEval.qualifies, rankingEval.mode);
-      showOverlay(true, "Game Over", msg || "Restart ou Menu.");
-      draw();
-    });
+    const newRecord = score > best;
+    if (newRecord) {
+      best = score;
+      storage.setItem(STORAGE_KEY, String(best));
+    }
+    syncHud();
+    configureOverlayForGameOver(rankingEval.qualifies, rankingEval.mode);
+    showOverlay(true, newRecord && title === "Fim de jogo" ? "Novo recorde!" : title, msg || "Joga novamente ou volta ao menu.");
+    draw();
+    void playDeathSequence(runId);
   }
 
   function startGame() {
+    stopLoop();
+    runId += 1;
+    state = State.MENU;
     unlockAudioOnce();
     syncWorldToMode();
     preloadWorldAssets();
+    closeMenuScreens();
+    showMenu(false);
     resizeCanvas();
     initGameFromMenu();
     particles = [];
     lastFrameTs = 0;
-    closeMenuScreens();
     state = State.RUNNING;
 
-    showMenu(false);
+    el.btnPause && (el.btnPause.textContent = "Pausa");
     configureOverlayForPause();
     showOverlay(false);
+    el.canvas.focus({ preventScroll: true });
 
     syncModeOptionsVisibility();
     startTutorial();
     startGameMusic();
+    draw();
     startLoop();
   }
 
@@ -2618,14 +2660,22 @@
     const toPause = typeof force === "boolean" ? force : (state === State.RUNNING);
 
     if (toPause) {
+      if (state === State.PAUSED) return;
       state = State.PAUSED;
       stopLoop();
       stopAllMusic();
+      clearDirectionInput();
+      el.btnPause && (el.btnPause.textContent = "Continuar");
       configureOverlayForPause();
-      showOverlay(true, "Pausa", "Espaço para continuar");
+      showOverlay(true, "Pausa", "Respira. Continua quando estiveres pronto.");
     } else {
+      if (state === State.RUNNING) return;
       state = State.RUNNING;
+      lastTs = 0;
+      lastFrameTs = 0;
+      el.btnPause && (el.btnPause.textContent = "Pausa");
       showOverlay(false);
+      el.canvas.focus({ preventScroll: true });
       startGameMusic();
       startLoop();
     }
@@ -2638,6 +2688,7 @@
 
   function backToMenu() {
     stopLoop();
+    runId += 1;
     stopTutorial(false);
     closeMenuScreens();
     pendingRankEntry = null;
@@ -2645,7 +2696,8 @@
     configureOverlayForPause();
     showOverlay(false);
     showMenu(true);
-    el.btnPause && (el.btnPause.textContent = "Pause");
+    clearDirectionInput();
+    el.btnPause && (el.btnPause.textContent = "Pausa");
     resizeCanvas();
     drawBackground();
     startMenuMusic();
@@ -2657,40 +2709,64 @@
   }
 
   window.addEventListener("keydown", (e) => {
+    if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey || e.isComposing) return;
+    const target = e.target;
+    if (target?.closest?.("input, textarea, select, [contenteditable]:not([contenteditable='false'])")) return;
     const k = e.key.toLowerCase();
-    if (k === " " || k === "spacebar") { e.preventDefault(); pauseToggle(); return; }
-    if (k === "r") { reset(); return; }
-    if (k === "f") { toggleFullscreen(); return; }
+    // Let Space activate focused buttons using the browser's native behavior.
+    if ((k === " " || k === "spacebar") && target?.closest?.("button, a")) return;
+    if (k === " " || k === "spacebar" || k === "escape" || k === "p") {
+      if (state === State.RUNNING || state === State.PAUSED) {
+        e.preventDefault();
+        if (!e.repeat) pauseToggle();
+      }
+      return;
+    }
+    if (k === "r") { if (!e.repeat) reset(); return; }
+    if (k === "f") { if (!e.repeat) toggleFullscreen(); return; }
     if (k === "h") {
-      toggleAlignmentHint();
+      if (!e.repeat) toggleAlignmentHint();
       return;
     }
     if (state !== State.RUNNING) return;
-
-    if (k === "arrowup" || k === "w") setNextDir(0, -1);
-    else if (k === "arrowdown" || k === "s") setNextDir(0, 1);
-    else if (k === "arrowleft" || k === "a") setNextDir(-1, 0);
-    else if (k === "arrowright" || k === "d") setNextDir(1, 0);
+    const keys = { arrowup: [0, -1], w: [0, -1], arrowdown: [0, 1], s: [0, 1], arrowleft: [-1, 0], a: [-1, 0], arrowright: [1, 0], d: [1, 0] };
+    if (keys[k]) {
+      e.preventDefault();
+      if (!e.repeat) setNextDir(...keys[k]);
+    }
   });
 
   function bindActionButton(button, action) {
     if (!button) return;
-    let handledAt = 0;
-    const run = (e) => {
-      e?.preventDefault?.();
-      e?.stopPropagation?.();
-      if (nowMs() - handledAt < 450) return;
-      handledAt = nowMs();
-      action();
-    };
-    button.addEventListener("pointerdown", run, { passive:false });
-    button.addEventListener("touchstart", run, { passive:false });
     button.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
-      if (nowMs() - handledAt > 450) action();
+      action();
     });
   }
+
+  const directionButtons = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+  el.touchControls?.querySelectorAll("[data-direction]").forEach(button => {
+    const turn = () => {
+      const direction = directionButtons[button.dataset.direction];
+      if (direction) enqueueDirection(...direction);
+    };
+    button.addEventListener("pointerdown", e => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      turn();
+    });
+    button.addEventListener("click", e => {
+      e.preventDefault();
+      if (e.detail === 0) turn();
+    });
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden && state === State.RUNNING) pauseToggle(true);
+  });
+  window.addEventListener("blur", () => {
+    if (state === State.RUNNING) pauseToggle(true);
+  });
 
   el.btnPlay?.addEventListener("click", startGame);
   el.btnProfile?.addEventListener("click", () => ProfileScreen.show());
@@ -2698,20 +2774,20 @@
   el.btnRanking?.addEventListener("click", showRankingFromMenu);
   el.btnExit?.addEventListener("click", exitGame);
   bindActionButton(el.btnHint, toggleAlignmentHint);
+  bindActionButton(el.btnPause, () => pauseToggle());
+  bindActionButton(el.btnOverlayResume, () => pauseToggle(false));
   el.btnOptions?.addEventListener("click", () => showOptions(true));
   el.btnCloseOptions?.addEventListener("click", () => showOptions(false));
   el.btnCloseProfile?.addEventListener("click", () => ProfileScreen.hide());
   el.btnCloseWorlds?.addEventListener("click", () => WorldScreen.hide());
   el.mode?.addEventListener("change", () => {
-    localStorage.setItem(LS.mode, String(el.mode.value));
+    storage.setItem(LS.mode, String(el.mode.value));
     applyModeExperience();
   });
   el.bgPreset?.addEventListener("change", () => {
     const v = el.bgPreset?.value || "none";
     if (v === "none") {
-      localStorage.removeItem(LS.bgPreset);
-      bgImg = null;
-      draw();
+      applyBuiltInBackground("none");
       return;
     }
     applyBuiltInBackground(v);
@@ -2720,10 +2796,7 @@
   bindActionButton(el.btnMenu, backToMenu);
   el.btnFull?.addEventListener("click", toggleFullscreen);
 
-  el.btnOverlayReset?.addEventListener("click", () => {
-    if (state === State.OVER) startGame();
-    else initGameFromMenu();
-  });
+  el.btnOverlayReset?.addEventListener("click", startGame);
   el.btnOverlayMenu?.addEventListener("click", backToMenu);
   el.btnOverlayWorlds?.addEventListener("click", () => {
     backToMenu();
@@ -2731,7 +2804,7 @@
   });
   el.btnSaveRank?.addEventListener("click", () => {
     if (!pendingRankEntry) return;
-    const ok = savePendingRanking(el.rankingNameInput?.value || "PLAYER");
+    const ok = savePendingRanking(el.rankingNameInput?.value || "JOGADOR");
     if (!ok) return;
     el.rankingNameWrap?.classList.add("hidden");
     el.overlayRanking?.classList.remove("hidden");
@@ -2740,9 +2813,13 @@
 
   function applySavedSettingsToUI() {
     const setIf = (node, key) => {
-      const v = localStorage.getItem(key);
-      if (node && v !== null) node.value = v;
+      const v = storage.getItem(key);
+      if (!node || v === null) return;
+      if (node.options && !Array.from(node.options).some(option => option.value === v)) return;
+      node.value = v;
     };
+    setIf(el.sound, LS.sound);
+    setIf(el.music, LS.music);
     setIf(el.sfxVol, LS.sfxVol);
     setIf(el.musicVol, LS.musicVol);
     setIf(el.bgPreset, LS.bgPreset);
@@ -2764,21 +2841,23 @@
   }
 
   function migrateLegacyBoardSizeSetting() {
-    if (localStorage.getItem(LS.boardSize) !== null) return;
+    if (storage.getItem(LS.boardSize) !== null) return;
 
-    const legacy = localStorage.getItem("undefined");
+    const legacy = storage.getItem("undefined");
     if (legacy === "small" || legacy === "medium" || legacy === "large") {
-      localStorage.setItem(LS.boardSize, legacy);
+      storage.setItem(LS.boardSize, legacy);
     }
   }
 
   function wireSettingsSave() {
-    const saveVal = (node, key) => node?.addEventListener("change", () => localStorage.setItem(key, String(node.value)));
-    const saveInput = (node, key) => node?.addEventListener("input", () => localStorage.setItem(key, String(node.value)));
+    const saveVal = (node, key) => node?.addEventListener("change", () => storage.setItem(key, String(node.value)));
+    const saveInput = (node, key) => node?.addEventListener("input", () => storage.setItem(key, String(node.value)));
 
     saveInput(el.sfxVol, LS.sfxVol);
     saveInput(el.musicVol, LS.musicVol);
     saveInput(el.bgOpacity, LS.bgOpacity);
+    saveVal(el.sound, LS.sound);
+    saveVal(el.music, LS.music);
     saveVal(el.grid, LS.grid);
     saveVal(el.walls, LS.walls);
     saveVal(el.difficulty, LS.difficulty);
@@ -2786,12 +2865,12 @@
       setAlignmentHint(String(el.alignmentHint.value));
     });
     el.hint?.addEventListener("change", () => {
-      localStorage.setItem(LS.hint, String(el.hint.value));
-      if (tutorialEnabled()) localStorage.setItem(LS.tutorialSeen, "false");
+      storage.setItem(LS.hint, String(el.hint.value));
+      if (tutorialEnabled()) storage.setItem(LS.tutorialSeen, "false");
       else stopTutorial(false);
     });
     el.boardSize?.addEventListener("change", () => {
-      localStorage.setItem(LS.boardSize, String(el.boardSize.value));
+      storage.setItem(LS.boardSize, String(el.boardSize.value));
       preloadWorldAssets();
       resizeCanvas();
       syncHud();
@@ -2801,16 +2880,7 @@
 
     el.bgFile?.addEventListener("change", () => {
       const f = el.bgFile.files && el.bgFile.files[0];
-      if (!f) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        const data = String(reader.result || "");
-        localStorage.setItem(LS.bgData, data);
-        loadMenuBackground();
-        loadBgFromStorage();
-        preloadWorldAssets();
-      };
-      reader.readAsDataURL(f);
+      handleBackgroundFileUpload(f);
     });
   }
 

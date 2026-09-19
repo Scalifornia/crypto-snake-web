@@ -1,59 +1,99 @@
 <!doctype html>
-<html lang="pt">
+<html lang="pt-PT">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Crypto Snake Web</title>
-  <link rel="stylesheet" href="style.css?v=162" />
+  <title>Crypto Snake — Mais uma jogada</title>
+  <meta name="theme-color" content="#0c100f" />
+  <meta name="description" content="O clássico Snake com moedas, poderes e três desafios arcade. Joga Crypto Snake e bate o teu recorde." />
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="style.css?v=200" />
 </head>
 
 <body>
   <div id="app">
 
     <header class="topbar">
-      <div class="brand">Crypto Snake</div>
-
+      <div class="brand"><span class="brand-mark" aria-hidden="true">S</span> CRYPTO<span>SNAKE</span></div>
       <div class="stats" id="stats">
-        <div class="pill">Coins: <span id="score">0</span></div>
-        <div class="pill">$ Value: <span id="best">$0</span></div>
-        <div class="pill">Style: <span id="level">Neon Blue</span></div>
-        <div class="pill">Time: <span id="time">--</span></div>
-        <div class="pill">Power: <span id="combo">--</span></div>
+        <div class="pill"><small>Moedas</small><span id="score">0</span></div>
+        <div class="pill"><small>Valor</small><span id="best">$0</span></div>
+        <div class="pill style-pill"><small>Mundo</small><span id="level">Neon Amber</span></div>
+        <div class="pill"><small>Tempo</small><span id="time">0s</span></div>
+        <div class="pill power-pill"><small>Poder</small><span id="combo">--</span></div>
       </div>
-
       <div class="actions">
-        <button id="btnHint" class="btn btn-hint" type="button">Hint ON</button>
-        <button id="btnMenu" class="btn">Menu</button>
+        <button id="btnHint" class="btn btn-hint" type="button" title="Mostrar guia para a moeda (H)">Guia ligado</button>
+        <button id="btnPause" class="btn" type="button" title="Pausar (Espaço)">Pausa</button>
+        <button id="btnMenu" class="btn" type="button">Menu</button>
       </div>
     </header>
 
-    
     <div id="menu" class="panel menu-home">
-      <img class="menu-bg-image" src="assets/menu/fundo_snake_melhorado.png" alt="" />
-      <div class="menu-backdrop"></div>
-
       <div class="menu-home-inner">
-        <div class="menu-hero">
-          <h1>CRYPTO SNAKE</h1>
-          <p>Three focused arcade modes with distinct neon identities.</p>
-        </div>
+        <header class="home-header">
+          <a class="brand home-brand" href="./" aria-label="Crypto Snake — início"><span class="brand-mark" aria-hidden="true">S</span> CRYPTO<span>SNAKE</span><span class="edition">ARCADE</span></a>
+          <nav class="home-nav" aria-label="Navegação principal">
+            <button id="btnProfile" class="nav-button" type="button" aria-label="O teu perfil"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/></svg><span>Perfil</span></button>
+            <button id="btnRanking" class="nav-button" type="button" aria-label="Ranking"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8v7a4 4 0 0 1-8 0V3ZM8 5H4v3a4 4 0 0 0 4 4m8-7h4v3a4 4 0 0 1-4 4M12 14v6m-4 1h8"/></svg><span>Ranking</span></button>
+            <button id="btnOptions" class="nav-button" type="button" aria-label="Definições"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg><span>Definições</span></button>
+            <button id="btnSound" class="sound-button" type="button" aria-pressed="true" title="Ligar ou desligar o som"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m11 5-6 4H2v6h3l6 4V5Zm4 3a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></svg><span id="soundLabel" class="sr-only">Som ligado</span></button>
+          </nav>
+        </header>
 
-        <div class="menu-home-actions">
-          <button id="btnPlay" class="btn btn-primary btn-home">Play</button>
-          <button id="btnProfile" class="btn btn-home">Profile</button>
-          <button id="btnWorlds" class="btn btn-home">Worlds</button>
-          <button id="btnRanking" class="btn btn-home">Ranking</button>
-          <button id="btnOptions" class="btn btn-home">Settings</button>
-          <button id="btnExit" class="btn btn-home">Exit</button>
-        </div>
+        <section class="hero" aria-labelledby="heroTitle">
+          <div class="hero-copy">
+            <div class="eyebrow"><span class="live-dot"></span> O CLÁSSICO SUBIU DE NÍVEL</div>
+            <h1 id="heroTitle">Mais uma moeda.<br><span>Mais uma jogada.</span></h1>
+            <p>Apanha moedas, ativa poderes e bate o teu recorde.<br class="desktop-break"> A tua próxima grande jogada começa aqui.</p>
+            <div class="play-row">
+              <button id="btnPlay" class="btn btn-primary play-button" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7V5Z"/></svg>Jogar agora<span aria-hidden="true">↗</span></button>
+              <button id="btnHelp" class="help-button" type="button">Como jogar <span aria-hidden="true">↗</span></button>
+            </div>
+            <div class="selected-mode"><span class="live-dot"></span><span id="selectedModeName">Clássico</span><span class="mode-separator">/</span><span id="selectedModeDetail">Ao teu ritmo. Até ao próximo recorde.</span></div>
+          </div>
+          <div class="hero-art" aria-hidden="true">
+            <img src="assets/menu/fundo_snake_melhorado.png" alt="" fetchpriority="high" />
+            <div class="art-vignette"></div>
+            <span class="art-coordinate">CS—01 / PLAYGROUND</span>
+            <div class="art-caption"><span class="live-dot"></span> PEQUENA COBRA. GRANDES AMBIÇÕES.</div>
+          </div>
+        </section>
+
+        <section class="mode-section" aria-labelledby="modeHeading">
+          <div class="section-heading"><div><span class="section-index">01 /</span><h2 id="modeHeading">Escolhe o teu desafio</h2></div><label class="difficulty-label" for="quickDifficulty">Dificuldade <select id="quickDifficulty"><option value="easy">Fácil</option><option value="normal" selected>Normal</option><option value="hard">Difícil</option></select></label></div>
+          <div class="mode-grid">
+            <button class="mode-card selected" data-mode="classic" type="button" aria-pressed="true">
+              <span class="mode-icon amber" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 8a4 4 0 1 0 0 8c5 0 7-8 12-8a4 4 0 1 1 0 8c-5 0-7-8-12-8Z"/></svg></span><span class="mode-number">01</span>
+              <span class="mode-name">Clássico</span><span class="mode-description">Sem pressa. Apanha moedas e evita o teu próprio rasto.</span><span class="mode-footer"><span>NEON AMBER</span><span class="mode-check" aria-hidden="true">✓</span></span>
+            </button>
+            <button class="mode-card" data-mode="timed" type="button" aria-pressed="false">
+              <span class="mode-icon blue" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="14" r="8"/><path d="M12 10v5l3 2M9 2h6m-3 0v4m6 1 2-2"/></svg></span><span class="mode-number">02</span>
+              <span class="mode-name">Contra o tempo</span><span class="mode-description">Cada segundo conta. Cada moeda dá-te mais tempo.</span><span class="mode-footer"><span>NEON BLUE</span><span class="mode-check" aria-hidden="true">✓</span></span>
+            </button>
+            <button class="mode-card" data-mode="survival" type="button" aria-pressed="false">
+              <span class="mode-icon violet" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m13 2-9 12h7l-1 8 10-13h-8l1-7Z"/></svg></span><span class="mode-number">03</span>
+              <span class="mode-name">Sobrevivência</span><span class="mode-description">Mais moedas, mais velocidade. Até onde consegues ir?</span><span class="mode-footer"><span>NEON VIOLET</span><span class="mode-check" aria-hidden="true">✓</span></span>
+            </button>
+          </div>
+        </section>
+
+        <section class="journey" aria-label="O teu progresso">
+          <div class="journey-level"><span class="level-symbol" aria-hidden="true">✧</span><div><span class="micro-label">O TEU PERCURSO</span><strong>Nível <span id="homeLevel">1</span></strong></div></div>
+          <div class="journey-xp"><div><span>Próximo nível</span><span id="homeXpText">0 / 100 XP</span></div><div class="xp-track"><span id="homeXpFill"></span></div></div>
+          <div class="journey-stat"><span class="micro-label">MELHOR PARTIDA</span><strong id="homeBest">0</strong></div>
+          <div class="journey-stat"><span class="micro-label">MOEDAS RECOLHIDAS</span><strong id="homeCoins">0</strong></div>
+          <button id="btnWorlds" class="worlds-link" type="button">Os teus mundos <span aria-hidden="true">↗</span></button>
+        </section>
+        <footer class="home-footer"><span><span class="footer-dot"></span> Feito para aquela «só mais uma».</span><span class="desktop-controls"><kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> ou <kbd>W A S D</kbd><i></i><kbd>Espaço</kbd> pausa</span><span class="mobile-controls-note">Desliza ou usa as setas para jogar</span></footer>
       </div>
 
       <div id="profilePanel" class="menu-screen-panel hidden">
         <div class="menu-shell">
           <div class="menu-card profile-card">
             <div class="options-header">
-              <h2>Player Profile</h2>
-              <button id="btnCloseProfile" class="btn">Back</button>
+              <h2>O teu perfil</h2>
+              <button id="btnCloseProfile" class="btn">Voltar</button>
             </div>
             <div id="profileContent" class="profile-content"></div>
           </div>
@@ -64,8 +104,8 @@
         <div class="menu-shell">
           <div class="menu-card worlds-card">
             <div class="options-header">
-              <h2>Worlds</h2>
-              <button id="btnCloseWorlds" class="btn">Back</button>
+              <h2>Os teus mundos</h2>
+              <button id="btnCloseWorlds" class="btn">Voltar</button>
             </div>
             <div id="worldsList" class="worlds-list"></div>
           </div>
@@ -76,12 +116,12 @@
         <div class="menu-shell">
           <div class="menu-card options-card">
             <div class="options-header">
-              <h2>Options</h2>
-              <button id="btnCloseOptions" class="btn">Close</button>
+              <h2>Definições</h2>
+              <button id="btnCloseOptions" class="btn">Fechar</button>
             </div>
 
             <details class="submenu" open>
-              <summary>Game</summary>
+              <summary>Jogo</summary>
 
               <div class="row hidden">
                 <label for="boardSize">Mundo</label>
@@ -95,18 +135,18 @@
               <div class="row">
                 <label for="mode">Modo</label>
                 <select id="mode">
-                  <option value="classic" selected>Classic — Neon Amber</option>
-                  <option value="timed">Time Attack — Neon Blue</option>
-                  <option value="survival">Survival — Neon Violet</option>
+                  <option value="classic" selected>Clássico — Neon Amber</option>
+                  <option value="timed">Contra o tempo — Neon Blue</option>
+                  <option value="survival">Sobrevivência — Neon Violet</option>
                 </select>
               </div>
 
               <div id="timedOptionsGroup" class="submenu nested-submenu hidden">
-                <div class="nested-submenu-title">Time Attack</div>
+                <div class="nested-submenu-title">Contra o tempo</div>
                 <div class="row">
                   <label for="timedDuration">Tempo inicial</label>
                   <select id="timedDuration">
-                    <option value="20" selected>Auto por modo</option>
+                    <option value="auto" selected>Automático (25 segundos)</option>
                     <option value="10">10 segundos</option>
                     <option value="20">20 segundos</option>
                     <option value="30">30 segundos</option>
@@ -117,54 +157,54 @@
               <div class="row">
                 <label for="difficulty">Dificuldade</label>
                 <select id="difficulty">
-                  <option value="easy">Easy</option>
+                  <option value="easy">Fácil</option>
                   <option value="normal" selected>Normal</option>
-                  <option value="hard">Hard</option>
+                  <option value="hard">Difícil</option>
                 </select>
               </div>
 
               <div class="row">
                 <label for="walls">Paredes</label>
                 <select id="walls">
-                  <option value="off" selected>OFF (wrap)</option>
-                  <option value="on">ON (colisão)</option>
+                  <option value="off" selected>Atravessar bordas</option>
+                  <option value="on">Colisão nas bordas</option>
                 </select>
               </div>
 
               <div class="row">
                 <label for="hint">Tutorial</label>
                 <select id="hint">
-                  <option value="on" selected>ON</option>
-                  <option value="off">OFF</option>
+                  <option value="on" selected>Ligado</option>
+                  <option value="off">Desligado</option>
                 </select>
               </div>
 
               <div class="row">
-                <label for="alignmentHint">Hint alinhado</label>
+                <label for="alignmentHint">Guia para a moeda</label>
                 <select id="alignmentHint">
-                  <option value="on" selected>ON</option>
-                  <option value="off">OFF</option>
+                  <option value="on" selected>Ligado</option>
+                  <option value="off">Desligado</option>
                 </select>
               </div>
 
               <div class="row">
                 <label for="grid">Grelha</label>
                 <select id="grid">
-                  <option value="off" selected>OFF</option>
+                  <option value="off">Desligado</option>
                   <option value="mid">Médio</option>
-                  <option value="low">Fraco</option>
+                  <option value="low" selected>Suave</option>
                 </select>
               </div>
             </details>
 
             <details class="submenu">
-              <summary>Audio</summary>
+              <summary>Áudio</summary>
 
               <div class="row">
                 <label for="music">Música</label>
                 <select id="music">
-                  <option value="on" selected>On</option>
-                  <option value="off">Off</option>
+                  <option value="on" selected>Ligado</option>
+                  <option value="off">Desligado</option>
                 </select>
               </div>
 
@@ -176,8 +216,8 @@
               <div class="row">
                 <label for="sound">Efeitos</label>
                 <select id="sound">
-                  <option value="on" selected>On</option>
-                  <option value="off">Off</option>
+                  <option value="on" selected>Ligado</option>
+                  <option value="off">Desligado</option>
                 </select>
               </div>
 
@@ -186,27 +226,15 @@
                 <input id="sfxVol" type="range" min="0" max="100" value="80" />
               </div>
 
-              <div class="row">
-                <label for="musicSource">Fonte</label>
-                <select id="musicSource">
-                  <option value="default" selected>Trilha Sonora</option>
-                  <option value="upload">Ficheiro local</option>
-                </select>
-              </div>
-
-              <div class="row">
-                <label for="musicFile">Carregar música</label>
-                <input id="musicFile" type="file" accept="audio/*" />
-              </div>
             </details>
 
             <details class="submenu">
-              <summary>Image</summary>
+              <summary>Aparência</summary>
 
               <div class="row">
                 <label for="bgPreset">Biblioteca</label>
                 <select id="bgPreset">
-                  <option value="none" selected>Sem preset</option>
+                  <option value="none" selected>Fundo do mundo</option>
                   <option value="alien1">Alien 1</option>
                   <option value="allien2">Alien 2</option>
                   <option value="bitimage">Bit Image</option>
@@ -225,7 +253,7 @@
               </div>
 
               <div class="row">
-                <label for="bgFile">Fundo (upload)</label>
+                <label for="bgFile">Carregar imagem</label>
                 <input id="bgFile" type="file" accept="image/*" />
               </div>
             </details>
@@ -235,22 +263,40 @@
     </div>
 
     <main class="stage">
-      <canvas id="game" width="900" height="700" aria-label="Crypto Snake"></canvas>
+      <div class="board-caption"><span><span class="live-dot"></span> EM JOGO</span><span>Apanha moedas. Mantém o ritmo.</span></div>
+      <canvas id="game" width="900" height="700" aria-label="Tabuleiro Crypto Snake. Usa as setas ou W A S D para mover e Espaço para pausar." tabindex="0"></canvas>
       <div id="tutorialCard" class="tutorial-card hidden" role="status" aria-live="polite">
         <div id="tutorialText" class="tutorial-text"></div>
       </div>
     </main>
+    <div id="touchControls" class="touch-controls" role="group" aria-label="Controlos de direção">
+      <span class="touch-tip">Desliza no tabuleiro<br>ou usa as setas</span>
+      <div class="direction-pad">
+        <button class="direction-up" data-direction="up" type="button" aria-label="Mover para cima">↑</button>
+        <button class="direction-left" data-direction="left" type="button" aria-label="Mover para a esquerda">←</button>
+        <button class="direction-down" data-direction="down" type="button" aria-label="Mover para baixo">↓</button>
+        <button class="direction-right" data-direction="right" type="button" aria-label="Mover para a direita">→</button>
+      </div>
+    </div>
+    <div class="game-footer"><span><kbd>↑ ← ↓ →</kbd> / <kbd>W A S D</kbd> mover</span><span><kbd>Espaço</kbd> pausa <i></i> <kbd>R</kbd> recomeçar</span><span>O próximo recorde é teu.</span></div>
 
-    <div id="overlay" class="overlay hidden">
+    <div id="overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="overlayTitle">
       <div class="overlay-card gameover-card">
+        <span class="overlay-symbol" aria-hidden="true">✦</span>
         <h2 id="overlayTitle">Pausa</h2>
-        <p id="overlayText">Espaço para continuar</p>
+        <p id="overlayText">Respira. O teu recorde pode esperar.</p>
+
+        <div id="runSummary" class="run-summary hidden" aria-label="Resultado da partida">
+          <div><span>Moedas</span><strong id="finalScore">0</strong></div>
+          <div><span>Tempo</span><strong id="finalTime">0s</strong></div>
+          <div><span>Valor</span><strong id="finalCash">$0</strong></div>
+        </div>
 
         <div id="rankingNameWrap" class="ranking-name-wrap hidden">
-          <label for="rankingNameInput">Novo Top 3 — nome</label>
+          <label for="rankingNameInput">Entraste no Top 3! Qual é o teu nome?</label>
           <div class="ranking-name-row">
-            <input id="rankingNameInput" type="text" maxlength="12" placeholder="PLAYER" />
-            <button id="btnSaveRank" class="btn btn-primary">Save</button>
+            <input id="rankingNameInput" type="text" maxlength="12" placeholder="O teu nome" />
+            <button id="btnSaveRank" class="btn btn-primary">Guardar</button>
           </div>
         </div>
 
@@ -260,8 +306,9 @@
         </div>
 
         <div class="buttons overlay-actions">
-          <button id="btnOverlayReset" class="btn">Try Again</button>
-          <button id="btnOverlayWorlds" class="btn">Modes</button>
+          <button id="btnOverlayResume" class="btn btn-primary" type="button">Continuar</button>
+          <button id="btnOverlayReset" class="btn">Jogar outra vez</button>
+          <button id="btnOverlayWorlds" class="btn">Mundos</button>
           <button id="btnOverlayMenu" class="btn">Menu</button>
         </div>
       </div>
@@ -269,11 +316,21 @@
 
     <div id="worldToast" class="world-toast hidden"></div>
     <div id="levelUpToast" class="level-up-toast hidden" aria-live="polite">
-      <strong>LEVEL UP!</strong>
-      <span id="levelUpText">LEVEL 2</span>
+      <strong>NOVO NÍVEL!</strong>
+      <span id="levelUpText">NÍVEL 2</span>
     </div>
   </div>
 
-  <script defer src="app.js?v=178"></script>
+  <dialog id="helpDialog" aria-labelledby="helpTitle">
+    <div class="options-header"><span class="eyebrow">PRONTO PARA JOGAR?</span><button id="btnCloseHelp" class="btn" type="button">Fechar</button></div>
+    <h2 id="helpTitle">Entra no ritmo.</h2>
+    <p class="help-intro">Apanha moedas para crescer e ganhar pontos. No Clássico e na Sobrevivência, evita o teu próprio corpo.</p>
+    <div class="help-step"><span>01</span><div><h3>Escolhe a direção</h3><p>Usa as setas ou W A S D. No telemóvel, desliza no tabuleiro ou toca nos botões de direção.</p></div></div>
+    <div class="help-step"><span>02</span><div><h3>Apanha poderes especiais</h3><p>Bitcoin dá-te proteção. Ethereum duplica o valor das moedas. Solana abranda o ritmo.</p></div></div>
+    <div class="help-step"><span>03</span><div><h3>Faz uma pausa quando precisares</h3><p>Carrega em Espaço ou no botão Pausa. Ao mudares de janela, o jogo pausa automaticamente.</p></div></div>
+    <p class="help-note">As moedas fazem parte do jogo. O teu progresso e os recordes ficam guardados neste navegador.</p>
+  </dialog>
+  <script defer src="app.js?v=200"></script>
+  <script defer src="menu.js?v=200"></script>
 </body>
 </html>
